@@ -1,6 +1,8 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:oktoast/oktoast.dart';
+import 'package:transientmobile/components/common/botNavBar.dart';
 import 'package:transientmobile/hooks/useStore.dart';
 import 'package:transientmobile/store/index.dart';
 import 'package:transientmobile/widgets/langSwitch.dart';
@@ -29,8 +31,9 @@ class _HomePageState extends ConsumerState<HomePage> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          'Transient ${dInfo.device}',
-          style: TextStyle(color: context.primary),
+          // 'Transient ${dInfo.device}',
+          'Test',
+          style: TextStyle(color: context.fc),
         ),
         actions: [
           ThemeSwitch(),
@@ -43,7 +46,9 @@ class _HomePageState extends ConsumerState<HomePage> {
       body: Column(
         // mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          BannerWidget(),
+          // BannerWidget(),
+          Text("hello".tr()),
+          Text("2212112"),
           Container(
             height: 300,
             child: Center(
@@ -68,6 +73,9 @@ class _HomePageState extends ConsumerState<HomePage> {
               child: Text('Go detail')),*/
         ],
       ),
+      bottomNavigationBar: BotNavBar(onTabChange: (i){
+        showToast("1111");
+      },),
     );
   }
 }

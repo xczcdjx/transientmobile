@@ -83,7 +83,7 @@ class _LangSwitch extends State<LangSwitch> {
                 entry.v,
                 style: TextStyle(
                   color: entry.k == _currentLang
-                      ? context.primary
+                      ? context.pcr
                       : null,
                 ),
               ),
@@ -101,7 +101,7 @@ class _LangSwitch extends State<LangSwitch> {
         return DropdownMenuItem<String>(
           value: entry.k,
           child: Text(entry.v, style: TextStyle(
-              color: entry.k==_currentLang?context.primary:null)),
+              color: entry.k==_currentLang?context.fc:null)),
         );
       }).toList(),
       onChanged: _switchLang,

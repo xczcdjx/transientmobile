@@ -1,5 +1,6 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:oktoast/oktoast.dart';
 import 'package:transientmobile/hooks/useStore.dart';
 import 'package:transientmobile/router/index.dart';
 import 'package:transientmobile/store/index.dart';
@@ -21,7 +22,9 @@ void main() async {
       fallbackLocale: const Locale('en'),
       // startLocale: savedLocale != null ? Locale(savedLocale) : null,
       saveLocale: true,
-      child: MyApp(),
+      child: OKToast(
+        child: MyApp(),
+      ),
     ),
   ));
 }
@@ -31,9 +34,9 @@ class MyApp extends ConsumerWidget {
 
   // This widget is the root of your application.
   @override
-  Widget build(BuildContext context,WidgetRef ref) {
+  Widget build(BuildContext context, WidgetRef ref) {
     // print("lang ${Localizations.localeOf(context)}");
-    final themeMode=useSelector(ref, settingProvider, (s)=>s.themeMode);
+    final themeMode = useSelector(ref, settingProvider, (s) => s.themeMode);
     return MaterialApp.router(
       theme: lightTheme,
       darkTheme: darkTheme,
