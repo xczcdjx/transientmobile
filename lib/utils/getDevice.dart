@@ -21,3 +21,15 @@ import 'package:flutter/foundation.dart';
       return (device: "未知平台", poem: "");
   }
 }
+bool isIos(){
+  return defaultTargetPlatform==TargetPlatform.iOS;
+}
+bool isAndroid(){
+  return defaultTargetPlatform==TargetPlatform.android;
+}
+bool isHarmony(){
+  return defaultTargetPlatform==TargetPlatform.ohos;
+}
+bool isMobile(){
+  return [TargetPlatform.android,TargetPlatform.iOS,TargetPlatform.ohos].contains(defaultTargetPlatform);
+}

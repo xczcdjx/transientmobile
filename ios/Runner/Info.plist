@@ -47,7 +47,7 @@
 	<true/>
 
     <!-- ✅ 允许 transient.online 使用 HTTP 播放音频 -->
-    <!--<key>NSAppTransportSecurity</key>
+    <key>NSAppTransportSecurity</key>
     <dict>
         <key>NSExceptionDomains</key>
         <dict>
@@ -55,19 +55,17 @@
             <dict>
                 <key>NSIncludesSubdomains</key>
                 <true/>
-                <key>NSTemporaryExceptionAllowsInsecureHTTPLoads</key>
+                <key>NSExceptionAllowsInsecureHTTPLoads</key>
                 <true/>
-                <key>NSTemporaryExceptionMinimumTLSVersion</key>
-                <string>TLSv1.0</string>
             </dict>
         </dict>
-    </dict>-->
+    </dict>
     <!-- ✅ 允许所有 HTTP 域名访问（开发阶段推荐） -->
-    <key>NSAppTransportSecurity</key>
+   <!-- <key>NSAppTransportSecurity</key>
     <dict>
         <key>NSAllowsArbitraryLoads</key>
         <true/>
-    </dict>
+    </dict>-->
 
 </dict>
 </plist>

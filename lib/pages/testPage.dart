@@ -1,9 +1,12 @@
 import 'dart:async';
 
 import 'package:audioplayers/audioplayers.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 
+import '../utils/getDevice.dart';
 
+const playUrl="http://transient.online/static/mediaMul/2025/05/23/小霞、海洋Bo - 向云端-1747994192850.mp3";
 class TestPage extends StatefulWidget {
   const TestPage({super.key});
 
@@ -26,7 +29,7 @@ class TestPageState extends State<TestPage> {
 
     // Start the player as soon as the app is displayed.
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      final rawUrl = 'http://transient.online/static/mediaMul/2025/08/12/张韶涵 - 暮色回响-1755002715053.mp3';
+      final rawUrl = playUrl;
       final encodedUrl = Uri.encodeFull(rawUrl);
 
       await player.setSource(UrlSource(encodedUrl));
@@ -103,12 +106,46 @@ class _PlayerWidgetState extends State<PlayerWidget> {
             });
           },
     );
+    _iosDuration();
     player.getCurrentPosition().then(
           (value) => setState(() {
         _position = value;
       }),
     );
     _initStreams();
+  }
+
+  Future<int?> getContentLength(String url) async {
+    try {
+      final dio = Dio();
+      final response = await dio.head(
+        url,
+        options: Options(
+          followRedirects: true,
+          validateStatus: (status) => status != null && status < 400,
+        ),
+      );
+
+      final lengthStr = response.headers.value('content-length');
+      if (lengthStr != null) {
+        return int.tryParse(lengthStr);
+      }
+    } catch (e) {
+      print("Failed to get content-length: $e");
+    }
+    return null;
+  }
+
+  _iosDuration()async{
+    if(isIos()){
+      final contentLength = await getContentLength(playUrl);
+      if (contentLength != null) {
+        final duration = estimateDuration(contentLength, 128); // 假设 128 kbps
+        setState(() {
+          _duration = duration;
+        });
+      }
+    }
   }
 
   @override
@@ -191,6 +228,7 @@ class _PlayerWidgetState extends State<PlayerWidget> {
 
   void _initStreams() {
     _durationSubscription = player.onDurationChanged.listen((duration) {
+      print("durlis $duration");
       setState(() => _duration = duration);
     });
 
@@ -230,4 +268,8 @@ class _PlayerWidgetState extends State<PlayerWidget> {
       _position = Duration.zero;
     });
   }
+}
+Duration estimateDuration(int contentLength, int bitrateKbps) {
+  final seconds = (contentLength * 8) / (bitrateKbps * 1000);
+  return Duration(seconds: seconds.round());
 }
