@@ -48,6 +48,10 @@ dependencies:
       path: "packages/shared_preferences/shared_preferences"
   oktoast: ^3.4.0
   google_nav_bar: ^5.0.7
+  audioplayers:
+    git:
+      url: "https://gitcode.com/openharmony-sig/flutter_audioplayers.git"
+      path: "packages/audioplayers"
 
 dev_dependencies:
   flutter_test:

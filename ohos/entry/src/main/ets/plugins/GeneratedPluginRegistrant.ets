@@ -1,4 +1,6 @@
 import { FlutterEngine, Log } from '@ohos/flutter_ohos';
+import AudioplayersPlugin from 'audioplayers_ohos';
+import PathProviderPlugin from 'path_provider_ohos';
 import SharedPreferencesPlugin from 'shared_preferences_ohos';
 
 /**
@@ -13,6 +15,8 @@ export class GeneratedPluginRegistrant {
 
   static registerWith(flutterEngine: FlutterEngine) {
     try {
+      flutterEngine.getPlugins()?.add(new AudioplayersPlugin());
+      flutterEngine.getPlugins()?.add(new PathProviderPlugin());
       flutterEngine.getPlugins()?.add(new SharedPreferencesPlugin());
     } catch (e) {
       Log.e(

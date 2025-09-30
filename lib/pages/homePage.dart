@@ -57,7 +57,10 @@ class _HomePageState extends ConsumerState<HomePage> {
                 style: TextStyle(fontSize: 18, fontStyle: FontStyle.italic),
               ),
             ),
-          )
+          ),
+          TextButton(onPressed: (){
+            context.push(Routes.test);
+          }, child: Text('TestPage'))
           /*Text("Home"),
           TextButton(
               onPressed: () {
