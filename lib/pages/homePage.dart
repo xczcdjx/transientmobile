@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:transientmobile/components/common/botNavBar.dart';
 import 'package:transientmobile/hooks/useStore.dart';
+import 'package:transientmobile/music/showScreen.dart';
 import 'package:transientmobile/store/index.dart';
 import 'package:transientmobile/widgets/langSwitch.dart';
 import 'package:transientmobile/widgets/themeSwitch.dart';
@@ -73,7 +74,24 @@ class _HomePageState extends ConsumerState<HomePage> {
                     path: Routes.detail + "/111",
                     queryParameters: {'name': '张三', 'gender': '男'}).toString());
               },
-              child: Text('Go detail')),*/
+              child: Text('Go detail')),*/,
+          TextButton(onPressed: (){
+            showGeneralDialog(
+              context: context,
+              barrierDismissible: true,
+              barrierLabel: '',
+              transitionDuration: const Duration(milliseconds: 300),
+              pageBuilder: (_, __, ___) {
+                return ShowScreen();
+              },
+              transitionBuilder: (_, anim, __, child) {
+                return SlideTransition(
+                  position: Tween(begin: const Offset(0, 1), end: Offset.zero).animate(anim),
+                  child: child,
+                );
+              },
+            );
+          }, child: Text('botPopup')),
         ],
       ),
       bottomNavigationBar: BotNavBar(onTabChange: (i){

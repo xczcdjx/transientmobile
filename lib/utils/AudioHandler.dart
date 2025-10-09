@@ -88,14 +88,27 @@ class AudioPlayerHandlerImpl extends BaseAudioHandler
   // 播放列表 , 换成原项目MediaItem资源
   final List<MediaItem> _playlist = [
     MediaItem(
-      id: '871',
-      album: "如梦令",
-      title: "如梦令",
-      artist: "SING女团",
-      duration: const Duration(seconds: 202),
-      artUri: Uri.parse('https://via.placeholder.com/300?text=No+Image'),
+      id: '781',
+      album: "听歌背四六级单词",
+      title: "听歌背高考单词01-Rise in the Rhythm",
+      artist: "王哪写英语",
+      duration: const Duration(seconds: 187),
+      artUri: Uri.parse(
+          'http://p2.music.126.net/9IfoCT65tKR2oIFYnv6UbQ==/109951171017564109.jpg'),
       extras: {
-        'musUrl': 'http://transient.online/static/mediaMul/2025/07/31/SING女团 - 如梦令-1753960461751.mp3',
+        'musUrl': 'http://transient.online/static/mediaMul/2025/06/19/王哪写英语 - 听歌背高考单词01-Rise in the Rhythm-1750329794877.mp3',
+      },
+    ),
+    MediaItem(
+      id: '779',
+      album: "听歌背四六级单词",
+      title: "听歌背四六级单词系列-03",
+      artist: "王哪写英语",
+      duration: const Duration(seconds: 214),
+      artUri: Uri.parse(
+          'http://p1.music.126.net/9IfoCT65tKR2oIFYnv6UbQ==/109951171017564109.jpg'),
+      extras: {
+        'musUrl': 'http://transient.online/static/mediaMul/2025/06/19/王哪写英语 - 听歌背四六级单词系列-03-1750329794844.mp3',
       },
     ),
     MediaItem(
@@ -110,20 +123,7 @@ class AudioPlayerHandlerImpl extends BaseAudioHandler
         'musUrl': 'http://transient.online/static/mediaMul/2025/05/23/Laura Shigihara - Zombies on Your Lawn-1747991750364.mp3',
       },
     ),
-    MediaItem(
-      id: '360',
-      album: "逐空",
-      title: "逐空",
-      artist: "叶斯淳",
-      duration: const Duration(seconds: 218),
-      artUri: Uri.parse(
-          'http://p1.music.126.net/wdxrFWZM0Nyzq4lgPxb6Zw==/109951169315801816.jpg'),
-      extras: {
-        'musUrl': 'http://transient.online/static/mediaMul/2025/05/29/叶斯淳 - 逐空-1748505171621.mp3',
-      },
-    ),
   ];
-
 
   int _currentIndex = 0;
   bool _isLoading = false;

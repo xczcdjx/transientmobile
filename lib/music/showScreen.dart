@@ -2,43 +2,19 @@
 import 'dart:async';
 
 import 'package:audio_service/audio_service.dart';
+import 'package:go_router/go_router.dart';
+import '../service/audioHandlerService.dart';
 import '../utils/AudioHandler.dart';
 import 'common.dart';
 import 'package:flutter/material.dart';
 import 'package:rxdart/rxdart.dart';
 
-late AudioPlayerHandler _audioHandler;
-
-Future<void> main() async {
-  _audioHandler = await AudioService.init(
-    builder: () => AudioPlayerHandlerImpl(),
-    config: const AudioServiceConfig(
-      androidNotificationChannelId: 'com.example.transientmobile.channel.audio',
-      androidNotificationChannelName: 'Audio playback',
-      androidNotificationOngoing: true,
-    ),
-  );
-  runApp(const MyApp());
-}
-
-
-/// The app widget
-class MyApp extends StatelessWidget {
-  const MyApp({Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Audio Service Demo',
-      theme: ThemeData(primarySwatch: Colors.blue),
-      home: const MainScreen(),
-    );
-  }
-}
 
 /// The main screen.
-class MainScreen extends StatelessWidget {
-  const MainScreen({Key? key}) : super(key: key);
+class ShowScreen extends StatelessWidget {
+  ShowScreen({super.key});
+
+  final _audioHandler = AudioHandlerService.instance.handler;
 
   Stream<Duration> get _bufferedPositionStream => _audioHandler.playbackState
       .map((state) => state.bufferedPosition)
@@ -56,6 +32,27 @@ class MainScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        title: Center(
+          child: Text(
+            'showScreen',
+            textAlign: TextAlign.center,
+          ),
+        ),
+        // automaticallyImplyLeading: false,
+        leading: IconButton(
+            onPressed: () {
+              context.pop();
+            },
+            icon: Icon(Icons.keyboard_arrow_down)),
+        actions: [
+          IconButton(
+              onPressed: () {
+                // context.pop();
+              },
+              icon: Icon(Icons.share))
+        ],
+      ),
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,

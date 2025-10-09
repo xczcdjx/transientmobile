@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:transientmobile/hooks/useStore.dart';
 import 'package:transientmobile/router/index.dart';
+import 'package:transientmobile/service/audioHandlerService.dart';
 import 'package:transientmobile/store/index.dart';
 import 'package:transientmobile/styles/theme.dart';
 import 'package:transientmobile/utils/AudioHandler.dart';
@@ -14,6 +15,7 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await EasyLocalization.ensureInitialized();
   await ShareStorage.init(); // 初始化存储
+  await AudioHandlerService.instance.init(); // 初始化音频服务
   // 尝试读取用户上次选择的语言
   // final savedLocale=ShareStorage.get<String>('locale');
 
