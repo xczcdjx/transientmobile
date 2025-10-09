@@ -88,33 +88,42 @@ class AudioPlayerHandlerImpl extends BaseAudioHandler
   // 播放列表 , 换成原项目MediaItem资源
   final List<MediaItem> _playlist = [
     MediaItem(
-      id: 'https://s3.amazonaws.com/scifri-episodes/scifri20181123-episode.mp3',
-      album: "Science Friday",
-      title: "A Salute To Head-Scratching Science",
-      artist: "Science Friday and WNYC Studios",
-      duration: const Duration(milliseconds: 5739820),
-      artUri: Uri.parse(
-          'https://media.wnyc.org/i/1400/1400/l/80/1/ScienceFriday_WNYCStudios_1400.jpg'),
+      id: '871',
+      album: "如梦令",
+      title: "如梦令",
+      artist: "SING女团",
+      duration: const Duration(seconds: 202),
+      artUri: Uri.parse('https://via.placeholder.com/300?text=No+Image'),
+      extras: {
+        'musUrl': 'http://transient.online/static/mediaMul/2025/07/31/SING女团 - 如梦令-1753960461751.mp3',
+      },
     ),
     MediaItem(
-      id: 'https://s3.amazonaws.com/scifri-segments/scifri201711241.mp3',
-      album: "Science Friday",
-      title: "From Cat Rheology To Operatic Incompetence",
-      artist: "Science Friday and WNYC Studios",
-      duration: const Duration(milliseconds: 2856950),
+      id: '29',
+      album: "Plants Vs. Zombies (Original Video Game Soundtrack)",
+      title: "Zombies on Your Lawn",
+      artist: "Laura Shigihara",
+      duration: const Duration(seconds: 159),
       artUri: Uri.parse(
-          'https://media.wnyc.org/i/1400/1400/l/80/1/ScienceFriday_WNYCStudios_1400.jpg'),
+          'http://imge.kugou.com/stdmusic/300/20150719/20150719061122429450.jpg'),
+      extras: {
+        'musUrl': 'http://transient.online/static/mediaMul/2025/05/23/Laura Shigihara - Zombies on Your Lawn-1747991750364.mp3',
+      },
     ),
     MediaItem(
-      id: 'https://s3.amazonaws.com/scifri-segments/scifri202011274.mp3',
-      album: "Science Friday",
-      title: "Laugh Along At Home With The Ig Nobel Awards",
-      artist: "Science Friday and WNYC Studios",
-      duration: const Duration(milliseconds: 1791883),
+      id: '360',
+      album: "逐空",
+      title: "逐空",
+      artist: "叶斯淳",
+      duration: const Duration(seconds: 218),
       artUri: Uri.parse(
-          'https://media.wnyc.org/i/1400/1400/l/80/1/ScienceFriday_WNYCStudios_1400.jpg'),
-    )
+          'http://p1.music.126.net/wdxrFWZM0Nyzq4lgPxb6Zw==/109951169315801816.jpg'),
+      extras: {
+        'musUrl': 'http://transient.online/static/mediaMul/2025/05/29/叶斯淳 - 逐空-1748505171621.mp3',
+      },
+    ),
   ];
+
 
   int _currentIndex = 0;
   bool _isLoading = false;
@@ -234,7 +243,7 @@ class AudioPlayerHandlerImpl extends BaseAudioHandler
       ));
       mediaItem.add(_playlist[_currentIndex]);
 
-      await _audioPlayer.play(UrlSource(_playlist[_currentIndex].id));
+      await _audioPlayer.play(UrlSource(_playlist[_currentIndex].extras?["musUrl"]));
     }
     playbackState.add(playbackState.value.copyWith(
       processingState: AudioProcessingState.ready,
