@@ -185,18 +185,24 @@ class _LyricsScrollerState extends State<LyricsScroller> {
                   ),
                   if (_userScrolling && isHover && line["time"] != null)
                     Positioned(
-                      right: 20,
+                      right: 5,
                       child: Container(
                         padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
                         decoration: BoxDecoration(
                           color: Colors.white24,
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: Text(
-                          _formatSeconds(line["time"].toDouble()),
-                          style:
-                          const TextStyle(color: Colors.white, fontSize: 12),
+                        child: Row(
+                          children: [
+                            Icon(Icons.play_arrow,color: Colors.white,size: 13,),
+                            SizedBox(width: 3,),
+                            Text(
+                              _formatSeconds(line["time"].toDouble()),
+                              style:
+                              const TextStyle(color: Colors.white, fontSize: 12),
+                            ),
+                          ],
                         ),
                       ),
                     ),
@@ -243,7 +249,7 @@ class _ExampleAppState extends State<_ExampleApp> {
       setState(() {
         _pos += 1;
         // loop
-        if (_pos > demo.length) _pos = 0;
+        if (_pos > demo.length*3) _pos = 0;
       });
     });
   }
@@ -271,7 +277,7 @@ class _ExampleAppState extends State<_ExampleApp> {
           },
           lineHeight: 56,
           normalStyle: const TextStyle(fontSize: 16, color: Colors.white54),
-          activeStyle: const TextStyle(fontSize: 20, color: Colors.white, fontWeight: FontWeight.w700),
+          activeStyle: const TextStyle(fontSize: 21, color: Colors.white, fontWeight: FontWeight.w700),
         ),
       ),
     );
