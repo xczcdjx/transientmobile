@@ -70,8 +70,7 @@ class ShowScreen extends StatelessWidget {
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      if (mediaItem.artUri != null)
-                        Expanded(
+                      if (mediaItem.artUri != null) Expanded(
                           child: Padding(
                             padding: const EdgeInsets.all(8.0),
                             child: Center(
@@ -85,9 +84,32 @@ class ShowScreen extends StatelessWidget {
                             ),
                           ),
                         ),
-                      Text(mediaItem.album ?? '',
-                          style: Theme.of(context).textTheme.titleLarge),
-                      Text(mediaItem.title),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 15.0),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    mediaItem.album ?? '',
+                                    style: Theme.of(context).textTheme.titleLarge,
+                                    overflow: TextOverflow.ellipsis,
+                                    maxLines: 1,
+                                  ),
+                                  Text(mediaItem.title,
+                                      overflow: TextOverflow.ellipsis,
+                                      maxLines: 1),
+                                ],),
+                            ),
+                            SizedBox(width: 20,),
+                            Transform.translate(offset: Offset(0, -8),
+                            child: IconButton(onPressed: (){}, icon: Icon(Icons.favorite_border,size: 30,)))
+                          ],),
+                      )
                     ],
                   );
                 },
