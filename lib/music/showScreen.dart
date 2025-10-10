@@ -1,15 +1,14 @@
-
 import 'dart:async';
 
 import 'package:audio_service/audio_service.dart';
 import 'package:go_router/go_router.dart';
+import 'package:transientmobile/utils/NetImage.dart';
 import '../components/music/comControl.dart';
 import '../service/audioHandlerService.dart';
 import '../utils/AudioHandler.dart';
 import 'common.dart';
 import 'package:flutter/material.dart';
 import 'package:rxdart/rxdart.dart';
-
 
 /// The main screen.
 class ShowScreen extends StatelessWidget {
@@ -20,14 +19,16 @@ class ShowScreen extends StatelessWidget {
   Stream<Duration> get _bufferedPositionStream => _audioHandler.playbackState
       .map((state) => state.bufferedPosition)
       .distinct();
+
   Stream<Duration?> get _durationStream =>
       _audioHandler.mediaItem.map((item) => item?.duration).distinct();
+
   Stream<PositionData> get _positionDataStream =>
       Rx.combineLatest3<Duration, Duration, Duration?, PositionData>(
           _audioHandler.durationStream,
           _bufferedPositionStream,
           _durationStream,
-              (position, bufferedPosition, duration) => PositionData(
+          (position, bufferedPosition, duration) => PositionData(
               position, bufferedPosition, duration ?? Duration.zero));
 
   @override
@@ -74,7 +75,13 @@ class ShowScreen extends StatelessWidget {
                           child: Padding(
                             padding: const EdgeInsets.all(8.0),
                             child: Center(
-                              child: Image.network('${mediaItem.artUri!}'),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(10),
+                                child: NetImage(
+                                  url: mediaItem.artUri.toString(),
+                                  cache: true,
+                                ),
+                              ),
                             ),
                           ),
                         ),
@@ -129,8 +136,8 @@ class ShowScreen extends StatelessWidget {
                       icon: icons[index],
                       onPressed: () {
                         _audioHandler.setRepeatMode(cycleModes[
-                        (cycleModes.indexOf(repeatMode) + 1) %
-                            cycleModes.length]);
+                            (cycleModes.indexOf(repeatMode) + 1) %
+                                cycleModes.length]);
                       },
                     );
                   },
@@ -145,7 +152,7 @@ class ShowScreen extends StatelessWidget {
                 StreamBuilder<bool>(
                   stream: _audioHandler.playbackState
                       .map((state) =>
-                  state.shuffleMode == AudioServiceShuffleMode.all)
+                          state.shuffleMode == AudioServiceShuffleMode.all)
                       .distinct(),
                   builder: (context, snapshot) {
                     final shuffleModeEnabled = snapshot.data ?? false;
