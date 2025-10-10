@@ -1,11 +1,12 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 
 /// Simple lyric line model with optional timestamp.
 class LyricLine {
-  final Duration? time;
+  final int? time;
   final String text;
 
   LyricLine({this.time, required this.text});
@@ -20,131 +21,115 @@ class LyricLine {
 /// - Highlights the current line
 /// - Smooth animated scroll to center the active line
 class LyricsScroller extends StatefulWidget {
-  final List<LyricLine> lines;
-  final Duration? currentPosition;
-  final TextStyle? normalStyle;
-  final TextStyle? highlightedStyle;
+  final List<Map<String, dynamic>> lines; // 传入的歌词
+  final double currentPosition; // 当前播放进度（秒）
   final double lineHeight;
-  final Duration scrollDuration;
-  final Curve scrollCurve;
-  final bool enableAutoScroll;
-
-  /// 当用户点击或滑动选择歌词时回调（用于修改外部播放进度）
-  final ValueChanged<Duration>? onSeek;
+  final TextStyle activeStyle;
+  final TextStyle normalStyle;
+  final Function(double seconds)? onSeek;
 
   const LyricsScroller({
-    Key? key,
+    super.key,
     required this.lines,
-    this.currentPosition,
-    this.normalStyle,
-    this.highlightedStyle,
-    this.lineHeight = 48.0,
-    this.scrollDuration = const Duration(milliseconds: 400),
-    this.scrollCurve = Curves.easeOutCubic,
-    this.enableAutoScroll = true,
+    required this.currentPosition,
+    this.lineHeight = 40,
+    required this.activeStyle,
+    required this.normalStyle,
     this.onSeek,
-  }) : super(key: key);
+  });
 
   @override
-  _LyricsScrollerState createState() => _LyricsScrollerState();
+  State<LyricsScroller> createState() => _LyricsScrollerState();
 }
 
 class _LyricsScrollerState extends State<LyricsScroller> {
-  late final ScrollController _controller;
+  final ScrollController _controller = ScrollController();
   int _currentIndex = 0;
+  int? _hoverIndex;
   bool _userScrolling = false;
   Timer? _resumeTimer;
-  int? _hoverIndex;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = ScrollController();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _maybeScrollToCurrent());
-  }
 
   @override
   void didUpdateWidget(covariant LyricsScroller oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.enableAutoScroll && widget.currentPosition != oldWidget.currentPosition) {
-      _maybeScrollToCurrent();
+    if (!_userScrolling) {
+      _updateCurrentIndexByTime(widget.currentPosition);
     }
-  }
-
-  @override
-  void dispose() {
-    _resumeTimer?.cancel();
-    _controller.dispose();
-    super.dispose();
-  }
-
-  void _maybeScrollToCurrent() {
-    if (!widget.enableAutoScroll || widget.currentPosition == null || _userScrolling) return;
-
-    final pos = widget.currentPosition!;
-    int idx = 0;
-    for (int i = 0; i < widget.lines.length; i++) {
-      final t = widget.lines[i].time;
-      if (t == null) continue;
-      if (t <= pos) idx = i;
-      else break;
-    }
-    if (_currentIndex != idx) {
-      _currentIndex = idx;
-      _animateToIndex(idx);
-    }
-  }
-
-  void _animateToIndex(int index) {
-    if (!_controller.hasClients) return;
-    final targetOffset = index * widget.lineHeight - widget.lineHeight;
-    _controller.animateTo(
-      targetOffset.clamp(0.0, _controller.position.maxScrollExtent),
-      duration: widget.scrollDuration,
-      curve: widget.scrollCurve,
-    );
-  }
-
-  int _getIndexFromOffset(double localDy) {
-    final scrollOffset = _controller.offset;
-    final absoluteY = scrollOffset + localDy;
-    return (absoluteY / widget.lineHeight).floor().clamp(0, widget.lines.length - 1);
   }
 
   void _pauseAutoScroll() {
     _userScrolling = true;
     _resumeTimer?.cancel();
-    _resumeTimer = Timer(const Duration(seconds: 5), () {
+    _resumeTimer = Timer(const Duration(seconds: 3), () {
       _userScrolling = false;
     });
   }
 
+  void _resumeAutoScrollLater() {
+    _resumeTimer?.cancel();
+    _resumeTimer = Timer(const Duration(seconds: 1), () {
+      _userScrolling = false;
+      _hoverIndex = null;
+      setState(() {});
+    });
+  }
+
+  void _updateCurrentIndexByTime(double positionSeconds) {
+    for (int i = 0; i < widget.lines.length; i++) {
+      final currentTime = widget.lines[i]["time"]?.toDouble() ?? 0;
+      final nextTime = i < widget.lines.length - 1
+          ? widget.lines[i + 1]["time"]?.toDouble() ?? double.infinity
+          : double.infinity;
+      if (positionSeconds >= currentTime && positionSeconds < nextTime) {
+        if (_currentIndex != i) {
+          _currentIndex = i;
+          _animateToIndex(i);
+        }
+        break;
+      }
+    }
+  }
+
+  void _animateToIndex(int index) {
+    final offset = index * widget.lineHeight;
+    if (_controller.hasClients) {
+      _controller.animateTo(
+        offset,
+        duration: const Duration(milliseconds: 400),
+        curve: Curves.easeOut,
+      );
+    }
+  }
+
+  int _getIndexFromOffset(double localDy, BuildContext context) {
+    final topPadding =
+        (MediaQuery.of(context).size.height - widget.lineHeight) / 2;
+    final scrollOffset = _controller.hasClients ? _controller.offset : 0.0;
+    final absoluteY = scrollOffset + localDy - topPadding;
+    final idx = (absoluteY / widget.lineHeight).round();
+    return idx.clamp(0, widget.lines.length - 1);
+  }
+
+  String _formatSeconds(double seconds) {
+    final d = Duration(seconds: seconds.floor());
+    final mm = d.inMinutes.remainder(60).toString().padLeft(2, '0');
+    final ss = d.inSeconds.remainder(60).toString().padLeft(2, '0');
+    return '$mm:$ss';
+  }
+
   @override
   Widget build(BuildContext context) {
-    final normal = widget.normalStyle ?? const TextStyle(fontSize: 16, color: Colors.white70);
-    final highlighted = widget.highlightedStyle ?? const TextStyle(fontSize: 18, color: Colors.white, fontWeight: FontWeight.bold);
-
     return NotificationListener<ScrollNotification>(
       onNotification: (notif) {
-        // 检测滚动时机
         if (notif is UserScrollNotification) {
-          // 用户主动拖动
           if (notif.direction != ScrollDirection.idle) {
             _pauseAutoScroll();
-            _userScrolling = true;
           } else {
-            // 停止拖动后延迟恢复自动滚动
-            _resumeTimer?.cancel();
-            _resumeTimer = Timer(const Duration(seconds: 2), () {
-              _userScrolling = false;
-              _hoverIndex = null;
-              setState(() {});
-            });
+            // _resumeAutoScrollLater();
           }
         }
 
         if (notif is ScrollUpdateNotification && _userScrolling) {
-          // 只有在用户主动滚动时才更新 hover index
           final offset = _controller.offset;
           final index =
           (offset / widget.lineHeight).round().clamp(0, widget.lines.length - 1);
@@ -154,36 +139,24 @@ class _LyricsScrollerState extends State<LyricsScroller> {
             setState(() {});
           }
         }
-
         return false;
       },
       child: GestureDetector(
         onTapUp: (details) {
-          // 用户点击歌词，触发时间跳转
-          final tappedIndex = _getIndexFromOffset(details.localPosition.dy);
-          final tapped = widget.lines[tappedIndex];
-          if (tapped.time != null) {
-            _pauseAutoScroll();
-            widget.onSeek?.call(tapped.time!);
+          final tappedIndex = _getIndexFromOffset(details.localPosition.dy, context);
+          // 如果点击的不是第一句，就用上一句的时间，否则从0开始
+          final prevIndex = tappedIndex > 0 ? tappedIndex - 1 : 0;
+          final tapped = widget.lines[prevIndex];
+          final time = tapped["time"]?.toDouble();
+          if (time != null) {
+            // _pauseAutoScroll();
+            widget.onSeek?.call(time);
             _currentIndex = tappedIndex;
             _hoverIndex = tappedIndex;
+            _animateToIndex(tappedIndex);
+            _resumeAutoScrollLater();
             setState(() {});
           }
-        },
-        onLongPressStart: (_) {
-          // 长按时显示时间，但不触发 seek
-          _pauseAutoScroll();
-          _userScrolling = true;
-          setState(() {});
-        },
-        onLongPressEnd: (_) {
-          // 松开后隐藏时间条并恢复自动滚动
-          _resumeTimer?.cancel();
-          _resumeTimer = Timer(const Duration(seconds: 2), () {
-            _userScrolling = false;
-            _hoverIndex = null;
-            setState(() {});
-          });
         },
         child: ListView.builder(
           controller: _controller,
@@ -195,6 +168,7 @@ class _LyricsScrollerState extends State<LyricsScroller> {
           itemBuilder: (context, index) {
             final isActive = index == _currentIndex;
             final isHover = index == _hoverIndex;
+            final line = widget.lines[index];
             return SizedBox(
               height: widget.lineHeight,
               child: Stack(
@@ -202,14 +176,14 @@ class _LyricsScrollerState extends State<LyricsScroller> {
                 children: [
                   AnimatedDefaultTextStyle(
                     duration: const Duration(milliseconds: 200),
-                    style: isActive ? highlighted : normal,
+                    style: isActive ? widget.activeStyle : widget.normalStyle,
                     child: Text(
-                      widget.lines[index].text,
+                      line["lrc"] ?? "",
                       textAlign: TextAlign.center,
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  if (_userScrolling && isHover && widget.lines[index].time != null)
+                  if (_userScrolling && isHover && line["time"] != null)
                     Positioned(
                       right: 20,
                       child: Container(
@@ -220,7 +194,7 @@ class _LyricsScrollerState extends State<LyricsScroller> {
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
-                          _formatDuration(widget.lines[index].time!),
+                          _formatSeconds(line["time"].toDouble()),
                           style:
                           const TextStyle(color: Colors.white, fontSize: 12),
                         ),
@@ -234,13 +208,8 @@ class _LyricsScrollerState extends State<LyricsScroller> {
       ),
     );
   }
-
-  String _formatDuration(Duration d) {
-    final m = d.inMinutes.remainder(60).toString().padLeft(2, '0');
-    final s = d.inSeconds.remainder(60).toString().padLeft(2, '0');
-    return "$m:$s";
-  }
 }
+
 
 
 /// Example usage of LyricsScroller in a minimal app.
@@ -257,11 +226,14 @@ class _ExampleApp extends StatefulWidget {
 }
 
 class _ExampleAppState extends State<_ExampleApp> {
-  final List<LyricLine> demo = List.generate(40, (i) {
-    return LyricLine(time: Duration(seconds: i * 3), text: '这是第 ${i + 1} 行词 — 示例文本');
+  final List<Map<String, dynamic>> demo = List.generate(40, (i) {
+    return {
+      "time": i * 3.0, // 每句相隔3秒
+      "lrc": "这是第 ${i + 1} 行词 — 示例文本"
+    };
   });
 
-  Duration _pos = Duration.zero;
+  double _pos = 0;
   Timer? _ticker;
 
   @override
@@ -269,9 +241,9 @@ class _ExampleAppState extends State<_ExampleApp> {
     super.initState();
     _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
       setState(() {
-        _pos += const Duration(seconds: 1);
+        _pos += 1;
         // loop
-        if (_pos > Duration(seconds: demo.length * 3)) _pos = Duration.zero;
+        if (_pos > demo.length) _pos = 0;
       });
     });
   }
@@ -293,14 +265,13 @@ class _ExampleAppState extends State<_ExampleApp> {
           lines: demo,
           currentPosition: _pos,
           onSeek: (t){
-            print(t);
             setState(() {
               _pos=t;
             });
           },
           lineHeight: 56,
           normalStyle: const TextStyle(fontSize: 16, color: Colors.white54),
-          highlightedStyle: const TextStyle(fontSize: 20, color: Colors.white, fontWeight: FontWeight.w700),
+          activeStyle: const TextStyle(fontSize: 20, color: Colors.white, fontWeight: FontWeight.w700),
         ),
       ),
     );
