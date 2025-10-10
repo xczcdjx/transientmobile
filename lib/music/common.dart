@@ -21,6 +21,8 @@ import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
 import 'package:rxdart/rxdart.dart';
 
+import '../utils/formatDate.dart';
+
 class PositionData {
   final Duration position;
   final Duration bufferedPosition;
@@ -35,14 +37,16 @@ class SeekBar extends StatefulWidget {
   final Duration bufferedPosition;
   final ValueChanged<Duration>? onChanged;
   final ValueChanged<Duration>? onChangeEnd;
+  bool showDuration;
 
-  const SeekBar({
+  SeekBar({
     Key? key,
     required this.duration,
     required this.position,
     this.bufferedPosition = Duration.zero,
     this.onChanged,
     this.onChangeEnd,
+    this.showDuration=true,
   }) : super(key: key);
 
   @override
@@ -90,9 +94,34 @@ class SeekBarState extends State<SeekBar> {
             ),
           ),
         ),
+        ...(widget.showDuration
+            ? [
+          Positioned(
+            left: 16.0,
+            bottom: -2.0,
+            child: Text(
+              tranTime(widget.position),
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ),
+          Positioned(
+            right: 16.0,
+            bottom: -2.0,
+            child: Text(
+              tranTime(widget.duration),
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ),
+        ]
+            : const []),
+
         SliderTheme(
           data: _sliderThemeData.copyWith(
             inactiveTrackColor: Colors.transparent,
+            thumbShape: RoundSliderThumbShape(
+              enabledThumbRadius: 7.0, // 修改这里的大小，默认是 10.0
+              pressedElevation: 3.5,    // 按下时的阴影
+            ),
           ),
           child: Slider(
             min: 0.0,
@@ -117,14 +146,11 @@ class SeekBarState extends State<SeekBar> {
             },
           ),
         ),
-        Positioned(
+        widget.showDuration?Container():Positioned(
           right: 16.0,
           bottom: 0.0,
           child: Text(
-              RegExp(r'((^0*[1-9]\d*:)?\d{2}:\d{2})\.\d+$')
-                  .firstMatch("$_remaining")
-                  ?.group(1) ??
-                  '$_remaining',
+              tranTime(_remaining),
               style: Theme.of(context).textTheme.bodySmall),
         ),
       ],
