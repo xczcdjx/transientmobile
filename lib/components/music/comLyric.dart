@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 
@@ -26,13 +27,21 @@ class LyricsScroller extends StatefulWidget {
   final double lineHeight;
   final TextStyle activeStyle;
   final TextStyle normalStyle;
+  TextAlign textAlign;
+  Alignment alignment;
+  EdgeInsetsGeometry padding;
   final Function(double seconds)? onSeek;
+  double? sizeHeight;
 
-  const LyricsScroller({
+  LyricsScroller({
     super.key,
     required this.lines,
     required this.currentPosition,
     this.lineHeight = 40,
+    this.sizeHeight,
+    this.textAlign = TextAlign.center,
+    this.alignment = Alignment.center,
+    this.padding = const EdgeInsets.symmetric(horizontal: 0),
     required this.activeStyle,
     required this.normalStyle,
     this.onSeek,
@@ -102,8 +111,8 @@ class _LyricsScrollerState extends State<LyricsScroller> {
   }
 
   int _getIndexFromOffset(double localDy, BuildContext context) {
-    final topPadding =
-        (MediaQuery.of(context).size.height - widget.lineHeight) / 2;
+    double oriHeight = widget.sizeHeight ?? MediaQuery.of(context).size.height;
+    final topPadding = (oriHeight - widget.lineHeight) / 2;
     final scrollOffset = _controller.hasClients ? _controller.offset : 0.0;
     final absoluteY = scrollOffset + localDy - topPadding;
     final idx = (absoluteY / widget.lineHeight).round();
@@ -119,6 +128,7 @@ class _LyricsScrollerState extends State<LyricsScroller> {
 
   @override
   Widget build(BuildContext context) {
+    widget.sizeHeight ??= MediaQuery.of(context).size.height;
     return NotificationListener<ScrollNotification>(
       onNotification: (notif) {
         if (notif is UserScrollNotification) {
@@ -131,8 +141,9 @@ class _LyricsScrollerState extends State<LyricsScroller> {
 
         if (notif is ScrollUpdateNotification && _userScrolling) {
           final offset = _controller.offset;
-          final index =
-          (offset / widget.lineHeight).round().clamp(0, widget.lines.length - 1);
+          final index = (offset / widget.lineHeight)
+              .round()
+              .clamp(0, widget.lines.length - 1);
           if (index != _hoverIndex) {
             _hoverIndex = index;
             _currentIndex = index;
@@ -143,7 +154,8 @@ class _LyricsScrollerState extends State<LyricsScroller> {
       },
       child: GestureDetector(
         onTapUp: (details) {
-          final tappedIndex = _getIndexFromOffset(details.localPosition.dy, context);
+          final tappedIndex =
+              _getIndexFromOffset(details.localPosition.dy, context);
           // 如果点击的不是第一句，就用上一句的时间，否则从0开始
           final prevIndex = tappedIndex > 0 ? tappedIndex - 1 : 0;
           final tapped = widget.lines[prevIndex];
@@ -163,7 +175,7 @@ class _LyricsScrollerState extends State<LyricsScroller> {
           physics: const BouncingScrollPhysics(),
           itemCount: widget.lines.length,
           padding: EdgeInsets.symmetric(
-            vertical: (MediaQuery.of(context).size.height - widget.lineHeight) / 2,
+            vertical: (widget.sizeHeight! - widget.lineHeight) / 2,
           ),
           itemBuilder: (context, index) {
             final isActive = index == _currentIndex;
@@ -171,42 +183,51 @@ class _LyricsScrollerState extends State<LyricsScroller> {
             final line = widget.lines[index];
             return SizedBox(
               height: widget.lineHeight,
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  AnimatedDefaultTextStyle(
-                    duration: const Duration(milliseconds: 200),
-                    style: isActive ? widget.activeStyle : widget.normalStyle,
-                    child: Text(
-                      line["lrc"] ?? "",
-                      textAlign: TextAlign.center,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  if (_userScrolling && isHover && line["time"] != null)
-                    Positioned(
-                      right: 5,
-                      child: Container(
-                        padding:
-                        const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: Colors.white24,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(Icons.play_arrow,color: Colors.white,size: 13,),
-                            SizedBox(width: 3,),
-                            Text(
-                              _formatSeconds(line["time"].toDouble()),
-                              style:
-                              const TextStyle(color: Colors.white, fontSize: 12),
-                            ),
-                          ],
-                        ),
+              child: Padding(
+                padding: widget.padding,
+                child: Stack(
+                  alignment: widget.alignment,
+                  children: [
+                    AnimatedDefaultTextStyle(
+                      duration: const Duration(milliseconds: 200),
+                      style: isActive ? widget.activeStyle : widget.normalStyle,
+                      child: Text(
+                        line["lrc"] ?? "",
+                        textAlign: widget.textAlign,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                ],
+                    if (_userScrolling && isHover && line["time"] != null)
+                      Positioned(
+                        right: 5,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 5, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: Colors.white24,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.play_arrow,
+                                color: Colors.white,
+                                size: 13,
+                              ),
+                              SizedBox(
+                                width: 3,
+                              ),
+                              Text(
+                                _formatSeconds(line["time"].toDouble()),
+                                style: const TextStyle(
+                                    color: Colors.white, fontSize: 12),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
               ),
             );
           },
@@ -215,8 +236,6 @@ class _LyricsScrollerState extends State<LyricsScroller> {
     );
   }
 }
-
-
 
 /// Example usage of LyricsScroller in a minimal app.
 /// In a real app you would drive currentPosition with your audio player's position stream.
@@ -249,7 +268,7 @@ class _ExampleAppState extends State<_ExampleApp> {
       setState(() {
         _pos += 1;
         // loop
-        if (_pos > demo.length*3) _pos = 0;
+        if (_pos > demo.length * 3) _pos = 0;
       });
     });
   }
@@ -267,17 +286,25 @@ class _ExampleAppState extends State<_ExampleApp> {
       home: Scaffold(
         backgroundColor: Colors.black,
         appBar: AppBar(title: const Text('scroll')),
-        body: LyricsScroller(
-          lines: demo,
-          currentPosition: _pos,
-          onSeek: (t){
-            setState(() {
-              _pos=t;
-            });
-          },
-          lineHeight: 56,
-          normalStyle: const TextStyle(fontSize: 16, color: Colors.white54),
-          activeStyle: const TextStyle(fontSize: 21, color: Colors.white, fontWeight: FontWeight.w700),
+        body: SizedBox(
+          height: 200,
+          child: LyricsScroller(
+            lines: demo,
+            sizeHeight: 200,
+            currentPosition: _pos,
+            textAlign: TextAlign.start,
+            alignment: Alignment.topLeft,
+            padding: const EdgeInsets.only(left: 10),
+            onSeek: (t) {
+              setState(() {
+                _pos = t;
+              });
+            },
+            lineHeight: 56,
+            normalStyle: const TextStyle(fontSize: 16, color: Colors.white54),
+            activeStyle: const TextStyle(
+                fontSize: 21, color: Colors.white, fontWeight: FontWeight.w700),
+          ),
         ),
       ),
     );
