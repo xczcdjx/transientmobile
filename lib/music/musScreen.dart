@@ -11,8 +11,8 @@ import 'package:flutter/material.dart';
 import 'package:rxdart/rxdart.dart';
 
 /// The main screen.
-class ShowScreen extends StatelessWidget {
-  ShowScreen({super.key});
+class MusScreen extends StatelessWidget {
+  MusScreen({super.key});
 
   final _audioHandler = AudioHandlerService.instance.handler;
 
@@ -33,29 +33,7 @@ class ShowScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Center(
-          child: Text(
-            'showScreen',
-            textAlign: TextAlign.center,
-          ),
-        ),
-        // automaticallyImplyLeading: false,
-        leading: IconButton(
-            onPressed: () {
-              context.pop();
-            },
-            icon: Icon(Icons.keyboard_arrow_down)),
-        actions: [
-          IconButton(
-              onPressed: () {
-                // context.pop();
-              },
-              icon: Icon(Icons.share))
-        ],
-      ),
-      body: SafeArea(
+    return SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           mainAxisAlignment: MainAxisAlignment.center,
@@ -238,7 +216,6 @@ class ShowScreen extends StatelessWidget {
             ),
           ],
         ),
-      ),
     );
   }
 }

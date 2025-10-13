@@ -60,7 +60,8 @@ class _BannerWidget extends State<BannerWidget> {
             ? const Center(child: CircularProgressIndicator()) // 加载中
             : SizedBox(
           height: 200, // 固定高度
-          child: PageView.builder(
+          child:
+          PageView.builder(
             itemCount: banner.length,
             controller: PageController(viewportFraction: 0.95),
             itemBuilder: (context, index) {

@@ -4,6 +4,7 @@ import '../pages/detailPage.dart';
 import '../pages/homePage.dart';
 import '../pages/testPage.dart';
 
+import '../pages/testPage2.dart';
 import 'routes.dart';
 
 final GoRouter router= GoRouter(
@@ -17,6 +18,10 @@ final GoRouter router= GoRouter(
     GoRoute(
       path: Routes.test,
       builder: (context, state) => TestPage(),
+    ),
+    GoRoute(
+      path: Routes.test2,
+      builder: (context, state) => TestPage2(),
     ),
     GoRoute(
       path: '${Routes.detail}/:id',

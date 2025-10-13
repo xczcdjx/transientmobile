@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:transientmobile/components/common/botNavBar.dart';
 import 'package:transientmobile/hooks/useStore.dart';
-import 'package:transientmobile/music/showScreen.dart';
+import 'package:transientmobile/music/musMainPlay.dart';
 import 'package:transientmobile/store/index.dart';
 import 'package:transientmobile/widgets/langSwitch.dart';
 import 'package:transientmobile/widgets/themeSwitch.dart';
@@ -61,7 +61,10 @@ class _HomePageState extends ConsumerState<HomePage> {
           ),
           TextButton(onPressed: (){
             context.push(Routes.test);
-          }, child: Text('TestPage'))
+          }, child: Text('TestPage')),
+          TextButton(onPressed: (){
+            context.push(Routes.test2);
+          }, child: Text('TestPage2'))
           /*Text("Home"),
           TextButton(
               onPressed: () {
@@ -82,7 +85,7 @@ class _HomePageState extends ConsumerState<HomePage> {
               barrierLabel: '',
               transitionDuration: const Duration(milliseconds: 300),
               pageBuilder: (_, __, ___) {
-                return ShowScreen();
+                return MusMainPlay();
               },
               transitionBuilder: (_, anim, __, child) {
                 return SlideTransition(
