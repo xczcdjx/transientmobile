@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:audio_service/audio_service.dart';
 import 'package:go_router/go_router.dart';
+import 'package:transientmobile/components/music/comPlaySeek.dart';
 import 'package:transientmobile/utils/NetImage.dart';
 import '../components/music/comControl.dart';
 import '../service/audioHandlerService.dart';
@@ -93,24 +94,11 @@ class MusScreen extends StatelessWidget {
                 },
               ),
             ),
+            // A seek bar.
+            ComMusSeek(audioHandler: _audioHandler),
+            const SizedBox(height: 8.0),
             // Playback controls
             ComControlBtn(_audioHandler),
-            // A seek bar.
-            StreamBuilder<PositionData>(
-              stream: _positionDataStream,
-              builder: (context, snapshot) {
-                final positionData = snapshot.data ??
-                    PositionData(Duration.zero, Duration.zero, Duration.zero);
-                return SeekBar(
-                  duration: positionData.duration,
-                  position: positionData.position,
-                  onChangeEnd: (newPosition) {
-                    _audioHandler.seek(newPosition);
-                  },
-                );
-              },
-            ),
-            const SizedBox(height: 8.0),
             // Repeat/shuffle controls
             Row(
               children: [

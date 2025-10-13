@@ -12,7 +12,7 @@ class MusMainPlay extends StatefulWidget {
 }
 
 class _MusMainPlayState extends State<MusMainPlay> {
-  final PageController _pageController = PageController(viewportFraction: 0.95);
+  final PageController _pageController = PageController(viewportFraction: 1);
   int _currentIndex = 0;
 
   void onSkip([index=1]) {

@@ -5,6 +5,10 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 
+import '../components/music/comControl.dart';
+import '../components/music/comPlaySeek.dart';
+import '../service/audioHandlerService.dart';
+
 /// Simple lyric line model with optional timestamp.
 class LyricLine {
   final int? time;
@@ -204,14 +208,14 @@ class _LyricsScrollerState extends State<LyricsScroller> {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 5, vertical: 2),
                           decoration: BoxDecoration(
-                            color: Colors.white24,
+                            color: Colors.grey[200],
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Row(
                             children: [
                               Icon(
                                 Icons.play_arrow,
-                                color: Colors.white,
+                                // color: Colors.white,
                                 size: 13,
                               ),
                               SizedBox(
@@ -220,7 +224,8 @@ class _LyricsScrollerState extends State<LyricsScroller> {
                               Text(
                                 _formatSeconds(line["time"].toDouble()),
                                 style: const TextStyle(
-                                    color: Colors.white, fontSize: 12),
+                                    // color: Colors.white,
+                                    fontSize: 12),
                               ),
                             ],
                           ),
@@ -245,6 +250,7 @@ class LyricScreen extends StatefulWidget {
 }
 
 class LyricScreenState extends State<LyricScreen> {
+  final _audioHandler = AudioHandlerService.instance.handler;
   final List<Map<String, dynamic>> demo = List.generate(40, (i) {
     return {
       "time": i * 3.0, // 每句相隔3秒
@@ -275,21 +281,33 @@ class LyricScreenState extends State<LyricScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return LyricsScroller(
-        lines: demo,
-        currentPosition: _pos,
-        textAlign: TextAlign.start,
-        alignment: Alignment.topLeft,
-        padding: const EdgeInsets.only(left: 10),
-        onSeek: (t) {
-          setState(() {
-            _pos = t;
-          });
-        },
-        lineHeight: 56,
-        normalStyle: const TextStyle(fontSize: 16, color: Colors.black54),
-        activeStyle: const TextStyle(
-            fontSize: 21, color: Colors.orange, fontWeight: FontWeight.w700),
-      );
+    return Column(
+      children: [
+        Expanded(child: LyricsScroller(
+          lines: demo,
+          currentPosition: _pos,
+          textAlign: TextAlign.start,
+          alignment: Alignment.topLeft,
+          padding: const EdgeInsets.only(left: 10),
+          sizeHeight: MediaQuery.of(context).size.height-400,
+          onSeek: (t) {
+            setState(() {
+              _pos = t;
+            });
+          },
+          lineHeight: 56,
+          normalStyle: const TextStyle(fontSize: 16, color: Colors.black54),
+          activeStyle: const TextStyle(
+              fontSize: 21, color: Colors.orange, fontWeight: FontWeight.w700),
+        ),),
+        // A seek bar.
+        const SizedBox(height: 18.0),
+        ComMusSeek(audioHandler: _audioHandler),
+        const SizedBox(height: 8.0),
+        // Playback controls
+        ComControlBtn(_audioHandler),
+        const SizedBox(height: 15.0),
+      ],
+    );
   }
 }
