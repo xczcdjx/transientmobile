@@ -36,6 +36,7 @@ class LyricsScroller extends StatefulWidget {
   EdgeInsetsGeometry padding;
   final Function(double seconds)? onSeek;
   double? sizeHeight;
+  double? topHeight;
 
   LyricsScroller({
     super.key,
@@ -43,6 +44,7 @@ class LyricsScroller extends StatefulWidget {
     required this.currentPosition,
     this.lineHeight = 40,
     this.sizeHeight,
+    this.topHeight,
     this.textAlign = TextAlign.center,
     this.alignment = Alignment.center,
     this.padding = const EdgeInsets.symmetric(horizontal: 0),
@@ -114,9 +116,7 @@ class _LyricsScrollerState extends State<LyricsScroller> {
     }
   }
 
-  int _getIndexFromOffset(double localDy, BuildContext context) {
-    double oriHeight = widget.sizeHeight ?? MediaQuery.of(context).size.height;
-    final topPadding = (oriHeight - widget.lineHeight) / 2;
+  int _getIndexFromOffset(double localDy, double topPadding) {
     final scrollOffset = _controller.hasClients ? _controller.offset : 0.0;
     final absoluteY = scrollOffset + localDy - topPadding;
     final idx = (absoluteY / widget.lineHeight).round();
@@ -132,7 +132,9 @@ class _LyricsScrollerState extends State<LyricsScroller> {
 
   @override
   Widget build(BuildContext context) {
-    widget.sizeHeight ??= MediaQuery.of(context).size.height;
+    final totHeight = widget.sizeHeight ?? MediaQuery.of(context).size.height;
+    widget.sizeHeight ??= totHeight;
+    final padTop = widget.topHeight ?? ((widget.sizeHeight! - widget.lineHeight) / 2);
     return NotificationListener<ScrollNotification>(
       onNotification: (notif) {
         if (notif is UserScrollNotification) {
@@ -159,9 +161,11 @@ class _LyricsScrollerState extends State<LyricsScroller> {
       child: GestureDetector(
         onTapUp: (details) {
           final tappedIndex =
-          _getIndexFromOffset(details.localPosition.dy, context);
+              _getIndexFromOffset(details.localPosition.dy, padTop);
+          print("tappedIndex $tappedIndex");
           // 如果点击的不是第一句，就用上一句的时间，否则从0开始
-          final prevIndex = tappedIndex > 0 ? tappedIndex - 1 : 0;
+          // final prevIndex = tappedIndex > 0 ? tappedIndex - 1 : 0;
+          final prevIndex = tappedIndex;
           final tapped = widget.lines[prevIndex];
           final time = tapped["time"]?.toDouble();
           if (time != null) {
@@ -178,8 +182,9 @@ class _LyricsScrollerState extends State<LyricsScroller> {
           controller: _controller,
           physics: const BouncingScrollPhysics(),
           itemCount: widget.lines.length,
-          padding: EdgeInsets.symmetric(
-            vertical: (widget.sizeHeight! - widget.lineHeight) / 2,
+          padding: EdgeInsets.only(
+            top: padTop,
+            bottom: totHeight - padTop - widget.lineHeight,
           ),
           itemBuilder: (context, index) {
             final isActive = index == _currentIndex;
@@ -251,7 +256,7 @@ class LyricScreen extends StatefulWidget {
 
 class LyricScreenState extends State<LyricScreen> {
   final _audioHandler = AudioHandlerService.instance.handler;
-  final List<Map<String, dynamic>> demo = List.generate(40, (i) {
+  final List<Map<String, dynamic>> demo = List.generate(5, (i) {
     return {
       "time": i * 3.0, // 每句相隔3秒
       "lrc": "这是第 ${i + 1} 行词 — 示例文本"
@@ -283,23 +288,36 @@ class LyricScreenState extends State<LyricScreen> {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Expanded(child: LyricsScroller(
-          lines: demo,
-          currentPosition: _pos,
-          textAlign: TextAlign.start,
-          alignment: Alignment.topLeft,
-          padding: const EdgeInsets.only(left: 10),
-          sizeHeight: MediaQuery.of(context).size.height-400,
-          onSeek: (t) {
-            setState(() {
-              _pos = t;
-            });
-          },
-          lineHeight: 56,
-          normalStyle: const TextStyle(fontSize: 16, color: Colors.black54),
-          activeStyle: const TextStyle(
-              fontSize: 21, color: Colors.orange, fontWeight: FontWeight.w700),
-        ),),
+        Expanded(
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final scrollerHeight = constraints.maxHeight;
+              print(
+                  "scrollerHeight $scrollerHeight,ctxHeight ${MediaQuery.of(context).size.height}");
+              return LyricsScroller(
+                lines: demo,
+                currentPosition: _pos,
+                textAlign: TextAlign.start,
+                alignment: Alignment.topLeft,
+                padding: const EdgeInsets.only(left: 10),
+                topHeight: scrollerHeight / 3,
+                sizeHeight: scrollerHeight,
+                onSeek: (t) {
+                  setState(() {
+                    _pos = t;
+                  });
+                },
+                lineHeight: 56,
+                normalStyle:
+                    const TextStyle(fontSize: 16, color: Colors.black54),
+                activeStyle: const TextStyle(
+                    fontSize: 21,
+                    color: Colors.orange,
+                    fontWeight: FontWeight.w700),
+              );
+            },
+          ),
+        ),
         // A seek bar.
         const SizedBox(height: 18.0),
         ComMusSeek(audioHandler: _audioHandler),
