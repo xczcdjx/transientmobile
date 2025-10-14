@@ -15,7 +15,8 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await EasyLocalization.ensureInitialized();
   await ShareStorage.init(); // 初始化存储
-  await AudioHandlerService.instance.init(); // 初始化音频服务
+  final container = ProviderContainer();
+  await AudioHandlerService.instance.init(container); // 初始化音频服务
   // 尝试读取用户上次选择的语言
   // final savedLocale=ShareStorage.get<String>('locale');
 
@@ -28,7 +29,8 @@ void main() async {
     ),
   );*/
 
-  runApp(ProviderScope(
+  runApp(UncontrolledProviderScope(
+    container: container,
     child: EasyLocalization(
       supportedLocales: const [Locale('en'), Locale('zh')],
       path: 'assets/translations',

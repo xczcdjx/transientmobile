@@ -17,21 +17,6 @@ class MusScreen extends StatelessWidget {
 
   final _audioHandler = AudioHandlerService.instance.handler;
 
-  Stream<Duration> get _bufferedPositionStream => _audioHandler.playbackState
-      .map((state) => state.bufferedPosition)
-      .distinct();
-
-  Stream<Duration?> get _durationStream =>
-      _audioHandler.mediaItem.map((item) => item?.duration).distinct();
-
-  Stream<PositionData> get _positionDataStream =>
-      Rx.combineLatest3<Duration, Duration, Duration?, PositionData>(
-          _audioHandler.durationStream,
-          _bufferedPositionStream,
-          _durationStream,
-          (position, bufferedPosition, duration) => PositionData(
-              position, bufferedPosition, duration ?? Duration.zero));
-
   @override
   Widget build(BuildContext context) {
     return SafeArea(
