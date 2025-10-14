@@ -60,6 +60,7 @@ class LyricsScroller extends StatefulWidget {
 }
 
 class _LyricsScrollerState extends State<LyricsScroller> {
+  static const double _badgeReserveWidth = 60.0;
   final ScrollController _controller = ScrollController();
   int _currentIndex = 0;
   int? _hoverIndex;
@@ -136,7 +137,8 @@ class _LyricsScrollerState extends State<LyricsScroller> {
   Widget build(BuildContext context) {
     final totHeight = widget.sizeHeight ?? MediaQuery.of(context).size.height;
     widget.sizeHeight ??= totHeight;
-    final padTop = widget.topHeight ?? ((widget.sizeHeight! - widget.lineHeight) / 2);
+    final padTop =
+        widget.topHeight ?? ((widget.sizeHeight! - widget.lineHeight) / 2);
     return NotificationListener<ScrollNotification>(
       onNotification: (notif) {
         if (notif is UserScrollNotification) {
@@ -199,13 +201,19 @@ class _LyricsScrollerState extends State<LyricsScroller> {
                 child: Stack(
                   alignment: widget.alignment,
                   children: [
-                    AnimatedDefaultTextStyle(
-                      duration: const Duration(milliseconds: 200),
-                      style: isActive ? widget.activeStyle : widget.normalStyle,
-                      child: Text(
-                        line["lrc"] ?? "",
-                        textAlign: widget.textAlign,
-                        // overflow: TextOverflow.ellipsis,
+                    Padding(
+                      padding: EdgeInsets.only(
+                          right: _userScrolling ? _badgeReserveWidth : 0),
+                      child: AnimatedDefaultTextStyle(
+                        duration: const Duration(milliseconds: 200),
+                        style:
+                            isActive ? widget.activeStyle : widget.normalStyle,
+                        child: Text(
+                          line["lrc"] ?? "",
+                          textAlign: widget.textAlign,
+                          softWrap: true,
+                          // overflow: TextOverflow.ellipsis,
+                        ),
                       ),
                     ),
                     if (_userScrolling && isHover && line["time"] != null)
@@ -289,8 +297,7 @@ class LyricScreenState extends State<LyricScreen> {
           child: LayoutBuilder(
             builder: (context, constraints) {
               final scrollerHeight = constraints.maxHeight;
-              print(
-                  "scrollerHeight $scrollerHeight,ctxHeight ${MediaQuery.of(context).size.height}");
+              // print("scrollerHeight $scrollerHeight,ctxHeight ${MediaQuery.of(context).size.height}");
               return LyricsScroller(
                 lines: demo,
                 currentPosition: _pos,
