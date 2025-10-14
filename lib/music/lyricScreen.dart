@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:transientmobile/constants/testData.dart';
+import 'package:transientmobile/extensions/customColors.dart';
 import 'package:transientmobile/utils/musFun.dart';
 
 import '../components/music/comControl.dart';
@@ -138,6 +139,13 @@ class _LyricsScrollerState extends State<LyricsScroller> {
 
   @override
   Widget build(BuildContext context) {
+    if (widget.lines.isEmpty)
+      return Center(
+        child: Text(
+          "暂无歌词",
+          style: TextStyle(color: context.fc.withOpacity(0.75), fontSize: 16),
+        ),
+      );
     final totHeight = widget.sizeHeight ?? MediaQuery.of(context).size.height;
     widget.sizeHeight ??= totHeight;
     final padTop =
@@ -226,7 +234,7 @@ class _LyricsScrollerState extends State<LyricsScroller> {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 5, vertical: 2),
                           decoration: BoxDecoration(
-                            color: Colors.grey[200],
+                            color: context.lineColor,
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Row(
@@ -269,7 +277,7 @@ class LyricScreen extends ConsumerStatefulWidget {
 
 class LyricScreenState extends ConsumerState<LyricScreen> {
   final _audioHandler = AudioHandlerService.instance.handler;
-  final List<Map<String, dynamic>> demo = parseLrc(lyricDataTest["781"]!);
+  final List<Map<String, dynamic>> demo = [];
 
   @override
   Widget build(BuildContext context) {
@@ -283,7 +291,7 @@ class LyricScreenState extends ConsumerState<LyricScreen> {
               // print("scrollerHeight $scrollerHeight,ctxHeight ${MediaQuery.of(context).size.height}");
               return LyricsScroller(
                 lines: demo,
-                currentPosition: musStore.position.inMilliseconds/1000,
+                currentPosition: musStore.position.inMilliseconds / 1000,
                 textAlign: TextAlign.start,
                 alignment: Alignment.topLeft,
                 padding: const EdgeInsets.only(left: 10),
@@ -293,11 +301,11 @@ class LyricScreenState extends ConsumerState<LyricScreen> {
                   _audioHandler.seek(Duration(seconds: t.toInt()));
                 },
                 lineHeight: 56,
-                normalStyle:
-                    const TextStyle(fontSize: 16, color: Colors.black54),
-                activeStyle: const TextStyle(
+                normalStyle: TextStyle(
+                    fontSize: 16, color: context.fc.withOpacity(0.75)),
+                activeStyle: TextStyle(
                     fontSize: 21,
-                    color: Colors.orange,
+                    color: context.pc,
                     fontWeight: FontWeight.w700),
               );
             },
