@@ -4,6 +4,8 @@ import 'dart:math';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:transientmobile/constants/testData.dart';
+import 'package:transientmobile/utils/musFun.dart';
 
 import '../components/music/comControl.dart';
 import '../components/music/comPlaySeek.dart';
@@ -203,7 +205,7 @@ class _LyricsScrollerState extends State<LyricsScroller> {
                       child: Text(
                         line["lrc"] ?? "",
                         textAlign: widget.textAlign,
-                        overflow: TextOverflow.ellipsis,
+                        // overflow: TextOverflow.ellipsis,
                       ),
                     ),
                     if (_userScrolling && isHover && line["time"] != null)
@@ -256,12 +258,7 @@ class LyricScreen extends StatefulWidget {
 
 class LyricScreenState extends State<LyricScreen> {
   final _audioHandler = AudioHandlerService.instance.handler;
-  final List<Map<String, dynamic>> demo = List.generate(5, (i) {
-    return {
-      "time": i * 3.0, // 每句相隔3秒
-      "lrc": "这是第 ${i + 1} 行词 — 示例文本"
-    };
-  });
+  final List<Map<String, dynamic>> demo = parseLrc(lyricDataTest["781"]!);
 
   double _pos = 0;
   Timer? _ticker;
