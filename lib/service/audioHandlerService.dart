@@ -10,6 +10,7 @@ class AudioHandlerService {
   late final AudioPlayerHandler _handler;
   StreamSubscription<Duration>? _posSub;
   StreamSubscription<Duration>? _bufSub;
+  StreamSubscription<MediaItem?>? _mediaSub;
   StreamSubscription<Duration?>? _durSub;
   AudioHandlerService._internal();
 
@@ -48,6 +49,10 @@ class AudioHandlerService {
         .distinct()
         .listen((dur) {
       if (dur != null) slice.updateDuration(dur);
+    });
+    _mediaSub = _handler.mediaItem
+        .listen((media) {
+      if (media != null) slice.updateMedia(media);
     });
   }
 

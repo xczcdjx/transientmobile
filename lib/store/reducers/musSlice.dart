@@ -1,7 +1,7 @@
 part of '../index.dart';
 
 class MusSlice extends StateNotifier<MusicState> {
-  MusSlice() : super(const MusicState());
+  MusSlice() : super(MusicState());
 
   void updatePosition(Duration pos) {
     state = state.copyWith(position: pos);
@@ -15,8 +15,12 @@ class MusSlice extends StateNotifier<MusicState> {
     state = state.copyWith(duration: dur);
   }
 
+  void updateMedia(MediaItem media) {
+    state = state.copyWith(curPlayMedia: media);
+  }
+
   void reset() {
-    state = const MusicState();
+    state =  MusicState();
   }
 }
 

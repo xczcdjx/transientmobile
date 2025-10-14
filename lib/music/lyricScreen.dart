@@ -72,6 +72,13 @@ class _LyricsScrollerState extends State<LyricsScroller> {
   Timer? _resumeTimer;
 
   @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    print("2222");
+  }
+
+  @override
   void didUpdateWidget(covariant LyricsScroller oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (!_userScrolling) {
@@ -275,13 +282,24 @@ class LyricScreen extends ConsumerStatefulWidget {
   ConsumerState<LyricScreen> createState() => LyricScreenState();
 }
 
-class LyricScreenState extends ConsumerState<LyricScreen> {
+class LyricScreenState extends ConsumerState<LyricScreen> with AutomaticKeepAliveClientMixin{
+  @override
+  bool get wantKeepAlive => true; // ✅ 保持页面状态
   final _audioHandler = AudioHandlerService.instance.handler;
-  final List<Map<String, dynamic>> demo = [];
-
+  List<Map<String, dynamic>> demo = [];
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    print("1111");
+  }
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     final musStore = useSelector(ref, musProvider, (s) => s);
+    if (musStore.curPlayMedia != null) {
+      demo = parseLrc(lyricDataTest[musStore.curPlayMedia!.id]!);
+    }
     return Column(
       children: [
         Expanded(
@@ -300,7 +318,7 @@ class LyricScreenState extends ConsumerState<LyricScreen> {
                 onSeek: (t) {
                   _audioHandler.seek(Duration(seconds: t.toInt()));
                 },
-                lineHeight: 56,
+                lineHeight: 65,
                 normalStyle: TextStyle(
                     fontSize: 16, color: context.fc.withOpacity(0.75)),
                 activeStyle: TextStyle(
