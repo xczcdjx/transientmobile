@@ -4,12 +4,15 @@ import 'dart:math';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:transientmobile/constants/testData.dart';
 import 'package:transientmobile/utils/musFun.dart';
 
 import '../components/music/comControl.dart';
 import '../components/music/comPlaySeek.dart';
+import '../hooks/useStore.dart';
 import '../service/audioHandlerService.dart';
+import '../store/index.dart';
 
 /// Simple lyric line model with optional timestamp.
 class LyricLine {
@@ -257,40 +260,20 @@ class _LyricsScrollerState extends State<LyricsScroller> {
   }
 }
 
-class LyricScreen extends StatefulWidget {
+class LyricScreen extends ConsumerStatefulWidget {
   const LyricScreen({Key? key}) : super(key: key);
 
   @override
-  State<LyricScreen> createState() => LyricScreenState();
+  ConsumerState<LyricScreen> createState() => LyricScreenState();
 }
 
-class LyricScreenState extends State<LyricScreen> {
+class LyricScreenState extends ConsumerState<LyricScreen> {
   final _audioHandler = AudioHandlerService.instance.handler;
   final List<Map<String, dynamic>> demo = parseLrc(lyricDataTest["781"]!);
 
-  double _pos = 0;
-  Timer? _ticker;
-
-  @override
-  void initState() {
-    super.initState();
-    _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
-      setState(() {
-        _pos += 1;
-        // loop
-        if (_pos > demo.length * 3) _pos = 0;
-      });
-    });
-  }
-
-  @override
-  void dispose() {
-    _ticker?.cancel();
-    super.dispose();
-  }
-
   @override
   Widget build(BuildContext context) {
+    final musStore = useSelector(ref, musProvider, (s) => s);
     return Column(
       children: [
         Expanded(
@@ -300,16 +283,14 @@ class LyricScreenState extends State<LyricScreen> {
               // print("scrollerHeight $scrollerHeight,ctxHeight ${MediaQuery.of(context).size.height}");
               return LyricsScroller(
                 lines: demo,
-                currentPosition: _pos,
+                currentPosition: musStore.position.inMilliseconds/1000,
                 textAlign: TextAlign.start,
                 alignment: Alignment.topLeft,
                 padding: const EdgeInsets.only(left: 10),
                 topHeight: scrollerHeight / 3,
                 sizeHeight: scrollerHeight,
                 onSeek: (t) {
-                  setState(() {
-                    _pos = t;
-                  });
+                  _audioHandler.seek(Duration(seconds: t.toInt()));
                 },
                 lineHeight: 56,
                 normalStyle:
