@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:transientmobile/pages/testPage2.dart';
 class MinePage extends StatefulWidget {
   const MinePage({super.key});
 
@@ -9,6 +10,6 @@ class MinePage extends StatefulWidget {
 class _MinePageState extends State<MinePage> {
   @override
   Widget build(BuildContext context) {
-    return const Placeholder();
+    return TestPage2();
   }
 }

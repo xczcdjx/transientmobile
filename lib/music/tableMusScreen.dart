@@ -32,20 +32,26 @@ class TableMusScreen extends ConsumerWidget {
           Expanded(child: Row(children: [
             Flexible(flex: 1,child: // MediaItem display
             musStore.curPlayMedia==null?SizedBox():
-            SizedBox(
-              // height: MediaQuery.of(context).size.width-20,
-              height: 300,
-              child: Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Center(
-                  child: ClipOval(
-                    child: NetImage(
-                      url: musStore.curPlayMedia!.artUri.toString(),
-                      cache: true,
-                    ),
-                  ),
-                ),
-              ),
+            LayoutBuilder(
+               builder:(context,constraints){
+                 final maxWidth = constraints.maxWidth;
+                 return SizedBox(
+                   // height: MediaQuery.of(context).size.width-20,
+                   height: maxWidth/2.1,
+                   child: Padding(
+                     padding: const EdgeInsets.all(8.0),
+                     child: Center(
+                       child: ClipOval(
+                         child: NetImage(
+                           url: musStore.curPlayMedia!.artUri.toString(),
+                           cache: true,
+                         ),
+                       ),
+                     ),
+                   ),
+                 );
+               }
+              ,
             ),),
             Flexible(flex: 1,child: LyricScreen(hideControl: true,),),
           ],),),
