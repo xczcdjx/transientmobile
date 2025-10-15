@@ -17,7 +17,7 @@ class MusMainPlay extends StatefulWidget {
   State<MusMainPlay> createState() => _MusMainPlayState();
 }
 
-class _MusMainPlayState extends State<MusMainPlay> {
+class _MusMainPlayState extends State<MusMainPlay> with WidgetsBindingObserver{
   final PageController _pageController = PageController(viewportFraction: 1);
   int _currentIndex = 0;
 
@@ -28,6 +28,28 @@ class _MusMainPlayState extends State<MusMainPlay> {
       curve: Curves.easeInOut,
     );
   }
+
+
+  @override
+  void initState() {
+    super.initState();
+    // 监听返回键
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  Future<bool> didPopRoute() async {
+    // 捕获返回事件并关闭弹窗
+    widget.onClose();
+    return true; // 阻止默认 pop
+  }
+
 
   @override
   Widget build(BuildContext context) {

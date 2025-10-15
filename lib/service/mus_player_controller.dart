@@ -25,16 +25,9 @@ class MusPlayerController {
     _animController = animationController;
 
     _overlayEntry = OverlayEntry(
-      builder: (_) => PopScope(
-        canPop: false,
-        onPopInvoked: (b) {
-          if (b) return;
-          print("1111");
-        },
-        child: MusMainPlay(
-          animationController: animationController,
-          onClose: hide,
-        ),
+      builder: (_) => MusMainPlay(
+        animationController: animationController,
+        onClose: hide,
       ),
     );
 
