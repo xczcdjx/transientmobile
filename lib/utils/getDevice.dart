@@ -1,4 +1,5 @@
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 
 ({String device, String poem}) getDevice() {
@@ -32,4 +33,14 @@ bool isHarmony(){
 }
 bool isMobile(){
   return [TargetPlatform.android,TargetPlatform.iOS,TargetPlatform.ohos].contains(defaultTargetPlatform);
+}
+bool isTablet(BuildContext ctx){
+  return MediaQuery.of(ctx).size.width > 756;
+}
+bool isTabletAll(BuildContext ctx) {
+  final size = MediaQuery.of(ctx).size;
+  final orientation = MediaQuery.of(ctx).orientation;
+
+  // ✅ 仅当横屏且宽度大于 756 才视为平板模式
+  return orientation == Orientation.landscape && size.width > 756;
 }

@@ -1,7 +1,7 @@
 import 'package:go_router/go_router.dart';
 
 import '../pages/detailPage.dart';
-import '../pages/homePage.dart';
+import '../pages/indexPage.dart';
 import '../pages/testPage.dart';
 
 import '../pages/testPage2.dart';
@@ -13,7 +13,7 @@ final GoRouter router= GoRouter(
   routes: [
     GoRoute(
       path: Routes.home,
-      builder: (context, state) => HomePage(),
+      builder: (context, state) => IndexPage(),
     ),
     GoRoute(
       path: Routes.test,
