@@ -1,96 +1,91 @@
 import 'dart:async';
 
 import 'package:audio_service/audio_service.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:transientmobile/components/music/comPlaySeek.dart';
 import 'package:transientmobile/extensions/customColors.dart';
+import 'package:transientmobile/music/lyricScreen.dart';
 import 'package:transientmobile/utils/NetImage.dart';
 import '../components/music/comControl.dart';
+import '../hooks/useStore.dart';
 import '../service/audioHandlerService.dart';
+import '../store/index.dart';
 import '../utils/AudioHandler.dart';
 import 'common.dart';
 import 'package:flutter/material.dart';
 import 'package:rxdart/rxdart.dart';
 
 /// The main screen.
-class MusScreen extends StatelessWidget {
-  MusScreen({super.key});
+class TableMusScreen extends ConsumerWidget {
+  TableMusScreen({super.key});
 
   final _audioHandler = AudioHandlerService.instance.handler;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context,WidgetRef ref) {
+    final musStore = useSelector(ref, musProvider, (s) => s);
     return SafeArea(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // MediaItem display
-          Expanded(
-            child: StreamBuilder<MediaItem?>(
-              stream: _audioHandler.mediaItem,
-              builder: (context, snapshot) {
-                final mediaItem = snapshot.data;
-                if (mediaItem == null) return const SizedBox();
-                return Column(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  children: [
-                    if (mediaItem.artUri != null)
-                      SizedBox(
-                        height: MediaQuery.of(context).size.width-20,
-                        // height: 150,
-                        child: Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Center(
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(10),
-                              child: NetImage(
-                                url: mediaItem.artUri.toString(),
-                                cache: true,
-                              ),
-                            ),
-                          ),
-                        ),
+          Expanded(child: Row(children: [
+            Flexible(flex: 1,child: // MediaItem display
+            musStore.curPlayMedia==null?SizedBox():
+            SizedBox(
+              // height: MediaQuery.of(context).size.width-20,
+              height: 300,
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Center(
+                  child: ClipOval(
+                    child: NetImage(
+                      url: musStore.curPlayMedia!.artUri.toString(),
+                      cache: true,
+                    ),
+                  ),
+                ),
+              ),
+            ),),
+            Flexible(flex: 1,child: LyricScreen(hideControl: true,),),
+          ],),),
+          // control
+          Padding(
+            padding: const EdgeInsets.symmetric(
+                horizontal: 15.0, vertical: 10),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child:
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        musStore.curPlayMedia?.album ?? 'Xxx',
+                        style: Theme.of(context).textTheme.titleLarge,
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
                       ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 15.0, vertical: 10),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  mediaItem.album ?? '',
-                                  style: Theme.of(context).textTheme.titleLarge,
-                                  overflow: TextOverflow.ellipsis,
-                                  maxLines: 1,
-                                ),
-                                Text(mediaItem.title,
-                                    overflow: TextOverflow.ellipsis,
-                                    maxLines: 1),
-                              ],
-                            ),
-                          ),
-                          SizedBox(
-                            width: 20,
-                          ),
-                          Transform.translate(
-                              offset: Offset(0, -5),
-                              child: IconButton(
-                                  onPressed: () {},
-                                  icon: Icon(
-                                    Icons.favorite_border,
-                                    size: 30,
-                                  )))
-                        ],
-                      ),
-                    )
-                  ],
-                );
-              },
+                      Text(musStore.curPlayMedia?.title??"xxx",
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1),
+                    ],
+                  ),
+                ),
+                SizedBox(
+                  width: 20,
+                ),
+                Transform.translate(
+                    offset: Offset(0, -5),
+                    child: IconButton(
+                        onPressed: () {},
+                        icon: Icon(
+                          Icons.favorite_border,
+                          size: 30,
+                        )))
+              ],
             ),
           ),
           // A seek bar.
@@ -162,6 +157,7 @@ class MusScreen extends StatelessWidget {
                     },
                   );
                 },
+                mainAxisAlignment: MainAxisAlignment.center,
               ),
               // Repeat/shuffle controls
               Row(

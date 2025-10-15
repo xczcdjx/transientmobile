@@ -276,23 +276,43 @@ class _LyricsScrollerState extends State<LyricsScroller> {
 }
 
 class LyricScreen extends ConsumerStatefulWidget {
-  const LyricScreen({Key? key}) : super(key: key);
+  bool hideControl;
+
+  LyricScreen({super.key, this.hideControl = false});
 
   @override
   ConsumerState<LyricScreen> createState() => LyricScreenState();
 }
 
-class LyricScreenState extends ConsumerState<LyricScreen> with AutomaticKeepAliveClientMixin{
+class LyricScreenState extends ConsumerState<LyricScreen>
+    with AutomaticKeepAliveClientMixin {
   @override
   bool get wantKeepAlive => true; // ✅ 保持页面状态
   final _audioHandler = AudioHandlerService.instance.handler;
   List<Map<String, dynamic>> demo = [];
+
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
     print("1111");
   }
+
+  List<Widget> _renderControl() {
+    if (!widget.hideControl) {
+      return [
+        // A seek bar.
+        const SizedBox(height: 18.0),
+        ComMusSeek(audioHandler: _audioHandler),
+        const SizedBox(height: 8.0),
+        // Playback controls
+        ComControlBtn(_audioHandler),
+        const SizedBox(height: 15.0),
+      ];
+    }
+    return [];
+  }
+
   @override
   Widget build(BuildContext context) {
     super.build(context);
@@ -329,13 +349,7 @@ class LyricScreenState extends ConsumerState<LyricScreen> with AutomaticKeepAliv
             },
           ),
         ),
-        // A seek bar.
-        const SizedBox(height: 18.0),
-        ComMusSeek(audioHandler: _audioHandler),
-        const SizedBox(height: 8.0),
-        // Playback controls
-        ComControlBtn(_audioHandler),
-        const SizedBox(height: 15.0),
+        ..._renderControl()
       ],
     );
   }

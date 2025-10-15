@@ -117,8 +117,8 @@ class ControlButtons extends StatelessWidget {
 class ComControlBtn extends StatelessWidget {
   final AudioPlayerHandler audioHandler;
   final VoidCallback? openPlayList;
-
-  ComControlBtn(this.audioHandler, {Key? key, this.openPlayList})
+  MainAxisAlignment mainAxisAlignment;
+  ComControlBtn(this.audioHandler, {Key? key, this.openPlayList,this.mainAxisAlignment=MainAxisAlignment.spaceBetween})
       : super(key: key);
 
   @override
@@ -126,8 +126,7 @@ class ComControlBtn extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8),
       child: Row(
-        // mainAxisSize: MainAxisSize.min,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        mainAxisAlignment: mainAxisAlignment,
         children: [
           StreamBuilder<AudioServiceRepeatMode>(
             stream: audioHandler.playbackState

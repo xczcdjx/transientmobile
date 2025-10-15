@@ -1,5 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:transientmobile/music/tableMusScreen.dart';
+import '../utils/getDevice.dart';
 import 'lyricScreen.dart';
 import 'musScreen.dart';
 
@@ -17,7 +19,7 @@ class MusMainPlay extends StatefulWidget {
   State<MusMainPlay> createState() => _MusMainPlayState();
 }
 
-class _MusMainPlayState extends State<MusMainPlay> with WidgetsBindingObserver{
+class _MusMainPlayState extends State<MusMainPlay> with WidgetsBindingObserver {
   final PageController _pageController = PageController(viewportFraction: 1);
   int _currentIndex = 0;
 
@@ -28,7 +30,6 @@ class _MusMainPlayState extends State<MusMainPlay> with WidgetsBindingObserver{
       curve: Curves.easeInOut,
     );
   }
-
 
   @override
   void initState() {
@@ -50,9 +51,9 @@ class _MusMainPlayState extends State<MusMainPlay> with WidgetsBindingObserver{
     return true; // 阻止默认 pop
   }
 
-
   @override
   Widget build(BuildContext context) {
+    final isTab = isTabletAll(context);
     final animation = CurvedAnimation(
       parent: widget.animationController,
       curve: Curves.easeOutCubic,
@@ -106,30 +107,37 @@ class _MusMainPlayState extends State<MusMainPlay> with WidgetsBindingObserver{
                       automaticallyImplyLeading: false,
                       // backgroundColor: Colors.transparent,
                       elevation: 0,
-                      title: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: List.generate(playViews.length, (index) {
-                            final bool isActive = index == _currentIndex;
-                            return GestureDetector(
-                              onTap: () => onSkip(index),
-                              child: AnimatedContainer(
-                                duration: const Duration(milliseconds: 300),
-                                margin: const EdgeInsets.symmetric(horizontal: 4),
-                                height: 8,
-                                width: isActive ? 20 : 8,
-                                decoration: BoxDecoration(
-                                  color: isActive
-                                      ? Theme.of(context).colorScheme.primary
-                                      : Colors.grey.shade400,
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
+                      title: isTab
+                          ? null
+                          : Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children:
+                                    List.generate(playViews.length, (index) {
+                                  final bool isActive = index == _currentIndex;
+                                  return GestureDetector(
+                                    onTap: () => onSkip(index),
+                                    child: AnimatedContainer(
+                                      duration:
+                                          const Duration(milliseconds: 300),
+                                      margin: const EdgeInsets.symmetric(
+                                          horizontal: 4),
+                                      height: 8,
+                                      width: isActive ? 20 : 8,
+                                      decoration: BoxDecoration(
+                                        color: isActive
+                                            ? Theme.of(context)
+                                                .colorScheme
+                                                .primary
+                                            : Colors.grey.shade400,
+                                        borderRadius: BorderRadius.circular(4),
+                                      ),
+                                    ),
+                                  );
+                                }),
                               ),
-                            );
-                          }),
-                        ),
-                      ),
+                            ),
                       leading: IconButton(
                         onPressed: widget.onClose,
                         icon: const Icon(Icons.keyboard_arrow_down),
@@ -143,20 +151,23 @@ class _MusMainPlayState extends State<MusMainPlay> with WidgetsBindingObserver{
                         ),
                       ],
                     ),
-                    body: Column(
-                      children: [
-                        Expanded(
-                          child: PageView.builder(
-                            controller: _pageController,
-                            itemCount: playViews.length,
-                            onPageChanged: (index) {
-                              setState(() => _currentIndex = index);
-                            },
-                            itemBuilder: (context, index) => playViews[index],
+                    body: isTab
+                        ? TableMusScreen()
+                        : Column(
+                            children: [
+                              Expanded(
+                                child: PageView.builder(
+                                  controller: _pageController,
+                                  itemCount: playViews.length,
+                                  onPageChanged: (index) {
+                                    setState(() => _currentIndex = index);
+                                  },
+                                  itemBuilder: (context, index) =>
+                                      playViews[index],
+                                ),
+                              ),
+                            ],
                           ),
-                        ),
-                      ],
-                    ),
                   ),
                 ),
               ),
