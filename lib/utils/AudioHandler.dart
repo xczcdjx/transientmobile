@@ -203,7 +203,7 @@ class AudioPlayerHandlerImpl extends BaseAudioHandler
             controls: [
               MediaControl.skipToPrevious,
               MediaControl.pause,
-              MediaControl.stop,
+              // MediaControl.stop,
               MediaControl.skipToNext,
             ],
             bufferedPosition: _duration,
@@ -218,7 +218,7 @@ class AudioPlayerHandlerImpl extends BaseAudioHandler
           controls: [
             MediaControl.skipToPrevious,
             MediaControl.play,
-            MediaControl.stop,
+            // MediaControl.stop,
             MediaControl.skipToNext,
           ],
         ));
