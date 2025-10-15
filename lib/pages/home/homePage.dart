@@ -1,6 +1,7 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:transientmobile/service/mus_player_controller.dart';
 
 import '../../router/routes.dart';
 import '../../utils/getDevice.dart';
@@ -95,16 +96,10 @@ class _HomePageState extends State<HomePage> {
                     );
                   },
                   child: Text('botPopup')),*/
-              Container(
-                height: 1000,
-                child: Center(
-                  child: Text(
-                    dInfo.poem,
-                    style:
-                    TextStyle(fontSize: 18, fontStyle: FontStyle.italic),
-                  ),
-                ),
-              ),
+              TextButton(
+                onPressed: () => MusPlayerController().toggle(context),
+                child: const Text('Show Player'),
+              )
             ],
           ),
         ),
