@@ -6,6 +6,7 @@ class MusPlayState {
   List<MediaItem> playList;
   List<String> randomIdList;
   PlayerState playState;
+  bool isPlay;
   AudioServiceRepeatMode mode;
 
   MusPlayState({
@@ -13,6 +14,7 @@ class MusPlayState {
     this.playList = const [],
     this.randomIdList = const [],
     this.playState = PlayerState.disposed,
+    this.isPlay = false,
     this.mode = AudioServiceRepeatMode.none,
   });
 
@@ -21,6 +23,7 @@ class MusPlayState {
     List<MediaItem>? playList,
     List<String>? randomIdList,
     PlayerState? playState,
+    bool? isPlay,
     AudioServiceRepeatMode? mode,
   }) {
     return MusPlayState(
@@ -28,6 +31,7 @@ class MusPlayState {
       playList: playList ?? this.playList,
       randomIdList: randomIdList ?? this.randomIdList,
       playState: playState ?? this.playState,
+      isPlay: isPlay ?? this.isPlay,
       mode: mode ?? this.mode,
     );
   }
