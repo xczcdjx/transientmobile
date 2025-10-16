@@ -131,6 +131,8 @@ class AudioPlayerHandlerImpl extends BaseAudioHandler
   Duration _duration = Duration.zero;
   final _mediaLibrary = MediaLibrary();
   AudioServiceRepeatMode _loopMode = AudioServiceRepeatMode.none;
+  // 在 AudioPlayerHandlerImpl 顶部
+  final BehaviorSubject<PlayerState> playerState = BehaviorSubject.seeded(PlayerState.stopped);
 
   final BehaviorSubject<List<MediaItem>> _recentSubject =
   BehaviorSubject.seeded(<MediaItem>[]);
@@ -171,6 +173,7 @@ class AudioPlayerHandlerImpl extends BaseAudioHandler
     _audioPlayer.onPlayerStateChanged.listen((state) async {
       print('onPlayerStateChanged $state');
       this.state = state;
+      playerState.add(state);
       if (state == PlayerState.completed) {
         switch (_loopMode) {
           case AudioServiceRepeatMode.none:
