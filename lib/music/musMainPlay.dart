@@ -75,9 +75,10 @@ class _MusMainPlayState extends ConsumerState<MusMainPlay> {
                 children: [
                   // 背景模糊图
                   ImageFiltered(
-                    imageFilter: ImageFilter.blur(sigmaX: 50, sigmaY: 50),
+                    imageFilter: ImageFilter.blur(sigmaX: 90, sigmaY: 90),
                     child: NetImage(
                       height: MediaQuery.of(context).size.height,
+                      width: MediaQuery.of(context).size.width,
                       url: musStore.curPlayMedia?.artUri?.toString() ?? "",
                       fit: BoxFit.cover,
                       cache: true,
@@ -108,12 +109,16 @@ class _MusMainPlayState extends ConsumerState<MusMainPlay> {
                         onTap: () {}, // 阻止事件穿透到背景
                         child: Scaffold(
                           backgroundColor: Colors.transparent,
-                          appBar: AppBar(
+                          appBar:
+                          AppBar(
                             automaticallyImplyLeading: false,
                             backgroundColor: Colors.transparent,
                             elevation: 0,
+                            scrolledUnderElevation: 0,          // 关键：滚动下不抬起
+                            surfaceTintColor: Colors.transparent, // 关键：取消着色
+                            shadowColor: Colors.transparent,      // 保险：不要阴影
                             title: isTab
-                                ? null
+                                ? Center(child: Text(musStore.curPlayMedia?.title??""))
                                 : Padding(
                               padding:
                               const EdgeInsets.symmetric(vertical: 12),
