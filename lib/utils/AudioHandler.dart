@@ -22,6 +22,8 @@ import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart'; // 用于获取应用目录
 import 'package:rxdart/rxdart.dart';
 
+import 'getDevice.dart';
+
 
 class AudioPlayerHandlerImpl extends BaseAudioHandler
     with SeekHandler
@@ -127,7 +129,7 @@ class AudioPlayerHandlerImpl extends BaseAudioHandler
 
   int _currentIndex = 0;
 
-  MediaItem? get curSoong {
+  MediaItem? get curSong {
     if (_playlist.isEmpty || _currentIndex < 0 || _currentIndex >= _playlist.length) {
       return null;
     }
@@ -248,10 +250,12 @@ class AudioPlayerHandlerImpl extends BaseAudioHandler
     final curMedia = _playlist[_currentIndex];
     mediaItem.add(curMedia.copyWith(
         artist: lyric, title: '${curMedia.title} - ${curMedia.artist}'));
+    // if(isIos()) playbackState.add(playbackState.value.copyWith(updatePosition: currentPosition));
   }
 
   @override
   Future<void> play() async {
+    print(curSong);
     if (_audioPlayer.state == PlayerState.paused) {
       await _audioPlayer.resume();
     } else {
@@ -259,7 +263,7 @@ class AudioPlayerHandlerImpl extends BaseAudioHandler
       playbackState.add(playbackState.value.copyWith(
         processingState: AudioProcessingState.loading,
       ));
-      mediaItem.add(_playlist[_currentIndex]);
+      mediaItem.add(curSong);
 
       await _audioPlayer.play(UrlSource(_playlist[_currentIndex].extras?["musUrl"]));
     }

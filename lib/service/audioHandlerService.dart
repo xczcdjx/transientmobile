@@ -37,7 +37,7 @@ class AudioHandlerService {
     final slice = container.read(musProvider.notifier);
 
     _posSub = _handler.durationStream.listen((pos) {
-      print("dur ${pos.toString()}");
+      // print("dur ${pos.toString()}");
       slice.updatePosition(pos);
     });
 
@@ -57,7 +57,7 @@ class AudioHandlerService {
     });
     _mediaSub = _handler.mediaItem
         .listen((media) {
-      if (media != null) slice.updateMedia(_handler.curSoong);
+      if (media != null) slice.updateMedia(_handler.curSong);
     });
   }
 

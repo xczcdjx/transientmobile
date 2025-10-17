@@ -29,7 +29,7 @@ class MusScreen extends StatelessWidget {
             child: StreamBuilder<MediaItem?>(
               stream: _audioHandler.mediaItem,
               builder: (context, snapshot) {
-                final mediaItem = snapshot.data;
+                final mediaItem = _audioHandler.curSong;
                 if (mediaItem == null) return const SizedBox();
                 return Column(
                   mainAxisAlignment: MainAxisAlignment.start,

@@ -27,7 +27,6 @@ class TableMusScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final musStore = useSelector(ref, musProvider, (s) => s);
     final musPlayStore = useSelector(ref, musPlayProvider, (s) => s);
-    bool playing = musPlayStore.isPlay;
     return SafeArea(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
