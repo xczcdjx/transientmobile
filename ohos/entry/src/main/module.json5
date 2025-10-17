@@ -26,6 +26,9 @@
     "pages": "$profile:main_pages",
     "abilities": [
       {
+        "backgroundModes": [
+          "audioPlayback",
+        ],
         "name": "EntryAbility",
         "srcEntry": "./ets/entryability/EntryAbility.ets",
         "description": "$string:EntryAbility_desc",
@@ -43,9 +46,6 @@
               "action.system.home"
             ]
           }
-        ],
-        "backgroundModes": [
-          "audioPlayback",
         ]
       }
     ],
@@ -56,12 +56,6 @@
       {
         "name": "ohos.permission.KEEP_BACKGROUND_RUNNING",
         "reason": "$string:background_running_reason",
-        "usedScene": {
-          "abilities": [
-            "EntryAbility"
-          ],
-          "when": "always"
-        }
       }
     ]
   }

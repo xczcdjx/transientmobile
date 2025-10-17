@@ -45,6 +45,7 @@ class AudioHandlerService {
         .map((s) => s.bufferedPosition)
         .distinct()
         .listen((buf) {
+          // print("buf $buf");
       slice.updateBuffered(buf);
     });
 
