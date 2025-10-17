@@ -13,7 +13,10 @@ import 'package:transientmobile/models/store/count_state.dart';
 import 'package:transientmobile/models/store/num_state.dart';
 import 'package:transientmobile/models/store/mus_play_state.dart';
 
+import '../constants/testData.dart';
+import '../service/audioHandlerService.dart';
 import '../utils/AudioHandler.dart';
+import '../utils/musFun.dart';
 // reducers
 part  'reducers/countSlice.dart';
 part  'reducers/numSlice.dart';

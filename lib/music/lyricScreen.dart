@@ -113,6 +113,7 @@ class _LyricsScrollerState extends State<LyricsScroller> {
         if (_currentIndex != i) {
           _currentIndex = i;
           _animateToIndex(i);
+          // widget.onActText?.call(widget.lines[i]["lrc"]);
         }
         break;
       }
@@ -277,8 +278,9 @@ class _LyricsScrollerState extends State<LyricsScroller> {
 
 class LyricScreen extends ConsumerStatefulWidget {
   bool hideControl;
+  List<Map<String,dynamic>> lines;
 
-  LyricScreen({super.key, this.hideControl = false});
+  LyricScreen({super.key, this.hideControl = false,this.lines=const []});
 
   @override
   ConsumerState<LyricScreen> createState() => LyricScreenState();
@@ -289,7 +291,7 @@ class LyricScreenState extends ConsumerState<LyricScreen>
   @override
   bool get wantKeepAlive => true; // ✅ 保持页面状态
   final _audioHandler = AudioHandlerService.instance.handler;
-  List<Map<String, dynamic>> demo = [];
+  // List<Map<String, dynamic>> demo = [];
 
   @override
   void initState() {
@@ -317,9 +319,7 @@ class LyricScreenState extends ConsumerState<LyricScreen>
   Widget build(BuildContext context) {
     super.build(context);
     final musStore = useSelector(ref, musProvider, (s) => s);
-    if (musStore.curPlayMedia != null) {
-      demo = parseLrc(lyricDataTest[musStore.curPlayMedia!.id]!);
-    }
+    final currentPosition=musStore.position.inMilliseconds / 1000;
     return Column(
       children: [
         Expanded(
@@ -328,8 +328,8 @@ class LyricScreenState extends ConsumerState<LyricScreen>
               final scrollerHeight = constraints.maxHeight;
               // print("scrollerHeight $scrollerHeight,ctxHeight ${MediaQuery.of(context).size.height}");
               return LyricsScroller(
-                lines: demo,
-                currentPosition: musStore.position.inMilliseconds / 1000,
+                lines: widget.lines,
+                currentPosition: currentPosition,
                 textAlign: TextAlign.start,
                 alignment: Alignment.topLeft,
                 padding: const EdgeInsets.only(left: 10),

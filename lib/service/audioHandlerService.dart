@@ -7,7 +7,7 @@ import '../utils/AudioHandler.dart';
 
 class AudioHandlerService {
   static final AudioHandlerService instance = AudioHandlerService._internal();
-  late final AudioPlayerHandler _handler;
+  late final AudioPlayerHandlerImpl _handler;
   StreamSubscription<Duration>? _posSub;
   StreamSubscription<Duration>? _bufSub;
   StreamSubscription<MediaItem?>? _mediaSub;
@@ -18,7 +18,7 @@ class AudioHandlerService {
     _handler = await AudioService.init(
       builder: () => AudioPlayerHandlerImpl(),
       config: const AudioServiceConfig(
-        androidNotificationChannelId: 'com.example.transientmobile.channel.audio',
+        androidNotificationChannelId: 'com.ryanheise.myapp.channel.audio',
         androidNotificationChannelName: 'Audio playback',
         androidNotificationOngoing: true,
         androidResumeOnClick: true,                   // 点击通知恢复 app
@@ -31,7 +31,7 @@ class AudioHandlerService {
     _listenToStreams(container);
   }
 
-  AudioPlayerHandler get handler => _handler;
+  AudioPlayerHandlerImpl get handler => _handler;
 
   void _listenToStreams(ProviderContainer container) {
     final slice = container.read(musProvider.notifier);

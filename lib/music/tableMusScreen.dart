@@ -18,8 +18,8 @@ import 'package:rxdart/rxdart.dart';
 
 /// The main screen.
 class TableMusScreen extends ConsumerWidget {
-  TableMusScreen({super.key});
-
+  List<Map<String,dynamic>> lines;
+  TableMusScreen({super.key,this.lines=const[]});
   final _audioHandler = AudioHandlerService.instance.handler;
 
   @override
@@ -53,7 +53,7 @@ class TableMusScreen extends ConsumerWidget {
                }
               ,
             ),),
-            Flexible(flex: 1,child: LyricScreen(hideControl: true,),),
+            Flexible(flex: 1,child: LyricScreen(hideControl: true,lines: lines,),),
           ],),),
           // control
           Padding(

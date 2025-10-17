@@ -235,6 +235,13 @@ class AudioPlayerHandlerImpl extends BaseAudioHandler
 
   Stream<List<int>?> get shuffleIndicesStream => _shuffleIndicesSubject.stream;
 
+  // 修改当前mediaItem
+  Future<void> updateArtist(String lyric) async {
+    final curMedia = _playlist[_currentIndex];
+    mediaItem.add(curMedia.copyWith(
+        artist: lyric, title: '${curMedia.title} - ${curMedia.artist}'));
+  }
+
   @override
   Future<void> play() async {
     if (_audioPlayer.state == PlayerState.paused) {
@@ -294,6 +301,7 @@ class AudioPlayerHandlerImpl extends BaseAudioHandler
 
   @override
   Future<void> moveQueueItem(int currentIndex, int newIndex) {
+
     // 检查索引范围
     if (currentIndex < 0 ||
         currentIndex >= _playlist.length ||

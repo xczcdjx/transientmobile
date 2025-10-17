@@ -2,13 +2,16 @@ import 'dart:ui';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:transientmobile/constants/testData.dart';
 import 'package:transientmobile/extensions/customColors.dart';
 import 'package:transientmobile/music/tableMusScreen.dart';
 
 import '../hooks/useStore.dart';
+import '../service/audioHandlerService.dart';
 import '../store/index.dart';
 import '../utils/NetImage.dart';
 import '../utils/getDevice.dart';
+import '../utils/musFun.dart';
 import 'lyricScreen.dart';
 import 'musScreen.dart';
 
@@ -31,10 +34,6 @@ class _MusMainPlayState extends ConsumerState<MusMainPlay> {
   final PageController _pageController = PageController(viewportFraction: 1);
   int _currentIndex = 0;
 
-  List<Widget> playViews =  [
-    MusScreen(),
-    LyricScreen(),
-  ];
   @override
   void initState() {
     // TODO: implement initState
@@ -53,7 +52,15 @@ class _MusMainPlayState extends ConsumerState<MusMainPlay> {
   Widget build(BuildContext context) {
     final isTab = isTabletAll(context);
     final musStore = useSelector(ref, musProvider, (s) => s);
-
+    dynamic lines;
+    if (musStore.curPlayMedia != null) {
+     final lineFc = LrcParser.from(lyricDataTest[musStore.curPlayMedia!.id]!);
+     lines=lineFc.lines;
+    }
+    List<Widget> playViews =  [
+      MusScreen(),
+      LyricScreen(lines: lines,),
+    ];
     // ✅ 用 ValueListenableBuilder 拿到可见状态，驱动显隐动画
     return ValueListenableBuilder<bool>(
       valueListenable: widget.visibleListenable,
@@ -168,7 +175,7 @@ class _MusMainPlayState extends ConsumerState<MusMainPlay> {
                             ],
                           ),
                           body: isTab
-                              ? TableMusScreen()
+                              ? TableMusScreen(lines: lines,)
                               : Column(
                             children: [
                               Expanded(
