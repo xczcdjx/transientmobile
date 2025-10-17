@@ -89,6 +89,8 @@ class _MusMainPlayState extends ConsumerState<MusMainPlay> {
                       url: musStore.curPlayMedia?.artUri?.toString() ?? "",
                       fit: BoxFit.cover,
                       cache: true,
+                      loadingWidget: (ctx,url)=>Container(color: context.bg,),
+                      errorWidget: (ctx,url,error)=>Container(color: context.bg,),
                     ),
                   ),
                   // 渐变遮罩
@@ -104,6 +106,7 @@ class _MusMainPlayState extends ConsumerState<MusMainPlay> {
                       ),
                     ),
                   ),
+
 
                   // ✅ 底部抽屉位移动画（由 visible 控制）
                   AnimatedSlide(

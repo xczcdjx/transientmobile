@@ -57,7 +57,7 @@ class AudioHandlerService {
     });
     _mediaSub = _handler.mediaItem
         .listen((media) {
-      if (media != null) slice.updateMedia(media);
+      if (media != null) slice.updateMedia(_handler.curSoong);
     });
   }
 

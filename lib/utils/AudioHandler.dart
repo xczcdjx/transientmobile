@@ -126,6 +126,14 @@ class AudioPlayerHandlerImpl extends BaseAudioHandler
   ];
 
   int _currentIndex = 0;
+
+  MediaItem? get curSoong {
+    if (_playlist.isEmpty || _currentIndex < 0 || _currentIndex >= _playlist.length) {
+      return null;
+    }
+    return _playlist[_currentIndex];
+  }
+
   bool _isLoading = false;
   PlayerState state = PlayerState.disposed;
   Duration _duration = Duration.zero;

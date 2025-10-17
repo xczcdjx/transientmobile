@@ -23,6 +23,15 @@ class NetImage extends StatelessWidget {
   final double? height;
   final BoxFit fit;
   final bool cache;
+  final Widget Function(
+    BuildContext context,
+    String url,
+  )? loadingWidget;
+  final Widget Function(
+    BuildContext context,
+    String url,
+    Object error,
+  )? errorWidget;
 
   const NetImage(
       {Key? key,
@@ -30,6 +39,8 @@ class NetImage extends StatelessWidget {
       this.width,
       this.height,
       this.fit = BoxFit.contain,
+      this.loadingWidget,
+      this.errorWidget,
       this.cache = false})
       : super(key: key);
 
@@ -57,8 +68,11 @@ class NetImage extends StatelessWidget {
           fit: fit,
           cacheManager: _imageCacheManager,
           placeholder: (context, url) =>
+              loadingWidget?.call(context, url) ??
               const Center(child: CircularProgressIndicator()),
-          errorWidget: (context, url, error) => const Icon(Icons.broken_image),
+          errorWidget: (context, url, error) =>
+              errorWidget?.call(context, url, error) ??
+              const Icon(Icons.broken_image),
         );
       } else {
         return Image.network(
@@ -68,9 +82,11 @@ class NetImage extends StatelessWidget {
           fit: fit,
           loadingBuilder: (context, child, loadingProgress) {
             if (loadingProgress == null) return child;
-            return const Center(child: CircularProgressIndicator());
+            return loadingWidget?.call(context, url) ??
+                const Center(child: CircularProgressIndicator());
           },
           errorBuilder: (context, error, stackTrace) =>
+              errorWidget?.call(context, url, error) ??
               const Icon(Icons.broken_image),
         );
       }

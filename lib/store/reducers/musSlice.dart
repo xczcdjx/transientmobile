@@ -28,7 +28,7 @@ class MusSlice extends StateNotifier<MusicState> {
     state = state.copyWith(duration: dur);
   }
 
-  void updateMedia(MediaItem media) {
+  void updateMedia(MediaItem? media) {
     state = state.copyWith(curPlayMedia: media);
     _upLrc();
   }
