@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:transientmobile/components/images/rotatingAlbumCover.dart';
 import 'package:transientmobile/components/music/comPlaySeek.dart';
 import 'package:transientmobile/extensions/customColors.dart';
 import 'package:transientmobile/music/lyricScreen.dart';
@@ -12,60 +13,64 @@ import '../hooks/useStore.dart';
 import '../service/audioHandlerService.dart';
 import '../store/index.dart';
 import '../utils/AudioHandler.dart';
-import 'common.dart';
 import 'package:flutter/material.dart';
-import 'package:rxdart/rxdart.dart';
 
 /// The main screen.
 class TableMusScreen extends ConsumerWidget {
-  List<Map<String,dynamic>> lines;
-  TableMusScreen({super.key,this.lines=const[]});
+  List<Map<String, dynamic>> lines;
+
+  TableMusScreen({super.key, this.lines = const []});
+
   final _audioHandler = AudioHandlerService.instance.handler;
 
   @override
-  Widget build(BuildContext context,WidgetRef ref) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final musStore = useSelector(ref, musProvider, (s) => s);
+    final musPlayStore = useSelector(ref, musPlayProvider, (s) => s);
+    bool playing = musPlayStore.isPlay;
     return SafeArea(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Expanded(child: Row(children: [
-            Flexible(flex: 1,child: // MediaItem display
-            musStore.curPlayMedia==null?SizedBox():
-            LayoutBuilder(
-               builder:(context,constraints){
-                 final maxWidth = constraints.maxWidth;
-                 return SizedBox(
-                   // height: MediaQuery.of(context).size.width-20,
-                   height: maxWidth/2.1,
-                   child: Padding(
-                     padding: const EdgeInsets.all(8.0),
-                     child: Center(
-                       child: ClipOval(
-                         child: NetImage(
-                           url: musStore.curPlayMedia!.artUri.toString(),
-                           cache: true,
-                         ),
-                       ),
-                     ),
-                   ),
-                 );
-               }
-              ,
-            ),),
-            Flexible(flex: 1,child: LyricScreen(hideControl: true,lines: lines,),),
-          ],),),
+          Expanded(
+            child: Row(
+              children: [
+                Flexible(
+                  flex: 1,
+                  child: // MediaItem display
+                      musStore.curPlayMedia == null
+                          ? SizedBox()
+                          : LayoutBuilder(
+                              builder: (context, constraints) {
+                                final maxWidth = constraints.maxWidth;
+                                return RotatingAlbumCover(
+                                  imageUrl:
+                                      musStore.curPlayMedia!.artUri.toString(),
+                                  playing: musPlayStore.isPlay,
+                                  size: maxWidth / 2.1,
+                                );
+                              },
+                            ),
+                ),
+                Flexible(
+                  flex: 1,
+                  child: LyricScreen(
+                    hideControl: true,
+                    lines: lines,
+                  ),
+                ),
+              ],
+            ),
+          ),
           // control
           Padding(
-            padding: const EdgeInsets.symmetric(
-                horizontal: 15.0, vertical: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 15.0, vertical: 10),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Expanded(
-                  child:
-                  Column(
+                  child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
@@ -74,9 +79,8 @@ class TableMusScreen extends ConsumerWidget {
                         overflow: TextOverflow.ellipsis,
                         maxLines: 1,
                       ),
-                      Text(musStore.curPlayMedia?.title??"xxx",
-                          overflow: TextOverflow.ellipsis,
-                          maxLines: 1),
+                      Text(musStore.curPlayMedia?.title ?? "xxx",
+                          overflow: TextOverflow.ellipsis, maxLines: 1),
                     ],
                   ),
                 ),
@@ -147,9 +151,13 @@ class TableMusScreen extends ConsumerWidget {
                                           ? context.bg
                                           : null,
                                       child: ListTile(
-                                        title: Text(queue[i].title,style: TextStyle(color: i == queueState.queueIndex
-                                            ? context.pc
-                                            : null),),
+                                        title: Text(
+                                          queue[i].title,
+                                          style: TextStyle(
+                                              color: i == queueState.queueIndex
+                                                  ? context.pc
+                                                  : null),
+                                        ),
                                         onTap: () =>
                                             _audioHandler.skipToQueueItem(i),
                                       ),

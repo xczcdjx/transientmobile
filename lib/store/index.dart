@@ -29,6 +29,9 @@ final counterProvider = StateNotifierProvider<CounterSlice, CountState>((ref) =>
 final numProvider = StateNotifierProvider<NumSlice, NumState>((ref) => NumSlice());
 final settingProvider = StateNotifierProvider<SettingSlice, SettingState>((ref) => SettingSlice());
 final musProvider = StateNotifierProvider<MusSlice, MusicState>((ref) => MusSlice());
+final musPlayProvider = StateNotifierProvider<MusPlaySlice, MusPlayState>((ref) {
+ return MusPlaySlice(AudioHandlerService.instance.handler);
+});
 /*final localeProvider = StateProvider<Locale>((ref) {
   // 默认用英文，可以从本地存储恢复
   return const Locale('en');
