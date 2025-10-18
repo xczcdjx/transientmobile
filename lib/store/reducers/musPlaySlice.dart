@@ -47,6 +47,7 @@ class MusPlaySlice extends StateNotifier<MusPlayState> {
           'musUrl': 'http://transient.online/static/mediaMul/2025/05/23/Laura Shigihara - Zombies on Your Lawn-1747991750364.mp3',
         },
       ),
+      ...mediaItemsFromJson(musTest)
     ]);
     handler.setMediaItemOnly(state.curSong!);
   }

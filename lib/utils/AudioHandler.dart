@@ -81,7 +81,7 @@ class AudioPlayerHandlerImpl extends BaseAudioHandler
         ));
       }
     });
-    mediaItem.add(mi);
+    // mediaItem.add(mi);
     // queue.add(mi);
   }
 
