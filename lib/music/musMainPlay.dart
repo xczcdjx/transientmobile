@@ -51,10 +51,11 @@ class _MusMainPlayState extends ConsumerState<MusMainPlay> {
   @override
   Widget build(BuildContext context) {
     final isTab = isTabletAll(context);
-    final musStore = useSelector(ref, musProvider, (s) => s);
+    final musPStore = useSelector(ref, musPlayProvider, (s) => s);
+    // print("list ${musPStore.curSong}");
     dynamic lines;
-    if (musStore.curPlayMedia != null) {
-     final lineFc = LrcParser.from(lyricDataTest[musStore.curPlayMedia!.id]!);
+    if (musPStore.curSong != null) {
+     final lineFc = LrcParser.from(lyricDataTest[musPStore.curSong?.id]!);
      lines=lineFc.lines;
     }
     List<Widget> playViews =  [
@@ -86,7 +87,7 @@ class _MusMainPlayState extends ConsumerState<MusMainPlay> {
                     child: NetImage(
                       height: MediaQuery.of(context).size.height,
                       width: MediaQuery.of(context).size.width,
-                      url: musStore.curPlayMedia?.artUri?.toString() ?? "",
+                      url: musPStore.curSong?.artUri?.toString() ?? "",
                       fit: BoxFit.cover,
                       cache: true,
                       loadingWidget: (ctx,url)=>Container(color: context.bg,),
@@ -128,7 +129,7 @@ class _MusMainPlayState extends ConsumerState<MusMainPlay> {
                             surfaceTintColor: Colors.transparent, // 关键：取消着色
                             shadowColor: Colors.transparent,      // 保险：不要阴影
                             title: isTab
-                                ? Center(child: Text(musStore.curPlayMedia?.title??""))
+                                ? Center(child: Text(musPStore.curSong?.title??""))
                                 : Padding(
                               padding:
                               const EdgeInsets.symmetric(vertical: 12),

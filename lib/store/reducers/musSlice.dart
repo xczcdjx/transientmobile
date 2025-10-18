@@ -1,49 +1,100 @@
 part of '../index.dart';
-class MusSlice extends StateNotifier<MusicState> {
-  MusSlice() : super(MusicState());
-  final _audioHandler = AudioHandlerService.instance.handler;
-  LrcParser? lrc;
 
+class MusSlice extends StateNotifier<MusicState> {
+  MusSlice(this.ref) : super(MusicState()) {
+    // 1) 监听 handler.mediaItem：当前曲目变化时，更新 curPlayMedia & 重建歌词
+    _mediaSub = _audioHandler.mediaItem.listen((mi) {
+      if (mi == null) return;
+      _upLrc(mi); // 换歌后重建歌词解析器
+    });
+
+    // 2) 监听 musPlayProvider：当上层切歌/改队列时，重建歌词解析器
+    _musPlayListen = ref.listen<MusPlayState>(
+      musPlayProvider,
+          (prev, next) {
+        if (prev == null) {
+          // _upLrc(next.curSong); // 首次
+          return;
+        }
+        final changedIndex = prev.curIndex != next.curIndex;
+        final changedLen   = prev.playList.length != next.playList.length;
+        // 也可加：标题/ID 变化等
+        if (changedIndex || changedLen) {
+          _upLrc(next.curSong);
+        }
+      },
+    );
+
+    // 3) 进度流：用你的 handler 的 position/duration/buffered 流
+    //    你上面有 createPositionStream，可直接用：
+    _posSub = _audioHandler.durationStream.listen(updatePosition);
+
+    // 如果你也有 buffered 流，这里一并监听
+    _bufSub = _audioHandler.playbackState
+        .map((s) => s.bufferedPosition)
+        .distinct()
+        .listen((buf) {
+      // print("buf $buf");
+      updateBuffered(buf);
+    });
+  }
+
+  final Ref ref;
+  final _audioHandler = AudioHandlerService.instance.handler;
+
+  LrcParser? lrc;
   double _lastLyricUpdate = -1; // 上次更新时间（秒）
 
+  StreamSubscription<MediaItem?>? _mediaSub;
+  StreamSubscription<Duration>? _posSub;
+  StreamSubscription<Duration>? _bufSub;
+  ProviderSubscription<MusPlayState>? _musPlayListen;
+
+  // === 供 position 流驱动 ===
   void updatePosition(Duration pos) {
     state = state.copyWith(position: pos);
 
-    // 节流：仅每0.5秒更新一次歌词
-    final sec = pos.inMilliseconds / 1000.0;
+    // 节流：仅每0.5秒更新一次歌词行 -> 同步到通知栏（updateArtist）
     if (lrc == null) return;
-    if (sec - _lastLyricUpdate < 0.5) return; // <1秒就不再更新
+    final sec = pos.inMilliseconds / 1000.0;
+    if (sec - _lastLyricUpdate < 0.5) return;
     _lastLyricUpdate = sec;
 
-    final l = lrc!.getByTime(sec);
-    if (l != null) _audioHandler.updateArtist(l);
+    final line = lrc!.getByTime(sec);
+    if (line != null) _audioHandler.updateArtist(line);
   }
 
   void updateBuffered(Duration buf) {
     state = state.copyWith(bufferedPosition: buf);
-    _upLrc();
+    // 缓冲变化时可以重置歌词节流，避免卡顿后不刷行
+    _resetLrcTick();
   }
 
-  void updateDuration(Duration dur) {
-    state = state.copyWith(duration: dur);
-  }
-
-  void updateMedia(MediaItem? media) {
-    state = state.copyWith(curPlayMedia: media);
-    _upLrc();
-  }
-  _upLrc(){
-    _lastLyricUpdate=-1;
-    if (state.curPlayMedia != null) {
-      final data = lyricDataTest[state.curPlayMedia!.id];
-      if (data != null) {
-        lrc = LrcParser.from(data);
-      }
+  // === 内部：重建歌词解析器 ===
+  void _upLrc(MediaItem? cur) {
+    _resetLrcTick();
+    if (cur == null) {
+      lrc = null;
+      return;
+    }
+    final data = lyricDataTest[cur.id]; // 你现有的歌词 Map：id -> lrc 文本
+    if (data != null) {
+      lrc = LrcParser.from(data);
+    } else {
+      lrc = null;
     }
   }
-  void reset() {
-    state = MusicState();
+
+  void _resetLrcTick() {
     _lastLyricUpdate = -1;
-    lrc = null;
+  }
+
+  @override
+  void dispose() {
+    _mediaSub?.cancel();
+    _posSub?.cancel();
+    _bufSub?.cancel();
+    _musPlayListen?.close();
+    super.dispose();
   }
 }

@@ -37,15 +37,15 @@ class TableMusScreen extends ConsumerWidget {
                 Flexible(
                   flex: 1,
                   child: // MediaItem display
-                      musStore.curPlayMedia == null
+                  musPlayStore.curSong == null
                           ? SizedBox()
                           : LayoutBuilder(
                               builder: (context, constraints) {
                                 final maxWidth = constraints.maxWidth;
                                 return RotatingAlbumCover(
                                   imageUrl:
-                                      musStore.curPlayMedia!.artUri.toString(),
-                                  playing: musPlayStore.isPlay,
+                                      (musPlayStore.curSong?.artUri??"").toString(),
+                                  playing: musPlayStore.isPlaying,
                                   size: maxWidth / 2.1,
                                 );
                               },
@@ -73,12 +73,12 @@ class TableMusScreen extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        musStore.curPlayMedia?.album ?? 'Xxx',
+                        musPlayStore.curSong?.album ?? 'Xxx',
                         style: Theme.of(context).textTheme.titleLarge,
                         overflow: TextOverflow.ellipsis,
                         maxLines: 1,
                       ),
-                      Text(musStore.curPlayMedia?.title ?? "xxx",
+                      Text(musPlayStore.curSong?.title ?? "xxx",
                           overflow: TextOverflow.ellipsis, maxLines: 1),
                     ],
                   ),
@@ -106,69 +106,7 @@ class TableMusScreen extends ConsumerWidget {
               ComControlBtn(
                 _audioHandler,
                 openPlayList: () {
-                  showModalBottomSheet(
-                    context: context,
-                    isScrollControlled: true,
-                    // 内容超出时可全屏
-                    shape: const RoundedRectangleBorder(
-                      borderRadius:
-                          BorderRadius.vertical(top: Radius.circular(16)),
-                    ),
-                    builder: (context) {
-                      return // Playlist
-                          SizedBox(
-                        height: 240.0,
-                        child: StreamBuilder<QueueState>(
-                          stream: _audioHandler.queueState,
-                          builder: (context, snapshot) {
-                            final queueState =
-                                snapshot.data ?? QueueState.empty;
-                            final queue = queueState.queue;
-                            return ReorderableListView(
-                              onReorder: (int oldIndex, int newIndex) {
-                                if (oldIndex < newIndex) newIndex--;
-                                _audioHandler.moveQueueItem(oldIndex, newIndex);
-                              },
-                              children: [
-                                for (var i = 0; i < queue.length; i++)
-                                  Dismissible(
-                                    key: ValueKey(queue[i].id),
-                                    background: Container(
-                                      color: Colors.redAccent,
-                                      alignment: Alignment.centerRight,
-                                      child: const Padding(
-                                        padding: EdgeInsets.only(right: 8.0),
-                                        child: Icon(Icons.delete,
-                                            color: Colors.white),
-                                      ),
-                                    ),
-                                    onDismissed: (dismissDirection) {
-                                      _audioHandler.removeQueueItemAt(i);
-                                    },
-                                    child: Material(
-                                      color: i == queueState.queueIndex
-                                          ? context.bg
-                                          : null,
-                                      child: ListTile(
-                                        title: Text(
-                                          queue[i].title,
-                                          style: TextStyle(
-                                              color: i == queueState.queueIndex
-                                                  ? context.pc
-                                                  : null),
-                                        ),
-                                        onTap: () =>
-                                            _audioHandler.skipToQueueItem(i),
-                                      ),
-                                    ),
-                                  ),
-                              ],
-                            );
-                          },
-                        ),
-                      );
-                    },
-                  );
+
                 },
                 mainAxisAlignment: MainAxisAlignment.center,
               ),

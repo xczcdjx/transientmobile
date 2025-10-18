@@ -1,25 +1,29 @@
 import 'dart:async';
 
 import 'package:audio_service/audio_service.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:transientmobile/components/music/comPlaySeek.dart';
 import 'package:transientmobile/extensions/customColors.dart';
 import 'package:transientmobile/utils/NetImage.dart';
 import '../components/music/comControl.dart';
+import '../hooks/useStore.dart';
 import '../service/audioHandlerService.dart';
+import '../store/index.dart';
 import '../utils/AudioHandler.dart';
 import 'common.dart';
 import 'package:flutter/material.dart';
 import 'package:rxdart/rxdart.dart';
 
 /// The main screen.
-class MusScreen extends StatelessWidget {
+class MusScreen extends ConsumerWidget {
   MusScreen({super.key});
 
   final _audioHandler = AudioHandlerService.instance.handler;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context,WidgetRef ref) {
+    final musPStore = useSelector(ref, musPlayProvider, (s) => s);
     return SafeArea(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -29,7 +33,7 @@ class MusScreen extends StatelessWidget {
             child: StreamBuilder<MediaItem?>(
               stream: _audioHandler.mediaItem,
               builder: (context, snapshot) {
-                final mediaItem = _audioHandler.curSong;
+                final mediaItem = musPStore.curSong;
                 if (mediaItem == null) return const SizedBox();
                 return Column(
                   mainAxisAlignment: MainAxisAlignment.start,
@@ -102,7 +106,7 @@ class MusScreen extends StatelessWidget {
               ComControlBtn(
                 _audioHandler,
                 openPlayList: () {
-                  showModalBottomSheet(
+                  /*showModalBottomSheet(
                     context: context,
                     isScrollControlled: true,
                     // 内容超出时可全屏
@@ -160,7 +164,7 @@ class MusScreen extends StatelessWidget {
                         ),
                       );
                     },
-                  );
+                  );*/
                 },
               ),
               // Repeat/shuffle controls

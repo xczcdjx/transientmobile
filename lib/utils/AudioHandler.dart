@@ -1,36 +1,89 @@
-/*
-* Copyright (c) 2024 SwanLink (Jiangsu) Technology Development Co., LTD.
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-*
-*     http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*/
-
+// audio_player_handler_impl.dart
 import 'dart:async';
-
 import 'package:audio_service/audio_service.dart';
 import 'package:audioplayers/audioplayers.dart';
-import 'package:flutter/foundation.dart';
-import 'package:flutter/services.dart';
-import 'package:path_provider/path_provider.dart'; // 用于获取应用目录
 import 'package:rxdart/rxdart.dart';
-
-import 'getDevice.dart';
-
 
 class AudioPlayerHandlerImpl extends BaseAudioHandler
     with SeekHandler
-    implements AudioPlayerHandler {
-  final AudioPlayer _audioPlayer = AudioPlayer()
-    ..setReleaseMode(ReleaseMode.stop);
+    implements AudioHandler {
+  final AudioPlayer _audioPlayer = AudioPlayer()..setReleaseMode(ReleaseMode.stop);
+
+  // 外部（上层 Slice）可监听，用于衔接下一首
+  Future<void> Function()? onCompleted;
+
+  // 公开：进度 / 音量 / 速度
+  @override
+  final BehaviorSubject<double> volume = BehaviorSubject.seeded(1.0);
+  @override
+  final BehaviorSubject<double> speed = BehaviorSubject.seeded(1.0);
+
+  // 当前位置（可选）
   Duration currentPosition = Duration.zero;
+  bool _isLoading = false;
+  PlayerState state = PlayerState.disposed;
+  Duration _duration = Duration.zero;
+
+  AudioPlayerHandlerImpl() {
+    _audioPlayer.onPlayerStateChanged.listen((state) async {
+      print('onPlayerStateChanged $state');
+      this.state = state;
+      if (state == PlayerState.completed) {
+        /*switch (_loopMode) {
+          case AudioServiceRepeatMode.none:
+            if (_currentIndex < _playlist.length - 1) {
+              _currentIndex = _currentIndex + 1;
+              play();
+            } else {
+              playbackState.add(playbackState.value.copyWith(
+                processingState: AudioProcessingState.completed,
+                playing: false,
+              ));
+            }
+            break;
+          case AudioServiceRepeatMode.one:
+            play();
+            break;
+          case AudioServiceRepeatMode.all:
+            *//*_currentIndex =
+            _currentIndex < _playlist.length - 1 ? _currentIndex + 1 : 0;*//*
+            play();
+            break;
+          default:
+        }*/
+      } else if (state == PlayerState.playing) {
+        _duration = await _audioPlayer.getDuration() as Duration;
+        print(_duration.inMilliseconds.toString());
+        playbackState.add(playbackState.value.copyWith(
+            processingState: AudioProcessingState.ready,
+            playing: true,
+            controls: [
+              MediaControl.skipToPrevious,
+              MediaControl.pause,
+              // MediaControl.stop,
+              MediaControl.skipToNext,
+            ],
+            bufferedPosition: _duration,
+            updatePosition: currentPosition));
+        _isLoading = false;
+      } else if (state == PlayerState.paused) {
+        playbackState.add(playbackState.value.copyWith(
+          processingState: AudioProcessingState.ready,
+          bufferedPosition: _duration,
+          updatePosition: currentPosition,
+          playing: false,
+          controls: [
+            MediaControl.skipToPrevious,
+            MediaControl.play,
+            // MediaControl.stop,
+            MediaControl.skipToNext,
+          ],
+        ));
+      }
+    });
+    mediaItem.add(mi);
+    // queue.add(mi);
+  }
 
   Stream<Duration> get durationStream => createPositionStream(
       steps: 800,
@@ -86,176 +139,58 @@ class AudioPlayerHandlerImpl extends BaseAudioHandler
     );
     return controller.stream;
   }
+  // ======== 仅保留“如何播放一个 MediaItem” ========
+  /// 仅设置当前 mediaItem，不播放。
+  /// 可用于：预载歌词 / 展示封面 / 准备播放队列中的下一首。
+  Future<void> setMediaItemOnly(MediaItem? item) async {
+    mi=item;
+    // 更新当前 mediaItem（通知系统与 UI）
+    mediaItem.add(item);
 
-  // 播放列表 , 换成原项目MediaItem资源
-  final List<MediaItem> _playlist = [
-    MediaItem(
-      id: '781',
-      album: "听歌背四六级单词",
-      title: "听歌背高考单词01-Rise in the Rhythm",
-      artist: "王哪写英语",
-      duration: const Duration(seconds: 187),
-      artUri: Uri.parse(
-          'http://p2.music.126.net/9IfoCT65tKR2oIFYnv6UbQ==/109951171017564109.jpg'),
-      extras: {
-        'musUrl': 'http://transient.online/static/mediaMul/2025/06/19/王哪写英语 - 听歌背高考单词01-Rise in the Rhythm-1750329794877.mp3',
-      },
-    ),
-    MediaItem(
-      id: '779',
-      album: "听歌背四六级单词",
-      title: "听歌背四六级单词系列-03",
-      artist: "王哪写英语",
-      duration: const Duration(seconds: 214),
-      artUri: Uri.parse(
-          'http://p1.music.126.net/9IfoCT65tKR2oIFYnv6UbQ==/109951171017564109.jpg'),
-      extras: {
-        'musUrl': 'http://transient.online/static/mediaMul/2025/06/19/王哪写英语 - 听歌背四六级单词系列-03-1750329794844.mp3',
-      },
-    ),
-    MediaItem(
-      id: '29',
-      album: "Plants Vs. Zombies (Original Video Game Soundtrack)",
-      title: "Zombies on Your Lawn",
-      artist: "Laura Shigihara",
-      duration: const Duration(seconds: 159),
-      artUri: Uri.parse(
-          'http://imge.kugou.com/stdmusic/300/20150719/20150719061122429450.jpg'),
-      extras: {
-        'musUrl': 'http://transient.online/static/mediaMul/2025/05/23/Laura Shigihara - Zombies on Your Lawn-1747991750364.mp3',
-      },
-    ),
-  ];
-
-  int _currentIndex = 0;
-
-  MediaItem? get curSong {
-    if (_playlist.isEmpty || _currentIndex < 0 || _currentIndex >= _playlist.length) {
-      return null;
-    }
-    return _playlist[_currentIndex];
+    // 更新播放状态为 idle（非播放中）
+    playbackState.add(playbackState.value.copyWith(
+      processingState: AudioProcessingState.idle,
+      playing: false,
+      updatePosition: Duration.zero,
+      controls: const [
+        MediaControl.play,
+        MediaControl.stop,
+      ],
+    ));
   }
 
-  bool _isLoading = false;
-  PlayerState state = PlayerState.disposed;
-  Duration _duration = Duration.zero;
-  final _mediaLibrary = MediaLibrary();
-  AudioServiceRepeatMode _loopMode = AudioServiceRepeatMode.none;
-  // 在 AudioPlayerHandlerImpl 顶部
-  final BehaviorSubject<PlayerState> playerState = BehaviorSubject.seeded(PlayerState.stopped);
 
-  final BehaviorSubject<List<MediaItem>> _recentSubject =
-  BehaviorSubject.seeded(<MediaItem>[]);
-
-  Duration d = Duration.zero;
-  StreamSubscription<Duration>? subscription;
-
-  final _controller = StreamController<Duration>.broadcast();
-
+  /// 直接播放一个媒体；由上层决定哪一个是“当前曲目”
   @override
-  final BehaviorSubject<double> volume = BehaviorSubject.seeded(1.0);
-  @override
-  final BehaviorSubject<double> speed = BehaviorSubject.seeded(1.0);
+  Future<void> playMediaItem(MediaItem mediaItem) async {
+    playbackState.add(playbackState.value.copyWith(
+      processingState: AudioProcessingState.ready,
+      playing: true,
+      controls: [
+        MediaControl.pause,
+        MediaControl.stop,
+      ],
+    ));
+    this.mediaItem.add(mediaItem);
+    await play();
+  }
+  MediaItem? mi;
 
-  @override
-  Future<void> addQueueItem(MediaItem mediaItem) async {
-    _playlist.add(mediaItem);
+  /// 直接播放一个媒体；由上层决定哪一个是“当前曲目”
+  Future<void> switchMediaItem(MediaItem item) async {
+    mi=item;
+    await _audioPlayer.stop();
+    await play();
   }
 
-  @override
-  Future<void> addQueueItems(List<MediaItem> mediaItems) async {
-    _playlist.addAll(mediaItems);
-  }
 
-  @override
-  Future<void> insertQueueItem(int index, MediaItem mediaItem) async {
-    _playlist.insert(index, mediaItem);
-  }
-
-  @override
-  Future<void> updateQueue(List<MediaItem> queue) async {
-    _playlist.addAll(queue);
-  }
-
-  Stream<Duration> get stream => _controller.stream;
-
-  AudioPlayerHandlerImpl() {
-    _audioPlayer.onPlayerStateChanged.listen((state) async {
-      print('onPlayerStateChanged $state');
-      this.state = state;
-      playerState.add(state);
-      if (state == PlayerState.completed) {
-        switch (_loopMode) {
-          case AudioServiceRepeatMode.none:
-            if (_currentIndex < _playlist.length - 1) {
-              _currentIndex = _currentIndex + 1;
-              play();
-            } else {
-              playbackState.add(playbackState.value.copyWith(
-                processingState: AudioProcessingState.completed,
-                playing: false,
-              ));
-            }
-            break;
-          case AudioServiceRepeatMode.one:
-            play();
-            break;
-          case AudioServiceRepeatMode.all:
-            _currentIndex =
-            _currentIndex < _playlist.length - 1 ? _currentIndex + 1 : 0;
-            play();
-            break;
-          default:
-        }
-      } else if (state == PlayerState.playing) {
-        _duration = await _audioPlayer.getDuration() as Duration;
-        print(_duration.inMilliseconds.toString());
-        playbackState.add(playbackState.value.copyWith(
-            processingState: AudioProcessingState.ready,
-            playing: true,
-            controls: [
-              MediaControl.skipToPrevious,
-              MediaControl.pause,
-              // MediaControl.stop,
-              MediaControl.skipToNext,
-            ],
-            bufferedPosition: _duration,
-            updatePosition: currentPosition));
-        _isLoading = false;
-      } else if (state == PlayerState.paused) {
-        playbackState.add(playbackState.value.copyWith(
-          processingState: AudioProcessingState.ready,
-          bufferedPosition: _duration,
-          updatePosition: currentPosition,
-          playing: false,
-          controls: [
-            MediaControl.skipToPrevious,
-            MediaControl.play,
-            // MediaControl.stop,
-            MediaControl.skipToNext,
-          ],
-        ));
-      }
-    });
-    mediaItem.add(_playlist[0]);
-    queue.add(_playlist);
-  }
-
-  final _shuffleIndicesSubject = BehaviorSubject<List<int>?>();
-
-  Stream<List<int>?> get shuffleIndicesStream => _shuffleIndicesSubject.stream;
-
-  // 修改当前mediaItem
-  Future<void> updateArtist(String lyric) async {
-    final curMedia = _playlist[_currentIndex];
-    mediaItem.add(curMedia.copyWith(
-        artist: lyric, title: '${curMedia.title} - ${curMedia.artist}'));
-    // if(isIos()) playbackState.add(playbackState.value.copyWith(updatePosition: currentPosition));
-  }
-
+  /// 通用播放控制：
+  /// - 若暂停则 resume
+  /// - 若无当前媒体但有历史队列，则重播当前曲目
+  /// - 若完全无媒体，则不做事
   @override
   Future<void> play() async {
-    print(curSong);
+    print("url ${mi?.extras?["musUrl"]}");
     if (_audioPlayer.state == PlayerState.paused) {
       await _audioPlayer.resume();
     } else {
@@ -263,15 +198,16 @@ class AudioPlayerHandlerImpl extends BaseAudioHandler
       playbackState.add(playbackState.value.copyWith(
         processingState: AudioProcessingState.loading,
       ));
-      mediaItem.add(curSong);
-
-      await _audioPlayer.play(UrlSource(_playlist[_currentIndex].extras?["musUrl"]));
+      mediaItem.add(mi);
+      final url = Uri.encodeFull(mi?.extras?["musUrl"]);
+      await _audioPlayer.play(UrlSource(url));
     }
     playbackState.add(playbackState.value.copyWith(
       processingState: AudioProcessingState.ready,
       playing: true,
     ));
   }
+
 
   @override
   Future<void> pause() async {
@@ -293,210 +229,52 @@ class AudioPlayerHandlerImpl extends BaseAudioHandler
 
   @override
   Future<void> seek(Duration position) async {
+    currentPosition = position;
     playbackState.add(playbackState.value.copyWith(updatePosition: position));
     await _audioPlayer.seek(position);
   }
 
+  // 仅更新通知栏/锁屏的演唱者标题（可选）
+  Future<void> updateArtist(String lyric) async {
+    final cur = mediaItem.valueOrNull;
+    if (cur == null) return;
+    mediaItem.add(cur.copyWith(artist: lyric, title: '${cur.title} - ${cur.artist ?? ""}'));
+  }
+
+  // ======== 速率/音量 ========
+
   @override
-  Future<void> playMediaItem(MediaItem mediaItem) async {
-    playbackState.add(playbackState.value.copyWith(
-      processingState: AudioProcessingState.ready,
-      playing: true,
-      controls: [
-        MediaControl.pause,
-        MediaControl.stop,
-      ],
-    ));
-    this.mediaItem.add(mediaItem);
-    await play();
+  Future<void> setSpeed(double s) async {
+    speed.add(s);
+    await _audioPlayer.setPlaybackRate(s);
   }
 
   @override
-  Future<void> moveQueueItem(int currentIndex, int newIndex) {
-
-    // 检查索引范围
-    if (currentIndex < 0 ||
-        currentIndex >= _playlist.length ||
-        newIndex < 0 ||
-        newIndex >= _playlist.length) {
-      print('Invalid index');
-    }
-    MediaItem element = _playlist.removeAt(currentIndex);
-    _playlist.insert(newIndex, element);
-
-    return Future.value();
+  Future<void> setVolume(double v) async {
+    volume.add(v);
+    await _audioPlayer.setVolume(v);
   }
+
+  // ======== 队列相关（全部由上层接管；这里 NO-OP，避免误用） ========
 
   @override
-  Future<void> removeQueueItemAt(int index) async {
-    // 被移除的是当前播放
-    print('要移除的index :' +
-        index.toString() +
-        '当前播放的index : ' +
-        _currentIndex.toString());
-    _playlist.removeAt(index);
-    //刷新列队
-    queue.add(_playlist);
-    if (index == _currentIndex) {
-      if (_playlist.isNotEmpty) {
-        _currentIndex = _currentIndex < _playlist.length
-            ? _currentIndex
-            : _currentIndex - 1;
-        PlayerState currentState = state;
-        await _audioPlayer.stop();
-        if (currentState == PlayerState.playing) {
-          play();
-        }
-      }
-    } else if (index < _currentIndex) {
-      //前进一位
-      _currentIndex = _currentIndex - 1;
-    }
-    return Future.value();
-  }
-
-  Stream<QueueState> get queueState =>
-      Rx.combineLatest2<List<MediaItem>, PlaybackState, QueueState>(
-          queue,
-          playbackState,
-              (queue, playbackState) => QueueState(
-            queue,
-            _currentIndex,
-            playbackState.repeatMode,
-          ));
-
+  Future<void> addQueueItem(MediaItem item) async {}
   @override
-  Future<void> setSpeed(double speed) async {
-    print('speed : ' + speed.toString());
-    //鸿蒙audioplayers库暂不支持 0.5倍速和1.5倍速
-    if (speed == 0.5 || speed == 1.5) {
-      return;
-    }
-    playbackState.add(playbackState.value.copyWith(
-        speed: speed,
-        updatePosition: currentPosition));
-    this.speed.add(speed);
-    await _audioPlayer.setPlaybackRate(speed);
-  }
-
+  Future<void> addQueueItems(List<MediaItem> items) async {}
   @override
-  Future<void> setVolume(double volume) async {
-    this.volume.add(volume);
-    await _audioPlayer.setVolume(volume);
-  }
-
+  Future<void> insertQueueItem(int index, MediaItem item) async {}
   @override
-  Future<void> skipToNext() async {
-    if (_currentIndex + 1 < _playlist.length) {
-      _currentIndex++;
-    } else {
-      _currentIndex = 0;
-    }
-    await _audioPlayer.stop();
-    await play();
-  }
-
+  Future<void> updateQueue(List<MediaItem> queue) async {}
   @override
-  Future<void> skipToPrevious() async {
-    if (_currentIndex - 1 >= 0) {
-      _currentIndex--;
-    } else {
-      _currentIndex = _playlist.length - 1;
-    }
-    await _audioPlayer.stop();
-    await play();
-  }
-
+  Future<void> removeQueueItemAt(int index) async {}
   @override
-  Future<void> skipToQueueItem(int index) async {
-    _currentIndex = index;
-    await _audioPlayer.stop();
-    await play();
-  }
-
+  Future<void> skipToNext() async {/* 上层调用 slice.next() */}
   @override
-  Future<void> setShuffleMode(AudioServiceShuffleMode shuffleMode) async {
-    // final enabled = shuffleMode == AudioServiceShuffleMode.all;
-    // if (enabled) {
-    // await _audioPlayer.shuffle();
-    // }
-    // playbackState.add(playbackState.value.copyWith(shuffleMode: shuffleMode));
-    // await _audioPlayer.setShuffleModeEnabled(enabled);
-  }
-
+  Future<void> skipToPrevious() async {/* 上层调用 slice.previous() */}
   @override
-  Future<void> setRepeatMode(AudioServiceRepeatMode repeatMode) async {
-    playbackState.add(playbackState.value.copyWith(repeatMode: repeatMode));
-    _loopMode = repeatMode;
-  }
-}
-
-class QueueState {
-  static const QueueState empty =
-  QueueState([], 0, AudioServiceRepeatMode.none);
-
-  final List<MediaItem> queue;
-  final int? queueIndex;
-  final AudioServiceRepeatMode repeatMode;
-
-  const QueueState(this.queue, this.queueIndex, this.repeatMode);
-
-  bool get hasPrevious =>
-      repeatMode != AudioServiceRepeatMode.none || (queueIndex ?? 0) > 0;
-
-  bool get hasNext =>
-      repeatMode != AudioServiceRepeatMode.none ||
-          (queueIndex ?? 0) + 1 < queue.length;
-}
-
-class MediaLibrary {
-  static const albumsRootId = 'albums';
-
-  final items = <String, List<MediaItem>>{
-    AudioService.browsableRootId: const [
-      MediaItem(
-        id: albumsRootId,
-        title: "Albums",
-        playable: false,
-      ),
-    ],
-    albumsRootId: [
-      MediaItem(
-        id: 'https://s3.amazonaws.com/scifri-episodes/scifri20181123-episode.mp3',
-        album: "Science Friday",
-        title: "A Salute To Head-Scratching Science",
-        artist: "Science Friday and WNYC Studios",
-        duration: const Duration(milliseconds: 5739820),
-        artUri: Uri.parse(
-            'https://media.wnyc.org/i/1400/1400/l/80/1/ScienceFriday_WNYCStudios_1400.jpg'),
-      ),
-      MediaItem(
-        id: 'https://s3.amazonaws.com/scifri-segments/scifri201711241.mp3',
-        album: "Science Friday",
-        title: "From Cat Rheology To Operatic Incompetence",
-        artist: "Science Friday and WNYC Studios",
-        duration: const Duration(milliseconds: 2856950),
-        artUri: Uri.parse(
-            'https://media.wnyc.org/i/1400/1400/l/80/1/ScienceFriday_WNYCStudios_1400.jpg'),
-      ),
-      MediaItem(
-        id: 'https://s3.amazonaws.com/scifri-segments/scifri202011274.mp3',
-        album: "Science Friday",
-        title: "Laugh Along At Home With The Ig Nobel Awards",
-        artist: "Science Friday and WNYC Studios",
-        duration: const Duration(milliseconds: 1791883),
-        artUri: Uri.parse(
-            'https://media.wnyc.org/i/1400/1400/l/80/1/ScienceFriday_WNYCStudios_1400.jpg'),
-      ),
-    ],
-  };
-}
-
-abstract class AudioPlayerHandler implements AudioHandler {
-  Stream<QueueState> get queueState;
-  Future<void> moveQueueItem(int currentIndex, int newIndex);
-  ValueStream<double> get volume;
-  Future<void> setVolume(double volume);
-  ValueStream<double> get speed;
-  Stream<Duration> get durationStream;
+  Future<void> skipToQueueItem(int index) async {/* 上层调用 slice.playAt(index) */}
+  @override
+  Future<void> setRepeatMode(AudioServiceRepeatMode mode) async {/* 上层管理 */}
+  @override
+  Future<void> setShuffleMode(AudioServiceShuffleMode mode) async {/* 上层管理 */}
 }

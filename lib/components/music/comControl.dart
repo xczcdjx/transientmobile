@@ -1,16 +1,20 @@
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../hooks/useStore.dart';
 import '../../music/common.dart';
+import '../../store/index.dart';
 import '../../utils/AudioHandler.dart';
 
-class ControlButtons extends StatelessWidget {
-  final AudioPlayerHandler audioHandler;
+/*class ControlButtons extends ConsumerWidget {
+  final AudioPlayerHandlerImpl audioHandler;
 
   const ControlButtons(this.audioHandler, {Key? key}) : super(key: key);
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context,WidgetRef ref) {
+
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -112,17 +116,23 @@ class ControlButtons extends StatelessWidget {
       ],
     );
   }
-}
+}*/
 
-class ComControlBtn extends StatelessWidget {
-  final AudioPlayerHandler audioHandler;
+class ComControlBtn extends ConsumerWidget {
+  final AudioPlayerHandlerImpl audioHandler;
   final VoidCallback? openPlayList;
   MainAxisAlignment mainAxisAlignment;
-  ComControlBtn(this.audioHandler, {Key? key, this.openPlayList,this.mainAxisAlignment=MainAxisAlignment.spaceBetween})
+
+  ComControlBtn(this.audioHandler,
+      {Key? key,
+      this.openPlayList,
+      this.mainAxisAlignment = MainAxisAlignment.spaceBetween})
       : super(key: key);
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    // final musPStore = useSelector(ref, musPlayProvider, (s) => s);
+    final dispatch = useDispatch(ref, musPlayProvider);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8),
       child: Row(
@@ -155,20 +165,12 @@ class ComControlBtn extends StatelessWidget {
               );
             },
           ),
-          StreamBuilder<QueueState>(
-            stream: audioHandler.queueState,
-            builder: (context, snapshot) {
-              final queueState = snapshot.data ?? QueueState.empty;
-              return IconButton(
-                icon: const Icon(
-                  Icons.skip_previous,
-                  size: 32,
-                ),
-                onPressed:
-                    queueState.hasPrevious ? audioHandler.skipToPrevious : null,
-              );
-            },
-          ),
+          IconButton(
+              icon: const Icon(
+                Icons.skip_previous,
+                size: 32,
+              ),
+              onPressed: dispatch.previous),
           StreamBuilder<PlaybackState>(
             stream: audioHandler.playbackState,
             builder: (context, snapshot) {
@@ -187,28 +189,33 @@ class ComControlBtn extends StatelessWidget {
                 return IconButton(
                   icon: const Icon(Icons.play_arrow),
                   iconSize: 64.0,
-                  onPressed: audioHandler.play,
+                  onPressed: (){
+                    dispatch.play();
+                  },
                 );
               } else {
                 return IconButton(
                   icon: const Icon(Icons.pause),
                   iconSize: 64.0,
-                  onPressed: audioHandler.pause,
+                  onPressed: (){
+                    dispatch.pause();
+                  },
                 );
               }
             },
           ),
-          StreamBuilder<QueueState>(
-            stream: audioHandler.queueState,
-            builder: (context, snapshot) {
-              final queueState = snapshot.data ?? QueueState.empty;
-              return IconButton(
-                icon: const Icon(Icons.skip_next, size: 32),
-                onPressed: queueState.hasNext ? audioHandler.skipToNext : null,
-              );
-            },
-          ),
-          IconButton(onPressed: openPlayList, icon: Icon(Icons.queue_music_sharp,size: 32,))
+          IconButton(
+              icon: const Icon(
+                Icons.skip_next,
+                size: 32,
+              ),
+              onPressed: dispatch.next),
+          IconButton(
+              onPressed: openPlayList,
+              icon: Icon(
+                Icons.queue_music_sharp,
+                size: 32,
+              ))
         ],
       ),
     );
