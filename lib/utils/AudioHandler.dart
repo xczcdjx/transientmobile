@@ -249,10 +249,21 @@ class AudioPlayerHandlerImpl extends BaseAudioHandler
     onSkipTo?.call(true);
   }
 
+
   @override
-  Future<void> setRepeatMode(AudioServiceRepeatMode mode) async {
-    print("mode $mode");
-    onRepeatMode?.call(mode);
+  Future<void> setShuffleMode(AudioServiceShuffleMode shuffleMode) async {
+    // final enabled = shuffleMode == AudioServiceShuffleMode.all;
+    // if (enabled) {
+    // await _audioPlayer.shuffle();
+    // }
+    // playbackState.add(playbackState.value.copyWith(shuffleMode: shuffleMode));
+    // await _audioPlayer.setShuffleModeEnabled(enabled);
+  }
+
+  @override
+  Future<void> setRepeatMode(AudioServiceRepeatMode repeatMode) async {
+    playbackState.add(playbackState.value.copyWith(repeatMode: repeatMode));
+    onRepeatMode?.call(repeatMode);
   }
 
   // ======== 队列相关（全部由上层接管；这里 NO-OP，避免误用） ========

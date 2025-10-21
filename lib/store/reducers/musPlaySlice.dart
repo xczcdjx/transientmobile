@@ -70,10 +70,10 @@ class MusPlaySlice extends StateNotifier<MusPlayState> {
       if(f) next();
       else previous();
     };
+    // 暂不处理
     handler.onRepeatMode=(m) async{
-      setRepeat(m);
+      // setRepeat(m);
     };
-
   }
   // ============== 列表管理 ==============
 
