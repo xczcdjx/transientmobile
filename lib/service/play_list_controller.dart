@@ -1,58 +1,51 @@
-import 'package:flutter/cupertino.dart';
-import '../music/playMainList.dart';
+import 'package:flutter/material.dart';
 
-class PlayListController {
-  static final PlayListController _instance = PlayListController._internal();
-  factory PlayListController() => _instance;
-  PlayListController._internal();
+class GlobalBottomSheet {
+  static OverlayEntry? _entry;
 
-  OverlayEntry? _entry;                 // 永久插入（懒加载一次）
-  final _visible = ValueNotifier<bool>(false);
-  LocalHistoryEntry? _historyEntry;
+  static void show({
+    required BuildContext context,
+    required Widget child,
+  }) {
+    _entry?.remove();
 
-  bool get isVisible => _visible.value;
-
-  void _ensureOverlayInserted(BuildContext context) {
-    if (_entry != null) return;
-
-    final overlay = Overlay.of(context, rootOverlay: true)!;
-
-    // 仅创建一次 MusMainPlay；用 ValueListenableBuilder 控制显隐
+    final overlay = Overlay.of(context, rootOverlay: true);
     _entry = OverlayEntry(
-      maintainState: true,
-      builder: (_) => PlayMainList(
-        visibleListenable: _visible,   // ✅ 传给子组件驱动动画
-        onClose: hide,
+      builder: (_) => Stack(
+        children: [
+          // 半透明遮罩
+          GestureDetector(
+            onTap: hide,
+            child: Container(color: Colors.black54),
+          ),
+          // 底部弹窗内容
+          Align(
+            alignment: Alignment.bottomCenter,
+            child: AnimatedSlide(
+              duration: const Duration(milliseconds: 250),
+              offset: const Offset(0, 0),
+              child: Material(
+                child: Container(
+                  decoration: const BoxDecoration(
+                    borderRadius:
+                    BorderRadius.vertical(top: Radius.circular(16)),
+                  ),
+                  // padding: const EdgeInsets.all(16),
+                  constraints: const BoxConstraints(maxHeight: 520),
+                  child: child,
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
 
     overlay.insert(_entry!);
   }
 
-  void show(BuildContext context) {
-    _ensureOverlayInserted(context);
-    if (_visible.value) return;
-
-    _visible.value = true;
-
-    // 每次显示时，压入一条 local history，用于物理返回键
-    final route = ModalRoute.of(context);
-    _historyEntry = LocalHistoryEntry(onRemove: () {
-      // 用户按返回键 → 先移除此条，再回调这里
-      _visible.value = false;
-      _historyEntry = null;
-    });
-    route?.addLocalHistoryEntry(_historyEntry!);
+  static void hide() {
+    _entry?.remove();
+    _entry = null;
   }
-
-  void hide() {
-    if (!_visible.value) return;
-    _visible.value = false;
-
-    // 主动隐藏时，配对移除本次加入的 local history
-    _historyEntry?.remove();
-    _historyEntry = null;
-  }
-
-  void toggle(BuildContext context) => isVisible ? hide() : show(context);
 }

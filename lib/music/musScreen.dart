@@ -5,6 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:transientmobile/components/music/comPlaySeek.dart';
 import 'package:transientmobile/extensions/customColors.dart';
+import 'package:transientmobile/music/playMainList.dart';
+import 'package:transientmobile/service/play_list_controller.dart';
 import 'package:transientmobile/utils/NetImage.dart';
 import '../components/music/comControl.dart';
 import '../hooks/useStore.dart';
@@ -106,65 +108,7 @@ class MusScreen extends ConsumerWidget {
               ComControlBtn(
                 _audioHandler,
                 openPlayList: () {
-                  /*showModalBottomSheet(
-                    context: context,
-                    isScrollControlled: true,
-                    // 内容超出时可全屏
-                    shape: const RoundedRectangleBorder(
-                      borderRadius:
-                          BorderRadius.vertical(top: Radius.circular(16)),
-                    ),
-                    builder: (context) {
-                      return // Playlist
-                          SizedBox(
-                        height: 240.0,
-                        child: StreamBuilder<QueueState>(
-                          stream: _audioHandler.queueState,
-                          builder: (context, snapshot) {
-                            final queueState =
-                                snapshot.data ?? QueueState.empty;
-                            final queue = queueState.queue;
-                            return ReorderableListView(
-                              onReorder: (int oldIndex, int newIndex) {
-                                if (oldIndex < newIndex) newIndex--;
-                                _audioHandler.moveQueueItem(oldIndex, newIndex);
-                              },
-                              children: [
-                                for (var i = 0; i < queue.length; i++)
-                                  Dismissible(
-                                    key: ValueKey(queue[i].id),
-                                    background: Container(
-                                      color: Colors.redAccent,
-                                      alignment: Alignment.centerRight,
-                                      child: const Padding(
-                                        padding: EdgeInsets.only(right: 8.0),
-                                        child: Icon(Icons.delete,
-                                            color: Colors.white),
-                                      ),
-                                    ),
-                                    onDismissed: (dismissDirection) {
-                                      _audioHandler.removeQueueItemAt(i);
-                                    },
-                                    child: Material(
-                                      color: i == queueState.queueIndex
-                                          ? context.bg
-                                          : null,
-                                      child: ListTile(
-                                        title: Text(queue[i].title,style: TextStyle(color: i == queueState.queueIndex
-                                            ? context.pc
-                                            : null),),
-                                        onTap: () =>
-                                            _audioHandler.skipToQueueItem(i),
-                                      ),
-                                    ),
-                                  ),
-                              ],
-                            );
-                          },
-                        ),
-                      );
-                    },
-                  );*/
+                  GlobalBottomSheet.show(context: context, child: PlayMainList());
                 },
               ),
               // Repeat/shuffle controls

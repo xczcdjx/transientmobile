@@ -97,7 +97,7 @@ class _HomePageState extends State<HomePage> {
                   },
                   child: Text('botPopup')),*/
               TextButton(
-                onPressed: () => MusPlayerController().toggle(context),
+                onPressed: () => MusPlayerController().show(context),
                 child: const Text('Show Player'),
               )
             ],

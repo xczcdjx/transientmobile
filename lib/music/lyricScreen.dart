@@ -7,12 +7,14 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:transientmobile/constants/testData.dart';
 import 'package:transientmobile/extensions/customColors.dart';
+import 'package:transientmobile/music/playMainList.dart';
 import 'package:transientmobile/utils/musFun.dart';
 
 import '../components/music/comControl.dart';
 import '../components/music/comPlaySeek.dart';
 import '../hooks/useStore.dart';
 import '../service/audioHandlerService.dart';
+import '../service/play_list_controller.dart';
 import '../store/index.dart';
 
 /// Simple lyric line model with optional timestamp.
@@ -308,7 +310,9 @@ class LyricScreenState extends ConsumerState<LyricScreen>
         ComMusSeek(audioHandler: _audioHandler),
         const SizedBox(height: 8.0),
         // Playback controls
-        ComControlBtn(_audioHandler),
+        ComControlBtn(_audioHandler,openPlayList: (){
+          GlobalBottomSheet.show(context: context, child: PlayMainList());
+        },),
         const SizedBox(height: 15.0),
       ];
     }

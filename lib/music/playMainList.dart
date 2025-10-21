@@ -1,147 +1,100 @@
-// PlayMainList.dart
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:transientmobile/extensions/customColors.dart';
 
-class PlayMainList extends StatefulWidget {
-  final VoidCallback onClose;
-  final ValueListenable<bool> visibleListenable; // ✅ 新增
+import '../hooks/useStore.dart';
+import '../store/index.dart';
 
-  const PlayMainList({
-    super.key,
-    required this.onClose,
-    required this.visibleListenable,
-  });
+class PlayMainList extends ConsumerWidget {
+  const PlayMainList({super.key});
 
   @override
-  State<PlayMainList> createState() => _PlayMainListState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final list = useSelector(ref, musPlayProvider, (s) => s.playList);
+    final curIndex = useSelector(ref, musPlayProvider, (s) => s.curIndex);
+    final dispatch=useDispatch(ref, musPlayProvider);
 
-class _PlayMainListState extends State<PlayMainList>
-    with TickerProviderStateMixin, WidgetsBindingObserver {
-  late final AnimationController _ctrl;
-  late final Animation<Offset> _slide;   // 位移动画（y 从 1 → 0）
-  late final Animation<double> _scrim;   // 遮罩透明度（0 → 0.5）
-
-  @override
-  void initState() {
-    super.initState();
-    print("1111");
-    WidgetsBinding.instance.addObserver(this);
-
-    _ctrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 280),
-      reverseDuration: const Duration(milliseconds: 220),
-    );
-    final curve = CurvedAnimation(
-      parent: _ctrl,
-      curve: Curves.fastOutSlowIn,
-      reverseCurve: Curves.easeInOut,
-    );
-    _slide = Tween<Offset>(begin: const Offset(0, 1), end: Offset.zero).animate(curve);
-    _scrim = Tween<double>(begin: 0, end: 0.5).animate(curve);
-
-    // 监听可见性，驱动 forward/reverse
-    widget.visibleListenable.addListener(_onVisibleChanged);
-    if (widget.visibleListenable.value) {
-      _ctrl.value = 1; // 如果初始就是可见，直接就位
+    if (list.isEmpty) {
+      return const Center(
+        child: Text('暂无播放列表', style: TextStyle(color: Colors.grey)),
+      );
     }
-  }
 
-  void _onVisibleChanged() {
-    if (widget.visibleListenable.value) {
-      _ctrl.forward();
-    } else {
-      _ctrl.reverse();
-    }
-  }
-
-  @override
-  void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
-    widget.visibleListenable.removeListener(_onVisibleChanged);
-    _ctrl.dispose();
-    super.dispose();
-  }
-
-  // 可选：物理返回拦截（通常已由 LocalHistoryEntry 处理，无需必加）
-  @override
-  Future<bool> didPopRoute() async {
-    if (widget.visibleListenable.value) {
-      widget.onClose(); // 触发下滑退出
-      return true;
-    }
-    return false;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _ctrl,
-      builder: (context, _) {
-        final showing = _ctrl.value > 0; // 0 表示完全隐藏
-        return IgnorePointer(
-          // 隐藏时不吃手势
-          ignoring: !showing,
-          child: Stack(
-            children: [
-              // 半透明遮罩，点击关闭
-              Opacity(
-                opacity: _scrim.value,
-                child: GestureDetector(
-                  onTap: widget.onClose,
-                  child: Container(color: Colors.black),
-                ),
-              ),
-
-              // 底部面板：自下而上滑入/滑出
-              Align(
-                alignment: Alignment.bottomCenter,
-                child: SlideTransition(
-                  position: _slide,
-                  child: SafeArea(
-                    top: false,
-                    child: _buildPanel(context),
+    return ListView.separated(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      itemCount: list.length,
+      separatorBuilder: (_, __) => const Divider(height: 1, indent: 70, endIndent: 15),
+      itemBuilder: (context, i) {
+        final m = list[i];
+        final bool isPlaying = i == curIndex;
+        return InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: () {
+            dispatch.playAt(i);
+          },
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
+            decoration: BoxDecoration(
+              color: isPlaying ? Theme.of(context).colorScheme.primary.withOpacity(0.08) : null,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              children: [
+                // 封面
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: Image.network(
+                    m.artUri?.toString() ?? '',
+                    width: 50,
+                    height: 50,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => Container(
+                      width: 50,
+                      height: 50,
+                      color: Colors.grey[300],
+                      child: const Icon(Icons.music_note, color: Colors.grey),
+                    ),
                   ),
                 ),
-              ),
-            ],
+                const SizedBox(width: 12),
+                // 标题 + 歌手
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        m.title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: isPlaying ? FontWeight.w600 : FontWeight.w500,
+                          color: isPlaying
+                              ? Theme.of(context).colorScheme.primary
+                              : context.fc,
+                        ),
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        m.artist ?? '',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 13,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 10),
+                // 当前播放标识
+                if (isPlaying)
+                  const Icon(Icons.equalizer, color: Colors.blueAccent, size: 20),
+              ],
+            ),
           ),
         );
       },
-    );
-  }
-
-  Widget _buildPanel(BuildContext context) {
-    // TODO: 这里放你的播放器内容
-    return Material(
-      elevation: 12,
-      borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
-      clipBehavior: Clip.antiAlias,
-      child: SizedBox(
-        width: MediaQuery.of(context).size.width,
-        height: MediaQuery.of(context).size.height * 0.6, // 比如 60% 高
-        child: Column(
-          children: [
-            // 顶部把手/关闭按钮
-            Container(
-              height: 44,
-              alignment: Alignment.center,
-              child: GestureDetector(
-                onTap: widget.onClose,
-                child: Container(
-                  width: 36, height: 4,
-                  decoration: BoxDecoration(
-                    color: Colors.black26,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-            ),
-            // ... 你的播放器主 UI ...
-          ],
-        ),
-      ),
     );
   }
 }

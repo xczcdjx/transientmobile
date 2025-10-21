@@ -169,7 +169,8 @@ class MusPlaySlice extends StateNotifier<MusPlayState> {
     if (state.playList.isEmpty) return;
     final i = index.clamp(0, state.playList.length - 1);
     state = state.copyWith(curIndex: i);
-    await _playCurrent();
+    handler.switchMediaItem(state.curSong!);
+    // await _playCurrent();
   }
 
   /// 下一首
