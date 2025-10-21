@@ -222,7 +222,12 @@ class AudioPlayerHandlerImpl extends BaseAudioHandler
   Future<void> updateArtist(String lyric) async {
     final cur = mediaItem.valueOrNull;
     if (cur == null) return;
-    mediaItem.add(cur.copyWith(artist: lyric, title: '${cur.title} - ${cur.artist ?? ""}'));
+    String title=cur.title;
+    /*if(cur.extras?["singers"]!=null){
+      title='${cur.title} - ${getSingersName(cur.extras)}';
+      print("tit $title");
+    }*/
+    mediaItem.add(cur.copyWith(artist: lyric, title: title));
   }
 
   // ======== 速率/音量 ========
@@ -288,4 +293,8 @@ class AudioPlayerHandlerImpl extends BaseAudioHandler
   Future<void> setRepeatMode(AudioServiceRepeatMode mode) async {*//* 上层管理 *//*}
   @override
   Future<void> setShuffleMode(AudioServiceShuffleMode mode) async {*//* 上层管理 *//*}*/
+}
+String getSingersName(Map<String, dynamic>? extra){
+  final s=extra?["singers"];
+  return s==null?'':s.map((e)=>e["name"]).join('、');
 }

@@ -52,14 +52,9 @@ class _MusMainPlayState extends ConsumerState<MusMainPlay> {
   Widget build(BuildContext context) {
     final isTab = isTabletAll(context);
     final musPStore = useSelector(ref, musPlayProvider, (s) => s);
+    final musStore = useSelector(ref, musProvider, (s) => s);
+    final lines=musStore.lyric;
     // print("list ${musPStore.curSong}");
-    List<Map<String,dynamic>> lines=[];
-    if (musPStore.curSong != null) {
-      if(lyricDataTest[musPStore.curSong?.id]!=null) {
-        final lineFc = LrcParser.from(lyricDataTest[musPStore.curSong?.id]!);
-        lines=lineFc.lines;
-      }
-    }
     List<Widget> playViews =  [
       MusScreen(),
       LyricScreen(lines: lines,),

@@ -67,12 +67,12 @@ class MusScreen extends ConsumerWidget {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  mediaItem.album ?? '',
+                                  mediaItem.title,
                                   style: Theme.of(context).textTheme.titleLarge,
                                   overflow: TextOverflow.ellipsis,
                                   maxLines: 1,
                                 ),
-                                Text(mediaItem.title,
+                                Text(mediaItem.artist??'',
                                     overflow: TextOverflow.ellipsis,
                                     maxLines: 1),
                               ],

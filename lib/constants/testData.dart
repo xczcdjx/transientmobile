@@ -21,7 +21,7 @@ List<MediaItem> mediaItemsFromJson(List<dynamic> list) {
     // 处理封面 URL：把 {size} 占位符替换为常用尺寸（可按需改成 400x400/200x200）
     String? imgUrl = payload['imgUrl']?.toString();
     if (imgUrl != null && imgUrl.contains('{size}')) {
-      imgUrl = imgUrl.replaceAll('{size}', '400x400');
+      imgUrl = imgUrl.replaceAll('{size}', '480');
     }
 
     // 音频 URL：建议 URL 编码（中文、空格等），player 播放时更稳
@@ -40,13 +40,10 @@ List<MediaItem> mediaItemsFromJson(List<dynamic> list) {
       artUri: imgUrl == null ? null : Uri.parse(imgUrl),
       extras: <String, dynamic>{
         'musUrl': musUrl,                       // 播放用
-        'rawMusUrl': musUrl,                           // 原始未编码（可选）
         'size': map['size'],
         'albumId': payload['albumId'],
         'encodeUrl': map['encodeUrl'],
-        'singerIds': (payload['singers'] as List<dynamic>? ?? [])
-            .map((e) => (e as Map)['id'])
-            .toList(),
+        'singers': payload['singers'] as List<dynamic>? ?? [],
       },
     );
   }).toList();
