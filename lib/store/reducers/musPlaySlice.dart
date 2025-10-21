@@ -5,6 +5,7 @@ class MusPlaySlice extends StateNotifier<MusPlayState> {
 
   StreamSubscription<PlaybackState>? _pbSub;
 
+
   MusPlaySlice(this.handler) : super(MusPlayState()) {
     // 监听底层播放状态，只同步 playing 标记
     _pbSub = handler.playbackState.listen((s) {
@@ -50,8 +51,30 @@ class MusPlaySlice extends StateNotifier<MusPlayState> {
       ...mediaItemsFromJson(musTest)
     ]);
     handler.setMediaItemOnly(state.curSong!);
-  }
+    handler.onCompleted= (s) async{
+      final mode = state.repeatMode;
+      switch (mode) {
+        case AudioServiceRepeatMode.none:
+          await next();
+          break;
+        case AudioServiceRepeatMode.one:
+          await play();      // 重播当前
+          break;
+        case AudioServiceRepeatMode.all:
+          await next();
+          break;
+        default:
+      }
+    };
+    handler.onSkipTo=(f) async{
+      if(f) next();
+      else previous();
+    };
+    handler.onRepeatMode=(m) async{
+      setRepeat(m);
+    };
 
+  }
   // ============== 列表管理 ==============
 
   /// 覆盖播放队列；可指定起始 index，并决定是否自动播放
@@ -239,17 +262,6 @@ class MusPlaySlice extends StateNotifier<MusPlayState> {
 
     // 将最终要播的 MediaItem 交给底层
     await handler.playMediaItem(item);
-
-    // 监听底层单曲完成：由上层决定“下一首”
-    handler.onCompleted = () async {
-      final nextIndex = _calcNextIndex(forward: true);
-      if (nextIndex == null) {
-        await stop();
-      } else {
-        state = state.copyWith(curIndex: nextIndex);
-        await _playCurrent();
-      }
-    };
   }
 
 // 根据当前队列重建随机 id 队列（保持当前曲目 id 在首位）

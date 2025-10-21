@@ -4,13 +4,17 @@ import 'package:audio_service/audio_service.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:rxdart/rxdart.dart';
 
+import '../store/index.dart';
+
 class AudioPlayerHandlerImpl extends BaseAudioHandler
     with SeekHandler
     implements AudioHandler {
   final AudioPlayer _audioPlayer = AudioPlayer()..setReleaseMode(ReleaseMode.stop);
 
-  // 外部（上层 Slice）可监听，用于衔接下一首
-  Future<void> Function()? onCompleted;
+  // 外部（上层 Slice）可监听，播放完成触发
+  Future<void> Function(PlayerState state)? onCompleted;
+  Future<void> Function(bool isNext)? onSkipTo;
+  Future<void> Function(AudioServiceRepeatMode mode)? onRepeatMode;
 
   // 公开：进度 / 音量 / 速度
   @override
@@ -25,32 +29,12 @@ class AudioPlayerHandlerImpl extends BaseAudioHandler
   Duration _duration = Duration.zero;
 
   AudioPlayerHandlerImpl() {
-    _audioPlayer.onPlayerStateChanged.listen((state) async {
+    _audioPlayer.onPlayerStateChanged.listen(
+            (state) async {
       print('onPlayerStateChanged $state');
       this.state = state;
       if (state == PlayerState.completed) {
-        /*switch (_loopMode) {
-          case AudioServiceRepeatMode.none:
-            if (_currentIndex < _playlist.length - 1) {
-              _currentIndex = _currentIndex + 1;
-              play();
-            } else {
-              playbackState.add(playbackState.value.copyWith(
-                processingState: AudioProcessingState.completed,
-                playing: false,
-              ));
-            }
-            break;
-          case AudioServiceRepeatMode.one:
-            play();
-            break;
-          case AudioServiceRepeatMode.all:
-            *//*_currentIndex =
-            _currentIndex < _playlist.length - 1 ? _currentIndex + 1 : 0;*//*
-            play();
-            break;
-          default:
-        }*/
+        await onCompleted?.call(state);
       } else if (state == PlayerState.playing) {
         _duration = await _audioPlayer.getDuration() as Duration;
         print(_duration.inMilliseconds.toString());
@@ -81,8 +65,6 @@ class AudioPlayerHandlerImpl extends BaseAudioHandler
         ));
       }
     });
-    // mediaItem.add(mi);
-    // queue.add(mi);
   }
 
   Stream<Duration> get durationStream => createPositionStream(
@@ -139,6 +121,7 @@ class AudioPlayerHandlerImpl extends BaseAudioHandler
     );
     return controller.stream;
   }
+
   // ======== 仅保留“如何播放一个 MediaItem” ========
   /// 仅设置当前 mediaItem，不播放。
   /// 可用于：预载歌词 / 展示封面 / 准备播放队列中的下一首。
@@ -227,6 +210,7 @@ class AudioPlayerHandlerImpl extends BaseAudioHandler
         updatePosition: Duration.zero));
   }
 
+  // 修改进度
   @override
   Future<void> seek(Duration position) async {
     currentPosition = position;
@@ -255,8 +239,24 @@ class AudioPlayerHandlerImpl extends BaseAudioHandler
     await _audioPlayer.setVolume(v);
   }
 
-  // ======== 队列相关（全部由上层接管；这里 NO-OP，避免误用） ========
+  @override
+  Future<void> skipToPrevious() async {
+    onSkipTo?.call(false);
+  }
 
+  @override
+  Future<void> skipToNext() async {
+    onSkipTo?.call(true);
+  }
+
+  @override
+  Future<void> setRepeatMode(AudioServiceRepeatMode mode) async {
+    print("mode $mode");
+    onRepeatMode?.call(mode);
+  }
+
+  // ======== 队列相关（全部由上层接管；这里 NO-OP，避免误用） ========
+/*
   @override
   Future<void> addQueueItem(MediaItem item) async {}
   @override
@@ -268,13 +268,13 @@ class AudioPlayerHandlerImpl extends BaseAudioHandler
   @override
   Future<void> removeQueueItemAt(int index) async {}
   @override
-  Future<void> skipToNext() async {/* 上层调用 slice.next() */}
+  Future<void> skipToNext() async {*//* 上层调用 slice.next() *//*}
   @override
-  Future<void> skipToPrevious() async {/* 上层调用 slice.previous() */}
+  Future<void> skipToPrevious() async {*//* 上层调用 slice.previous() *//*}
   @override
-  Future<void> skipToQueueItem(int index) async {/* 上层调用 slice.playAt(index) */}
+  Future<void> skipToQueueItem(int index) async {*//* 上层调用 slice.playAt(index) *//*}
   @override
-  Future<void> setRepeatMode(AudioServiceRepeatMode mode) async {/* 上层管理 */}
+  Future<void> setRepeatMode(AudioServiceRepeatMode mode) async {*//* 上层管理 *//*}
   @override
-  Future<void> setShuffleMode(AudioServiceShuffleMode mode) async {/* 上层管理 */}
+  Future<void> setShuffleMode(AudioServiceShuffleMode mode) async {*//* 上层管理 *//*}*/
 }

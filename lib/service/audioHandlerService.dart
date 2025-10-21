@@ -25,13 +25,14 @@ class AudioHandlerService {
         // notificationColor: Color(0xFF3A85FF),         // 可选：通知栏主色调
       ),
     );
-    // ✅ 初始化完毕后监听各个流
-    _listenToStreams(container);
+    // ✅ 初始化完毕绑定slice
+    _audioBindSlice(container);
   }
 
   AudioPlayerHandlerImpl get handler => _handler;
 
-  void _listenToStreams(ProviderContainer container) {
-    final slice = container.read(musProvider.notifier);
+  void _audioBindSlice(ProviderContainer container) {
+    final slice = container.read(musPlayProvider.notifier);
+    // _handler.bindSlice(slice);
   }
 }
