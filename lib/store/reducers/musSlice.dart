@@ -1,32 +1,7 @@
 part of '../index.dart';
 
 class MusSlice extends StateNotifier<MusicState> {
-  MusSlice(this.ref) : super(MusicState()) {
-    _http=Http();
-    // 1) 监听 handler.mediaItem：当前曲目变化时，更新 curPlayMedia & 重建歌词
-    _mediaSub = _audioHandler.mediaItem.listen((mi) {
-      if (mi == null) return;
-      // print("1111111111");
-      // _upLrc(mi); // 换歌后重建歌词解析器
-    });
-
-    // 2) 监听 musPlayProvider：当上层切歌/改队列时，重建歌词解析器
-    _musPlayListen = ref.listen<MusPlayState>(
-      musPlayProvider,
-          (prev, next) {
-        if (prev == null) {
-          // _upLrc(next.curSong); // 首次
-          return;
-        }
-        final changedIndex = prev.curIndex != next.curIndex;
-        final changedLen   = prev.playList.length != next.playList.length;
-        // 也可加：标题/ID 变化等
-        if (changedIndex || changedLen) {
-          _upLrc(next.curSong);
-        }
-      },
-    );
-
+  MusSlice() : super(MusicState()) {
     // 3) 进度流：用你的 handler 的 position/duration/buffered 流
     //    你上面有 createPositionStream，可直接用：
     _posSub = _audioHandler.durationStream.listen(updatePosition);
@@ -38,17 +13,19 @@ class MusSlice extends StateNotifier<MusicState> {
         .listen((buf) {
       // print("buf $buf");
       updateBuffered(buf);
+      // 如果当前歌曲存在，就尝试刷新歌词
+      final cur = _audioHandler.musPlaySlice.curMedia;
+      if (cur != null) {
+        _upLrc(cur);
+      }
     });
   }
 
-  late Http _http;
-  final Ref ref;
   final _audioHandler = AudioHandlerService.instance.handler;
-
+  final Http _http = Http();
   LrcParser? lrc;
   double _lastLyricUpdate = -1; // 上次更新时间（秒）
 
-  StreamSubscription<MediaItem?>? _mediaSub;
   StreamSubscription<Duration>? _posSub;
   StreamSubscription<Duration>? _bufSub;
   ProviderSubscription<MusPlayState>? _musPlayListen;
@@ -74,19 +51,19 @@ class MusSlice extends StateNotifier<MusicState> {
   }
 
   // === 内部：重建歌词解析器 ===
-  Future<void> _upLrc(MediaItem? cur) async{
+  Future<void> _upLrc(MediaItem? cur) async {
     _resetLrcTick();
     if (cur == null) {
       lrc = null;
       return;
     }
-    final res=await _http.get<Map<String, dynamic>>(ExploreU.lycdetail,queryParameters: {
-      "musId":cur.id
-    });
+    final res = await _http.get<Map<String, dynamic>>(ExploreU.lycdetail,
+        queryParameters: {"musId": cur.id});
     if (res.data != null) {
-      final lyr = LyricEntity.fromJson(res.data!["data"]); // 你现有的歌词 Map：id -> lrc 文本
-      lrc = LrcParser.from(lyr.lyric?.lyric??"");
-      state=state.copyWith(lyric: lrc!.lines);
+      final lyr =
+          LyricEntity.fromJson(res.data!["data"]); // 你现有的歌词 Map：id -> lrc 文本
+      lrc = LrcParser.from(lyr.lyric?.lyric ?? "");
+      state = state.copyWith(lyric: lrc!.lines);
     } else {
       lrc = null;
     }
@@ -98,7 +75,6 @@ class MusSlice extends StateNotifier<MusicState> {
 
   @override
   void dispose() {
-    _mediaSub?.cancel();
     _posSub?.cancel();
     _bufSub?.cancel();
     _musPlayListen?.close();

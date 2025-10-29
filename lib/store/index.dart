@@ -33,7 +33,7 @@ part  'reducers/musPlaySlice.dart';
 final counterProvider = StateNotifierProvider<CounterSlice, CountState>((ref) => CounterSlice());
 final numProvider = StateNotifierProvider<NumSlice, NumState>((ref) => NumSlice());
 final settingProvider = StateNotifierProvider<SettingSlice, SettingState>((ref) => SettingSlice());
-final musProvider = StateNotifierProvider<MusSlice, MusicState>((ref) => MusSlice(ref));
+final musProvider = StateNotifierProvider<MusSlice, MusicState>((ref) => MusSlice());
 final musPlayProvider = StateNotifierProvider<MusPlaySlice, MusPlayState>((ref) {
  return MusPlaySlice(AudioHandlerService.instance.handler);
 });
