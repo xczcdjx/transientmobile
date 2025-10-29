@@ -33,6 +33,6 @@ class AudioHandlerService {
 
   void _audioBindSlice(ProviderContainer container) {
     final slice = container.read(musPlayProvider.notifier);
-    // _handler.bindSlice(slice);
+    _handler.bindMusPlaySlice(slice);
   }
 }

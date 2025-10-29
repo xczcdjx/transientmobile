@@ -75,6 +75,8 @@ class MusPlaySlice extends StateNotifier<MusPlayState> {
       // setRepeat(m);
     };
   }
+
+  MediaItem? get curMedia=>state.curSong;
   // ============== 列表管理 ==============
 
   /// 覆盖播放队列；可指定起始 index，并决定是否自动播放
@@ -169,7 +171,7 @@ class MusPlaySlice extends StateNotifier<MusPlayState> {
     if (state.playList.isEmpty) return;
     final i = index.clamp(0, state.playList.length - 1);
     state = state.copyWith(curIndex: i);
-    handler.switchMediaItem(state.curSong!);
+    handler.switchMediaItem();
     // await _playCurrent();
   }
 
@@ -182,7 +184,7 @@ class MusPlaySlice extends StateNotifier<MusPlayState> {
     print("nextIndex ${nextIndex}");
     state = state.copyWith(curIndex: nextIndex);
     print("cur ${state.curSong}");
-    handler.switchMediaItem(state.curSong!);
+    handler.switchMediaItem();
     // await _playCurrent();
   }
 
@@ -194,7 +196,7 @@ class MusPlaySlice extends StateNotifier<MusPlayState> {
     // print("prevIndex ${prevIndex}");
     state = state.copyWith(curIndex: prevIndex);
     // print("cur ${state.curSong}");
-    handler.switchMediaItem(state.curSong!);
+    handler.switchMediaItem();
     // await _playCurrent();
   }
 

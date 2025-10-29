@@ -11,6 +11,9 @@ class AudioPlayerHandlerImpl extends BaseAudioHandler
     implements AudioHandler {
   final AudioPlayer _audioPlayer = AudioPlayer()..setReleaseMode(ReleaseMode.stop);
 
+  // 绑定musPlaySlice
+  late MusPlaySlice musPlaySlice;
+
   // 外部（上层 Slice）可监听，播放完成触发
   Future<void> Function(PlayerState state)? onCompleted;
   Future<void> Function(bool isNext)? onSkipTo;
@@ -27,6 +30,11 @@ class AudioPlayerHandlerImpl extends BaseAudioHandler
   bool _isLoading = false;
   PlayerState state = PlayerState.disposed;
   Duration _duration = Duration.zero;
+
+  // 初始化监听
+  void bindMusPlaySlice(MusPlaySlice mus){
+    musPlaySlice=mus;
+  }
 
   AudioPlayerHandlerImpl() {
     _audioPlayer.onPlayerStateChanged.listen(
@@ -126,7 +134,6 @@ class AudioPlayerHandlerImpl extends BaseAudioHandler
   /// 仅设置当前 mediaItem，不播放。
   /// 可用于：预载歌词 / 展示封面 / 准备播放队列中的下一首。
   Future<void> setMediaItemOnly(MediaItem? item) async {
-    mi=item;
     // 更新当前 mediaItem（通知系统与 UI）
     mediaItem.add(item);
 
@@ -157,11 +164,9 @@ class AudioPlayerHandlerImpl extends BaseAudioHandler
     this.mediaItem.add(mediaItem);
     await play();
   }
-  MediaItem? mi;
 
   /// 直接播放一个媒体；由上层决定哪一个是“当前曲目”
-  Future<void> switchMediaItem(MediaItem item) async {
-    mi=item;
+  Future<void> switchMediaItem() async {
     await _audioPlayer.stop();
     await play();
   }
@@ -173,6 +178,7 @@ class AudioPlayerHandlerImpl extends BaseAudioHandler
   /// - 若完全无媒体，则不做事
   @override
   Future<void> play() async {
+    final mi=musPlaySlice.curMedia;
     print("url ${mi?.extras?["musUrl"]}");
     if (_audioPlayer.state == PlayerState.paused) {
       await _audioPlayer.resume();
@@ -220,13 +226,13 @@ class AudioPlayerHandlerImpl extends BaseAudioHandler
 
   // 仅更新通知栏/锁屏的演唱者标题（可选）
   Future<void> updateArtist(String lyric) async {
-    final cur = mediaItem.valueOrNull;
+    final cur = musPlaySlice.curMedia;
     if (cur == null) return;
     String title=cur.title;
-    /*if(cur.extras?["singers"]!=null){
+    if(cur.extras?["singers"]!=null){
       title='${cur.title} - ${getSingersName(cur.extras)}';
-      print("tit $title");
-    }*/
+      // print("tit $title");
+    }
     mediaItem.add(cur.copyWith(artist: lyric, title: title));
   }
 
