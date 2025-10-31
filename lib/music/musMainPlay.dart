@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:transientmobile/constants/testData.dart';
 import 'package:transientmobile/extensions/customColors.dart';
+import 'package:transientmobile/music/newlyricScreen.dart';
 import 'package:transientmobile/music/tableMusScreen.dart';
 
 import '../hooks/useStore.dart';
@@ -33,7 +34,11 @@ class MusMainPlay extends ConsumerStatefulWidget {
 class _MusMainPlayState extends ConsumerState<MusMainPlay> {
   final PageController _pageController = PageController(viewportFraction: 1);
   int _currentIndex = 0;
-
+  List<Widget> playViews =  [
+    MusScreen(),
+    // LyricScreen(lines: lines,),
+    NewLyricScreen()
+  ];
   @override
   void initState() {
     // TODO: implement initState
@@ -52,13 +57,9 @@ class _MusMainPlayState extends ConsumerState<MusMainPlay> {
   Widget build(BuildContext context) {
     final isTab = isTabletAll(context);
     final musPStore = useSelector(ref, musPlayProvider, (s) => s);
-    final musStore = useSelector(ref, musProvider, (s) => s);
-    final lines=musStore.lyric;
-    // print("list ${musPStore.curSong}");
-    List<Widget> playViews =  [
-      MusScreen(),
-      LyricScreen(lines: lines,),
-    ];
+    ref.watch(musProvider.select((s) => s.lyric));
+    final lines = ref.watch(musProvider.notifier).lines;
+
     // ✅ 用 ValueListenableBuilder 拿到可见状态，驱动显隐动画
     return ValueListenableBuilder<bool>(
       valueListenable: widget.visibleListenable,

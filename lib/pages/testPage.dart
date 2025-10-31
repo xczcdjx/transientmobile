@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:transientmobile/test/lyricPluginTest.dart';
 
 import '../utils/getDevice.dart';
 
@@ -47,12 +48,7 @@ class TestPageState extends State<TestPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Simple Player'),
-      ),
-      body: PlayerWidget(player: player),
-    );
+    return LyricPluginTest();
   }
 }
 

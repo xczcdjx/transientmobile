@@ -1,20 +1,18 @@
-import 'package:audio_service/audio_service.dart';
-
 class MusicState {
   final Duration position;
   final Duration bufferedPosition;
-  List<Map<String,dynamic>> lyric;
+  String lyric;
 
   MusicState({
     this.position = Duration.zero,
     this.bufferedPosition = Duration.zero,
-    this.lyric=const []
+    this.lyric=""
   });
 
   MusicState copyWith({
     Duration? position,
     Duration? bufferedPosition,
-    List<Map<String,dynamic>>? lyric
+    String? lyric
   }) {
     return MusicState(
       position: position ?? this.position,

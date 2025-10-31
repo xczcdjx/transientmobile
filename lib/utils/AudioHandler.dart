@@ -19,6 +19,10 @@ class AudioPlayerHandlerImpl extends BaseAudioHandler
   Future<void> Function(bool isNext)? onSkipTo;
   Future<void> Function(AudioServiceRepeatMode mode)? onRepeatMode;
 
+  // AudioPlayerHandlerImpl
+  /*Stream<Duration> get positionStream =>
+      _audioPlayer.onPositionChanged.distinct();*/
+
   // 公开：进度 / 音量 / 速度
   @override
   final BehaviorSubject<double> volume = BehaviorSubject.seeded(1.0);

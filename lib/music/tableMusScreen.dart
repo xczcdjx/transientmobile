@@ -27,7 +27,8 @@ class TableMusScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final musStore = useSelector(ref, musProvider, (s) => s);
+    ref.watch(musProvider.select((s) => s.lyric));
+    final lines = ref.watch(musProvider.notifier).lines;
     final musPlayStore = useSelector(ref, musPlayProvider, (s) => s);
     return SafeArea(
       child: Column(

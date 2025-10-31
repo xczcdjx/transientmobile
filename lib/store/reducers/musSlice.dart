@@ -30,8 +30,16 @@ class MusSlice extends StateNotifier<MusicState> {
   StreamSubscription<Duration>? _bufSub;
   ProviderSubscription<MusPlayState>? _musPlayListen;
 
+  List<Map<String,dynamic>> get lines {
+    if(lrc==null) {
+      return [];
+    } else {
+      return lrc!.lines;
+    }
+  }
   // === 供 position 流驱动 ===
   void updatePosition(Duration pos) {
+    // print("pos ${pos.inMilliseconds}");
     state = state.copyWith(position: pos);
 
     // 节流：仅每0.5秒更新一次歌词行 -> 同步到通知栏（updateArtist）
@@ -62,8 +70,9 @@ class MusSlice extends StateNotifier<MusicState> {
     if (res.data != null) {
       final lyr =
           LyricEntity.fromJson(res.data!["data"]); // 你现有的歌词 Map：id -> lrc 文本
-      lrc = LrcParser.from(lyr.lyric?.lyric ?? "");
-      state = state.copyWith(lyric: lrc!.lines);
+      final lyricData=lyr.lyric?.lyric ?? "";
+      lrc = LrcParser.from(lyricData);
+      state = state.copyWith(lyric: lyricData);
     } else {
       lrc = null;
     }
