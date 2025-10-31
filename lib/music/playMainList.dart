@@ -4,12 +4,20 @@ import 'package:transientmobile/extensions/customColors.dart';
 
 import '../hooks/useStore.dart';
 import '../store/index.dart';
-
-class PlayMainList extends ConsumerWidget {
+class PlayMainList extends ConsumerStatefulWidget{
   const PlayMainList({super.key});
-
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState createState() =>_PlayMainList();
+}
+class _PlayMainList extends ConsumerState<PlayMainList> {
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    print(111);
+  }
+  @override
+  Widget build(BuildContext context) {
     final list = useSelector(ref, musPlayProvider, (s) => s.playList);
     final curIndex = useSelector(ref, musPlayProvider, (s) => s.curIndex);
     final dispatch=useDispatch(ref, musPlayProvider);

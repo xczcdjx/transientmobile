@@ -311,7 +311,7 @@ class LyricScreenState extends ConsumerState<LyricScreen>
         const SizedBox(height: 8.0),
         // Playback controls
         ComControlBtn(_audioHandler,openPlayList: (){
-          GlobalBottomSheet.show(context: context, child: PlayMainList());
+          GlobalBottomSheet.show(context: context);
         },),
         const SizedBox(height: 15.0),
       ];

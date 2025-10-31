@@ -108,7 +108,7 @@ class MusScreen extends ConsumerWidget {
               ComControlBtn(
                 _audioHandler,
                 openPlayList: () {
-                  GlobalBottomSheet.show(context: context, child: PlayMainList());
+                  GlobalBottomSheet.show(context: context);
                 },
               ),
               // Repeat/shuffle controls
