@@ -7,6 +7,7 @@ import 'package:transientmobile/components/images/rotatingAlbumCover.dart';
 import 'package:transientmobile/components/music/comPlaySeek.dart';
 import 'package:transientmobile/extensions/customColors.dart';
 import 'package:transientmobile/music/lyricScreen.dart';
+import 'package:transientmobile/music/newlyricScreen.dart';
 import 'package:transientmobile/music/playMainList.dart';
 import 'package:transientmobile/utils/NetImage.dart';
 import '../components/music/comControl.dart';
@@ -56,10 +57,12 @@ class TableMusScreen extends ConsumerWidget {
                 ),
                 Flexible(
                   flex: 1,
-                  child: LyricScreen(
+                  child:
+                  LyricScreen(
                     hideControl: true,
                     lines: lines,
                   ),
+                  // NewLyricScreen(hideControl: true,)
                 ),
               ],
             ),

@@ -1,10 +1,12 @@
 import 'dart:async';
 
 import 'package:audio_service/audio_service.dart';
+import 'package:flutter_lyric/lyric_ui/lyric_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:transientmobile/components/music/comPlaySeek.dart';
 import 'package:transientmobile/extensions/customColors.dart';
+import 'package:transientmobile/music/newlyricScreen.dart';
 import 'package:transientmobile/music/playMainList.dart';
 import 'package:transientmobile/service/play_list_controller.dart';
 import 'package:transientmobile/utils/NetImage.dart';
@@ -24,7 +26,7 @@ class MusScreen extends ConsumerWidget {
   final _audioHandler = AudioHandlerService.instance.handler;
 
   @override
-  Widget build(BuildContext context,WidgetRef ref) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final musPStore = useSelector(ref, musPlayProvider, (s) => s);
     return SafeArea(
       child: Column(
@@ -42,7 +44,7 @@ class MusScreen extends ConsumerWidget {
                   children: [
                     if (mediaItem.artUri != null)
                       SizedBox(
-                        height: MediaQuery.of(context).size.width-20,
+                        height: MediaQuery.of(context).size.width - 20,
                         // height: 150,
                         child: Padding(
                           padding: const EdgeInsets.all(8.0),
@@ -74,7 +76,7 @@ class MusScreen extends ConsumerWidget {
                                   overflow: TextOverflow.ellipsis,
                                   maxLines: 1,
                                 ),
-                                Text(mediaItem.artist??'',
+                                Text(mediaItem.artist ?? '',
                                     overflow: TextOverflow.ellipsis,
                                     maxLines: 1),
                               ],
@@ -98,6 +100,22 @@ class MusScreen extends ConsumerWidget {
                 );
               },
             ),
+          ),
+          // short Lyric
+          SizedBox(
+            child: NewLyricScreen(
+              lycTextAlign: LyricAlign.CENTER,
+              size: Size(double.infinity, 60),
+              hideControl: true,
+              hideSkipPlay: true,
+              defaultSize: 18,
+              lineGap: 15,
+              defaultExtSize: 13,
+            ),
+            height: 60,
+          ),
+          SizedBox(
+            height: 60,
           ),
           // A seek bar.
           Column(

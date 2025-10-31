@@ -240,7 +240,8 @@ class _LyricsScrollerState extends State<LyricsScroller> {
                     if (_userScrolling && isHover && line["time"] != null)
                       Positioned(
                         right: 5,
-                        child: Container(
+                        child:
+                        Container(
                           padding: const EdgeInsets.symmetric(
                               horizontal: 5, vertical: 2),
                           decoration: BoxDecoration(

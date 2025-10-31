@@ -16,10 +16,28 @@ import '../models/store/mus_play_state.dart';
 import '../service/audioHandlerService.dart';
 import '../service/play_list_controller.dart';
 import '../store/index.dart';
+
 class NewLyricScreen extends ConsumerStatefulWidget {
   bool hideControl;
+  bool hideSkipPlay;
+  LyricAlign lycTextAlign;
+  Size? size;
+  double defaultSize;
+  double defaultExtSize;
+  double lineGap;
+  double bias;
 
-  NewLyricScreen({super.key, this.hideControl = false});
+  NewLyricScreen(
+      {super.key,
+      this.hideControl = false,
+      this.hideSkipPlay = false,
+      this.lycTextAlign = LyricAlign.LEFT,
+      this.size,
+      this.defaultSize = 22,
+      this.defaultExtSize = 15,
+      this.lineGap = 35,
+      this.bias = 0.5,
+      });
 
   @override
   ConsumerState<NewLyricScreen> createState() => NewLyricScreenState();
@@ -31,30 +49,36 @@ class NewLyricScreenState extends ConsumerState<NewLyricScreen>
   bool get wantKeepAlive => true; // ✅ 保持页面状态
   final _audioHandler = AudioHandlerService.instance.handler;
   late final ProviderSubscription<String?> _lyricSub;
-  var lyricUI = UINetease(lyricAlign: LyricAlign.LEFT,defaultSize: 20);
-  var lyricModel = LyricsModelBuilder.create()
-      .bindLyricToMain("")
-      .getModel();
+  late UINetease lyricUI; // ✅ 用 late ，不要在这里初始化
+  var lyricModel = LyricsModelBuilder.create().bindLyricToMain("").getModel();
+
   // List<Map<String, dynamic>> demo = [];
 
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
+    lyricUI = UINetease(
+        lyricAlign: widget.lycTextAlign,
+        defaultSize: widget.defaultSize,
+        lineGap: widget.lineGap,
+        bias: widget.bias,
+        defaultExtSize: widget.defaultExtSize,
+    );
     _lyricSub = ref.listenManual<String?>(
       musProvider.select((s) => s.lyric),
-          (prev, next) {
+      (prev, next) {
         if (next == null || next == prev || !mounted) return;
         setState(() {
-          lyricModel = LyricsModelBuilder.create()
-              .bindLyricToMain(next)
-              .getModel();
+          lyricModel =
+              LyricsModelBuilder.create().bindLyricToMain(next).getModel();
         });
       },
     );
     // 如需拿到当前值初始化一次：
     final current = ref.read(musProvider.select((s) => s.lyric)) ?? "";
-    lyricModel = LyricsModelBuilder.create().bindLyricToMain(current).getModel();
+    lyricModel =
+        LyricsModelBuilder.create().bindLyricToMain(current).getModel();
   }
 
   List<Widget> _renderControl() {
@@ -65,9 +89,12 @@ class NewLyricScreenState extends ConsumerState<NewLyricScreen>
         ComMusSeek(audioHandler: _audioHandler),
         const SizedBox(height: 8.0),
         // Playback controls
-        ComControlBtn(_audioHandler,openPlayList: (){
-          GlobalBottomSheet.show(context: context);
-        },),
+        ComControlBtn(
+          _audioHandler,
+          openPlayList: () {
+            GlobalBottomSheet.show(context: context);
+          },
+        ),
         const SizedBox(height: 15.0),
       ];
     }
@@ -75,11 +102,18 @@ class NewLyricScreenState extends ConsumerState<NewLyricScreen>
   }
 
   @override
+  void dispose() {
+    _lyricSub.close();
+    // TODO: implement dispose
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     super.build(context);
     final musPStore = useSelector(ref, musPlayProvider, (s) => s);
     final musStore = useSelector(ref, musProvider, (s) => s);
-    final currentPosition=musStore.position.inMilliseconds;
+    final currentPosition = musStore.position.inMilliseconds;
     // print(currentPosition);
     return Column(
       children: [
@@ -90,42 +124,79 @@ class NewLyricScreenState extends ConsumerState<NewLyricScreen>
             position: currentPosition,
             lyricUi: lyricUI,
             playing: musPStore.isPlaying,
-            // size: Size(double.infinity, MediaQuery.of(context).size.height / 2),
+            size: widget.size,
             emptyBuilder: () => Center(
-              child: Text(
-                "No lyrics",
-                style: TextStyle(color: context.fc.withOpacity(0.75), fontSize: 16),
-              ),
+              child: widget.hideSkipPlay
+                  ? SizedBox()
+                  : Text(
+                      "No lyrics",
+                      style: TextStyle(
+                          color: context.fc.withOpacity(0.75), fontSize: 16),
+                    ),
             ),
             selectLineBuilder: (progress, confirm) {
-              return Row(
-                children: [
-                  IconButton(
-                      onPressed: () {
+              return widget.hideSkipPlay
+                  ? SizedBox()
+                  : GestureDetector(
+                      onTap: () {
                         confirm.call();
-                       /* setState(() {
-                          audioPlayer?.seek(Duration(milliseconds: progress));
-                        });*/
+                        _audioHandler.seek(Duration(milliseconds: progress));
                       },
-                      icon: Icon(Icons.play_arrow, color: Colors.green)),
-                  Expanded(
-                    child: Container(
-                      decoration: BoxDecoration(color: Colors.green),
-                      height: 1,
-                      width: double.infinity,
-                    ),
-                  ),
-                  Text(
-                    progress.toString(),
-                    style: TextStyle(color: Colors.green),
-                  )
-                ],
-              );
+                      child: Padding(
+                        padding: const EdgeInsets.only(right: 2.5),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            Expanded(
+                              child: Container(
+                                decoration: BoxDecoration(
+                                    color: context.fc.withOpacity(0.3)),
+                                height: 1,
+                                width: double.infinity,
+                              ),
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 5, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: context.lineColor,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    Icons.play_arrow,
+                                    // color: Colors.white,
+                                    size: 13,
+                                  ),
+                                  SizedBox(
+                                    width: 3,
+                                  ),
+                                  Text(
+                                    _formatSeconds(progress / 1000),
+                                    style: const TextStyle(
+                                        // color: Colors.white,
+                                        fontSize: 12),
+                                  ),
+                                ],
+                              ),
+                            )
+                          ],
+                        ),
+                      ),
+                    );
             },
           ),
         ),
         ..._renderControl()
       ],
     );
+  }
+
+  String _formatSeconds(double seconds) {
+    final d = Duration(seconds: seconds.floor());
+    final mm = d.inMinutes.remainder(60).toString().padLeft(2, '0');
+    final ss = d.inSeconds.remainder(60).toString().padLeft(2, '0');
+    return '$mm:$ss';
   }
 }
