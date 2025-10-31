@@ -34,11 +34,11 @@ class MusMainPlay extends ConsumerStatefulWidget {
 class _MusMainPlayState extends ConsumerState<MusMainPlay> {
   final PageController _pageController = PageController(viewportFraction: 1);
   int _currentIndex = 0;
-/*  List<Widget> playViews =  [
+  List<Widget> playViews =  [
     MusScreen(),
     // LyricScreen(lines: lines,),
     NewLyricScreen()
-  ];*/
+  ];
   @override
   void initState() {
     // TODO: implement initState
@@ -59,10 +59,10 @@ class _MusMainPlayState extends ConsumerState<MusMainPlay> {
     final musPStore = useSelector(ref, musPlayProvider, (s) => s);
     ref.watch(musProvider.select((s) => s.lyric));
     final lines = ref.watch(musProvider.notifier).lines;
-    List<Widget> playViews =  [
+/*    List<Widget> playViews =  [
       MusScreen(),
       LyricScreen(lines: lines,),
-    ];
+    ];*/
     // ✅ 用 ValueListenableBuilder 拿到可见状态，驱动显隐动画
     return ValueListenableBuilder<bool>(
       valueListenable: widget.visibleListenable,

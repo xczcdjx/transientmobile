@@ -58,11 +58,11 @@ class TableMusScreen extends ConsumerWidget {
                 Flexible(
                   flex: 1,
                   child:
-                  LyricScreen(
+                  /*LyricScreen(
                     hideControl: true,
                     lines: lines,
-                  ),
-                  // NewLyricScreen(hideControl: true,)
+                  ),*/
+                  NewLyricScreen(hideControl: true,)
                 ),
               ],
             ),
