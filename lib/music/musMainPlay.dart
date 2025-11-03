@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:transientmobile/constants/testData.dart';
 import 'package:transientmobile/extensions/customColors.dart';
+import 'package:transientmobile/music/musLyricScreen.dart';
 import 'package:transientmobile/music/newlyricScreen.dart';
 import 'package:transientmobile/music/tableMusScreen.dart';
 
@@ -50,11 +51,11 @@ class _MusMainPlayState extends ConsumerState<MusMainPlay> {
     playViews = [
       MusScreen(
         onImageTap: () {
-          print("1111$_currentIndex");
           onSkip(1,1);
         },
       ),
-      NewLyricScreen()
+      MusLyricScreen(),
+      // MusLyricScreen()
     ];
     // ✅ 监听 visibleListenable 的变化
     widget.visibleListenable.addListener(_onVisibleChanged);

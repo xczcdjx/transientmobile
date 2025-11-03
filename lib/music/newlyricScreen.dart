@@ -1,24 +1,17 @@
-import 'dart:async';
-
 import 'package:flutter_lyric/lyric_ui/ui_netease.dart';
 import 'package:flutter_lyric/lyrics_model_builder.dart';
 import 'package:flutter_lyric/lyrics_reader.dart';
 import 'package:flutter_lyric/lyrics_reader_widget.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/material.dart';
-import 'package:transientmobile/constants/testData.dart';
 import 'package:transientmobile/extensions/customColors.dart';
 
-import '../components/music/comControl.dart';
-import '../components/music/comPlaySeek.dart';
 import '../hooks/useStore.dart';
-import '../models/store/mus_play_state.dart';
 import '../service/audioHandlerService.dart';
-import '../service/play_list_controller.dart';
 import '../store/index.dart';
+import '../utils/musFun.dart';
 
 class NewLyricScreen extends ConsumerStatefulWidget {
-  bool hideControl;
   bool hideSkipPlay;
   LyricAlign lycTextAlign;
   Size? size;
@@ -29,7 +22,6 @@ class NewLyricScreen extends ConsumerStatefulWidget {
 
   NewLyricScreen(
       {super.key,
-      this.hideControl = false,
       this.hideSkipPlay = false,
       this.lycTextAlign = LyricAlign.LEFT,
       this.size,
@@ -43,10 +35,7 @@ class NewLyricScreen extends ConsumerStatefulWidget {
   ConsumerState<NewLyricScreen> createState() => NewLyricScreenState();
 }
 
-class NewLyricScreenState extends ConsumerState<NewLyricScreen>
-    with AutomaticKeepAliveClientMixin {
-  @override
-  bool get wantKeepAlive => true; // ✅ 保持页面状态
+class NewLyricScreenState extends ConsumerState<NewLyricScreen> {
   final _audioHandler = AudioHandlerService.instance.handler;
   late final ProviderSubscription<String?> _lyricSub;
   late UINetease lyricUI; // ✅ 用 late ，不要在这里初始化
@@ -81,26 +70,6 @@ class NewLyricScreenState extends ConsumerState<NewLyricScreen>
         LyricsModelBuilder.create().bindLyricToMain(current).getModel();
   }
 
-  List<Widget> _renderControl() {
-    if (!widget.hideControl) {
-      return [
-        // A seek bar.
-        const SizedBox(height: 18.0),
-        ComMusSeek(audioHandler: _audioHandler),
-        const SizedBox(height: 8.0),
-        // Playback controls
-        ComControlBtn(
-          _audioHandler,
-          openPlayList: () {
-            GlobalBottomSheet.show(context: context);
-          },
-        ),
-        const SizedBox(height: 15.0),
-      ];
-    }
-    return [];
-  }
-
   @override
   void dispose() {
     _lyricSub.close();
@@ -110,7 +79,6 @@ class NewLyricScreenState extends ConsumerState<NewLyricScreen>
 
   @override
   Widget build(BuildContext context) {
-    super.build(context);
     final musPStore = useSelector(ref, musPlayProvider, (s) => s);
     final musStore = useSelector(ref, musProvider, (s) => s);
     final currentPosition = musStore.position.inMilliseconds;
@@ -173,7 +141,7 @@ class NewLyricScreenState extends ConsumerState<NewLyricScreen>
                                     width: 3,
                                   ),
                                   Text(
-                                    _formatSeconds(progress / 1000),
+                                    formatSeconds(progress / 1000),
                                     style: const TextStyle(
                                         // color: Colors.white,
                                         fontSize: 12),
@@ -188,15 +156,7 @@ class NewLyricScreenState extends ConsumerState<NewLyricScreen>
             },
           ),
         ),
-        ..._renderControl()
       ],
     );
-  }
-
-  String _formatSeconds(double seconds) {
-    final d = Duration(seconds: seconds.floor());
-    final mm = d.inMinutes.remainder(60).toString().padLeft(2, '0');
-    final ss = d.inSeconds.remainder(60).toString().padLeft(2, '0');
-    return '$mm:$ss';
   }
 }

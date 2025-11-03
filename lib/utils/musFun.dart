@@ -51,3 +51,10 @@ class LrcParser {
   /// 获取完整的歌词列表
   List<Map<String, dynamic>> get lines => _lines;
 }
+// 格式化展示时间
+String formatSeconds(double seconds) {
+  final d = Duration(seconds: seconds.floor());
+  final mm = d.inMinutes.remainder(60).toString().padLeft(2, '0');
+  final ss = d.inSeconds.remainder(60).toString().padLeft(2, '0');
+  return '$mm:$ss';
+}

@@ -46,7 +46,8 @@ class _PlayMainList extends ConsumerState<PlayMainList> {
               color: isPlaying ? Theme.of(context).colorScheme.primary.withOpacity(0.08) : null,
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Row(
+            child:
+            Row(
               children: [
                 // 封面
                 ClipRRect(

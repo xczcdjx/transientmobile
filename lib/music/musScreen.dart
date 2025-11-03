@@ -100,7 +100,6 @@ class MusScreen extends ConsumerWidget {
                       child: NewLyricScreen(
                         lycTextAlign: LyricAlign.CENTER,
                         size: Size(double.infinity, 60),
-                        hideControl: true,
                         hideSkipPlay: true,
                         defaultSize: 18,
                         lineGap: 15,

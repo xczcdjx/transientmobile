@@ -62,7 +62,7 @@ class TableMusScreen extends ConsumerWidget {
                     hideControl: true,
                     lines: lines,
                   ),*/
-                  NewLyricScreen(hideControl: true,)
+                  NewLyricScreen()
                 ),
               ],
             ),
