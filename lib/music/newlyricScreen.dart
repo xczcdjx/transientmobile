@@ -20,16 +20,16 @@ class NewLyricScreen extends ConsumerStatefulWidget {
   double lineGap;
   double bias;
 
-  NewLyricScreen(
-      {super.key,
-      this.hideSkipPlay = false,
-      this.lycTextAlign = LyricAlign.LEFT,
-      this.size,
-      this.defaultSize = 22,
-      this.defaultExtSize = 15,
-      this.lineGap = 35,
-      this.bias = 0.5,
-      });
+  NewLyricScreen({
+    super.key,
+    this.hideSkipPlay = false,
+    this.lycTextAlign = LyricAlign.LEFT,
+    this.size,
+    this.defaultSize = 22,
+    this.defaultExtSize = 15,
+    this.lineGap = 35,
+    this.bias = 0.5,
+  });
 
   @override
   ConsumerState<NewLyricScreen> createState() => NewLyricScreenState();
@@ -48,11 +48,11 @@ class NewLyricScreenState extends ConsumerState<NewLyricScreen> {
     // TODO: implement initState
     super.initState();
     lyricUI = UINetease(
-        lyricAlign: widget.lycTextAlign,
-        defaultSize: widget.defaultSize,
-        lineGap: widget.lineGap,
-        bias: widget.bias,
-        defaultExtSize: widget.defaultExtSize,
+      lyricAlign: widget.lycTextAlign,
+      defaultSize: widget.defaultSize,
+      lineGap: widget.lineGap,
+      bias: widget.bias,
+      defaultExtSize: widget.defaultExtSize,
     );
     _lyricSub = ref.listenManual<String?>(
       musProvider.select((s) => s.lyric),

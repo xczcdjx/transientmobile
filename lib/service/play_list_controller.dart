@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:transientmobile/extensions/customColors.dart';
 
 import '../music/playMainList.dart';
 class GlobalBottomSheet {
@@ -9,7 +10,7 @@ class GlobalBottomSheet {
   static void show({
     required BuildContext context,
     Widget? child, // 可自定义内容，默认用 PlayMainList()
-    double maxHeight = 520,
+    double maxHeight = 620,
     BorderRadiusGeometry radius =
     const BorderRadius.vertical(top: Radius.circular(16)),
     Color barrierColor = Colors.black54,
@@ -169,7 +170,7 @@ class _BottomSheetHostState extends State<_BottomSheetHost>
                             onVerticalDragEnd: _onVerticalDragEnd,
                             child: Container(
                               decoration: BoxDecoration(
-                                color: Theme.of(context).cardColor,
+                                color: context.bg.withOpacity(0.8),
                                 borderRadius: widget.radius,
                               ),
                               child: SafeArea(
