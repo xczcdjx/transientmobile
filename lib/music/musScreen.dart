@@ -3,26 +3,20 @@ import 'dart:async';
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter_lyric/lyric_ui/lyric_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:transientmobile/components/music/comPlaySeek.dart';
-import 'package:transientmobile/extensions/customColors.dart';
 import 'package:transientmobile/music/newlyricScreen.dart';
-import 'package:transientmobile/music/playMainList.dart';
 import 'package:transientmobile/service/play_list_controller.dart';
 import 'package:transientmobile/utils/NetImage.dart';
 import '../components/music/comControl.dart';
 import '../hooks/useStore.dart';
 import '../service/audioHandlerService.dart';
 import '../store/index.dart';
-import '../utils/AudioHandler.dart';
-import 'common.dart';
 import 'package:flutter/material.dart';
-import 'package:rxdart/rxdart.dart';
 
 /// The main screen.
 class MusScreen extends ConsumerWidget {
-  MusScreen({super.key});
-
+  MusScreen({super.key,this.onImageTap});
+  VoidCallback? onImageTap;
   final _audioHandler = AudioHandlerService.instance.handler;
 
   @override
@@ -43,17 +37,22 @@ class MusScreen extends ConsumerWidget {
                   mainAxisAlignment: MainAxisAlignment.start,
                   children: [
                     if (mediaItem.artUri != null)
-                      SizedBox(
-                        height: MediaQuery.of(context).size.width - 20,
-                        // height: 150,
-                        child: Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Center(
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(10),
-                              child: NetImage(
-                                url: mediaItem.artUri.toString(),
-                                cache: true,
+                      GestureDetector(
+                        onTap: (){
+                          onImageTap?.call();
+                        },
+                        child: SizedBox(
+                          height: MediaQuery.of(context).size.width - 20,
+                          // height: 150,
+                          child: Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Center(
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(10),
+                                child: NetImage(
+                                  url: mediaItem.artUri.toString(),
+                                  cache: true,
+                                ),
                               ),
                             ),
                           ),
@@ -95,6 +94,19 @@ class MusScreen extends ConsumerWidget {
                                   )))
                         ],
                       ),
+                    ),
+                    SizedBox(height: 20,),
+                    SizedBox(
+                      child: NewLyricScreen(
+                        lycTextAlign: LyricAlign.CENTER,
+                        size: Size(double.infinity, 60),
+                        hideControl: true,
+                        hideSkipPlay: true,
+                        defaultSize: 18,
+                        lineGap: 15,
+                        defaultExtSize: 13,
+                      ),
+                      height: 60,
                     )
                   ],
                 );
@@ -102,21 +114,6 @@ class MusScreen extends ConsumerWidget {
             ),
           ),
           // short Lyric
-          SizedBox(
-            child: NewLyricScreen(
-              lycTextAlign: LyricAlign.CENTER,
-              size: Size(double.infinity, 60),
-              hideControl: true,
-              hideSkipPlay: true,
-              defaultSize: 18,
-              lineGap: 15,
-              defaultExtSize: 13,
-            ),
-            height: 60,
-          ),
-          SizedBox(
-            height: 60,
-          ),
           // A seek bar.
           Column(
             children: [

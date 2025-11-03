@@ -34,25 +34,53 @@ class MusMainPlay extends ConsumerStatefulWidget {
 class _MusMainPlayState extends ConsumerState<MusMainPlay> {
   final PageController _pageController = PageController(viewportFraction: 1);
   int _currentIndex = 0;
-  List<Widget> playViews =  [
-    MusScreen(),
-    // LyricScreen(lines: lines,),
-    NewLyricScreen()
-  ];
+  late List<Widget> playViews;
+  void onSkip([int index = 1,int milliseconds=200]) {
+    _pageController.animateToPage(
+      index,
+      duration: Duration(milliseconds:milliseconds),
+      curve: Curves.easeInOut,
+    );
+  }
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
-    print("1111");
+    // print("1111");
+    playViews = [
+      MusScreen(
+        onImageTap: () {
+          print("1111$_currentIndex");
+          onSkip(1,1);
+        },
+      ),
+      NewLyricScreen()
+    ];
+    // ✅ 监听 visibleListenable 的变化
+    widget.visibleListenable.addListener(_onVisibleChanged);
   }
-  void onSkip([int index = 1]) {
-    _pageController.animateToPage(
-      index,
-      duration: const Duration(milliseconds: 200),
-      curve: Curves.easeInOut,
-    );
+  void _onVisibleChanged() {
+    if (widget.visibleListenable.value == false) {
+      // 当关闭时，自动切回第 0 页
+     onSkip(0,1);
+    }
   }
-
+/*  @override
+  void didUpdateWidget(covariant MusMainPlay oldWidget) {
+    // TODO: implement didUpdateWidget
+    super.didUpdateWidget(oldWidget);
+    // ✅ 如果父组件替换了新的 ValueListenable，需要重新监听
+    if (oldWidget.visibleListenable != widget.visibleListenable) {
+      oldWidget.visibleListenable.removeListener(_onVisibleChanged);
+      widget.visibleListenable.addListener(_onVisibleChanged);
+    }
+  }*/
+  @override
+  void dispose() {
+    widget.visibleListenable.removeListener(_onVisibleChanged);
+    _pageController.dispose();
+    super.dispose();
+  }
   @override
   Widget build(BuildContext context) {
     final isTab = isTabletAll(context);
@@ -91,8 +119,12 @@ class _MusMainPlayState extends ConsumerState<MusMainPlay> {
                       url: musPStore.curSong?.artUri?.toString() ?? "",
                       fit: BoxFit.cover,
                       cache: true,
-                      loadingWidget: (ctx,url)=>Container(color: context.bg,),
-                      errorWidget: (ctx,url,error)=>Container(color: context.bg,),
+                      loadingWidget: (ctx, url) => Container(
+                        color: context.bg,
+                      ),
+                      errorWidget: (ctx, url, error) => Container(
+                        color: context.bg,
+                      ),
                     ),
                   ),
                   // 渐变遮罩
@@ -109,7 +141,6 @@ class _MusMainPlayState extends ConsumerState<MusMainPlay> {
                     ),
                   ),
 
-
                   // ✅ 底部抽屉位移动画（由 visible 控制）
                   AnimatedSlide(
                     duration: dur,
@@ -121,51 +152,55 @@ class _MusMainPlayState extends ConsumerState<MusMainPlay> {
                         onTap: () {}, // 阻止事件穿透到背景
                         child: Scaffold(
                           backgroundColor: Colors.transparent,
-                          appBar:
-                          AppBar(
+                          appBar: AppBar(
                             automaticallyImplyLeading: false,
                             backgroundColor: Colors.transparent,
                             elevation: 0,
-                            scrolledUnderElevation: 0,          // 关键：滚动下不抬起
-                            surfaceTintColor: Colors.transparent, // 关键：取消着色
-                            shadowColor: Colors.transparent,      // 保险：不要阴影
+                            scrolledUnderElevation: 0,
+                            // 关键：滚动下不抬起
+                            surfaceTintColor: Colors.transparent,
+                            // 关键：取消着色
+                            shadowColor: Colors.transparent,
+                            // 保险：不要阴影
                             title: isTab
-                                ? Center(child: Text(musPStore.curSong?.title??""))
+                                ? Center(
+                                    child: Text(musPStore.curSong?.title ?? ""))
                                 : Padding(
-                              padding:
-                              const EdgeInsets.symmetric(vertical: 12),
-                              child: Row(
-                                mainAxisAlignment:
-                                MainAxisAlignment.center,
-                                children: List.generate(
-                                  playViews.length,
-                                      (index) {
-                                    final isActive =
-                                        index == _currentIndex;
-                                    return GestureDetector(
-                                      onTap: () => onSkip(index),
-                                      child: AnimatedContainer(
-                                        duration:
-                                        const Duration(milliseconds: 300),
-                                        margin:
-                                        const EdgeInsets.symmetric(horizontal: 4),
-                                        height: 8,
-                                        width: isActive ? 20 : 8,
-                                        decoration: BoxDecoration(
-                                          color: isActive
-                                              ? Theme.of(context)
-                                              .colorScheme
-                                              .primary
-                                              : Colors.grey.shade400,
-                                          borderRadius:
-                                          BorderRadius.circular(4),
-                                        ),
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 12),
+                                    child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: List.generate(
+                                        playViews.length,
+                                        (index) {
+                                          final isActive =
+                                              index == _currentIndex;
+                                          return GestureDetector(
+                                            onTap: () => onSkip(index),
+                                            child: AnimatedContainer(
+                                              duration: const Duration(
+                                                  milliseconds: 300),
+                                              margin:
+                                                  const EdgeInsets.symmetric(
+                                                      horizontal: 4),
+                                              height: 8,
+                                              width: isActive ? 20 : 8,
+                                              decoration: BoxDecoration(
+                                                color: isActive
+                                                    ? Theme.of(context)
+                                                        .colorScheme
+                                                        .primary
+                                                    : Colors.grey.shade400,
+                                                borderRadius:
+                                                    BorderRadius.circular(4),
+                                              ),
+                                            ),
+                                          );
+                                        },
                                       ),
-                                    );
-                                  },
-                                ),
-                              ),
-                            ),
+                                    ),
+                                  ),
                             leading: IconButton(
                               onPressed: widget.onClose,
                               icon: const Icon(Icons.keyboard_arrow_down),
@@ -180,22 +215,24 @@ class _MusMainPlayState extends ConsumerState<MusMainPlay> {
                             ],
                           ),
                           body: isTab
-                              ? TableMusScreen(lines: lines,)
+                              ? TableMusScreen(
+                                  lines: lines,
+                                )
                               : Column(
-                            children: [
-                              Expanded(
-                                child: PageView.builder(
-                                  controller: _pageController,
-                                  itemCount: playViews.length,
-                                  onPageChanged: (index) {
-                                    setState(() => _currentIndex = index);
-                                  },
-                                  itemBuilder: (context, index) =>
-                                  playViews[index],
+                                  children: [
+                                    Expanded(
+                                      child: PageView.builder(
+                                        controller: _pageController,
+                                        itemCount: playViews.length,
+                                        onPageChanged: (index) {
+                                          setState(() => _currentIndex = index);
+                                        },
+                                        itemBuilder: (context, index) =>
+                                            playViews[index],
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                              ),
-                            ],
-                          ),
                         ),
                       ),
                     ),
