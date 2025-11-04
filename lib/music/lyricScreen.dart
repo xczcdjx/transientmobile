@@ -278,7 +278,7 @@ class _LyricsScrollerState extends State<LyricsScroller> {
     );
   }
 }
-
+// 旧版歌词组件
 class LyricScreen extends ConsumerStatefulWidget {
   bool hideControl;
   List<Map<String,dynamic>> lines;

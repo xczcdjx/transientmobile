@@ -18,18 +18,17 @@ import '../store/index.dart';
 import '../utils/AudioHandler.dart';
 import 'package:flutter/material.dart';
 
-/// The main screen.
+//  桌面版音词处理
 class TableMusScreen extends ConsumerWidget {
-  List<Map<String, dynamic>> lines;
 
-  TableMusScreen({super.key, this.lines = const []});
+  TableMusScreen({super.key});
 
   final _audioHandler = AudioHandlerService.instance.handler;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     ref.watch(musProvider.select((s) => s.lyric));
-    final lines = ref.watch(musProvider.notifier).lines;
+    // final lines = ref.watch(musProvider.notifier).lines;
     final musPlayStore = useSelector(ref, musPlayProvider, (s) => s);
     return SafeArea(
       child: Column(

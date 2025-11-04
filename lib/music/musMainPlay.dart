@@ -2,21 +2,16 @@ import 'dart:ui';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:transientmobile/constants/testData.dart';
 import 'package:transientmobile/extensions/customColors.dart';
 import 'package:transientmobile/music/musLyricScreen.dart';
-import 'package:transientmobile/music/newlyricScreen.dart';
 import 'package:transientmobile/music/tableMusScreen.dart';
 
 import '../hooks/useStore.dart';
-import '../service/audioHandlerService.dart';
 import '../store/index.dart';
 import '../utils/NetImage.dart';
 import '../utils/getDevice.dart';
-import '../utils/musFun.dart';
-import 'lyricScreen.dart';
 import 'musScreen.dart';
-
+// music 主控
 class MusMainPlay extends ConsumerStatefulWidget {
   /// ✅ 不再要 AnimationController；改成监听可见性
   final ValueListenable<bool> visibleListenable;
@@ -87,7 +82,7 @@ class _MusMainPlayState extends ConsumerState<MusMainPlay> {
     final isTab = isTabletAll(context);
     final musPStore = useSelector(ref, musPlayProvider, (s) => s);
     ref.watch(musProvider.select((s) => s.lyric));
-    final lines = ref.watch(musProvider.notifier).lines;
+    // final lines = ref.watch(musProvider.notifier).lines;
 /*    List<Widget> playViews =  [
       MusScreen(),
       LyricScreen(lines: lines,),
@@ -216,9 +211,7 @@ class _MusMainPlayState extends ConsumerState<MusMainPlay> {
                             ],
                           ),
                           body: isTab
-                              ? TableMusScreen(
-                                  lines: lines,
-                                )
+                              ? TableMusScreen()
                               : Column(
                                   children: [
                                     Expanded(

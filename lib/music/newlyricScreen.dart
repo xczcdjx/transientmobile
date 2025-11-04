@@ -11,6 +11,7 @@ import '../service/audioHandlerService.dart';
 import '../store/index.dart';
 import '../utils/musFun.dart';
 
+// 新版歌词组件
 class NewLyricScreen extends ConsumerStatefulWidget {
   bool hideSkipPlay;
   LyricAlign lycTextAlign;

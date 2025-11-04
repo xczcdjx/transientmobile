@@ -13,7 +13,7 @@ import '../service/audioHandlerService.dart';
 import '../store/index.dart';
 import 'package:flutter/material.dart';
 
-/// The main screen.
+// music 音乐主控
 class MusScreen extends ConsumerWidget {
   MusScreen({super.key,this.onImageTap});
   VoidCallback? onImageTap;

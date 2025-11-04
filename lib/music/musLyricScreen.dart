@@ -10,7 +10,7 @@ import '../components/music/comPlaySeek.dart';
 import '../service/audioHandlerService.dart';
 import '../service/play_list_controller.dart';
 import '../utils/NetImage.dart';
-
+// music 词主控
 class MusLyricScreen extends ConsumerStatefulWidget {
   const MusLyricScreen({super.key});
 
