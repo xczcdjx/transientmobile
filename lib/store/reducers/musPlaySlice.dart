@@ -158,6 +158,14 @@ class MusPlaySlice extends StateNotifier<MusPlayState> {
 
   // ============== 播放控制（对外 API，UI 只调这些） ==============
 
+  Future<void> playToggle() async{
+    if(state.isPlaying) {
+      handler.pause();
+    } else {
+      handler.play();
+    }
+  }
+
   Future<void> play() => handler.play();
 
   Future<void> pause() => handler.pause();

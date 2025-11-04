@@ -1,6 +1,7 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:transientmobile/music/musBotScreen.dart';
 import 'package:transientmobile/service/mus_player_controller.dart';
 
 import '../../router/routes.dart';
@@ -33,7 +34,8 @@ class _HomePageState extends State<HomePage> {
           LangSwitch()
         ],
       ),
-      body: Container(
+      body:
+      Container(
         child: SingleChildScrollView(
           child:
           Column(
@@ -104,6 +106,7 @@ class _HomePageState extends State<HomePage> {
           ),
         ),
       ),
+      bottomNavigationBar: MusBotScreen(),
     );
   }
 }

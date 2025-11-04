@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -221,3 +223,84 @@ class ComControlBtn extends ConsumerWidget {
     );
   }
 }
+
+
+class ComPlayCircleBtn extends StatelessWidget {
+  final Duration position;
+  final Duration duration;
+  final bool isPlaying;
+  final VoidCallback onPlayPause;
+
+  const ComPlayCircleBtn({
+    Key? key,
+    required this.position,
+    required this.duration,
+    required this.isPlaying,
+    required this.onPlayPause,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    final double progress = (duration.inMilliseconds == 0)
+        ? 0
+        : position.inMilliseconds / duration.inMilliseconds;
+
+    return GestureDetector(
+      onTap: onPlayPause,
+      child: SizedBox(
+        width: 35,
+        height: 35,
+        child: CustomPaint(
+          painter: _CircleProgressPainter(
+            progress: progress.clamp(0.0, 1.0),
+            color: Theme.of(context).colorScheme.primary,
+          ),
+          child: Center(
+            child: Icon(
+              isPlaying ? Icons.pause_circle_filled : Icons.play_circle_fill,
+              size: 28,
+              color: Theme.of(context).colorScheme.primary,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _CircleProgressPainter extends CustomPainter {
+  final double progress;
+  final Color color;
+
+  _CircleProgressPainter({required this.progress, required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final Paint bgPaint = Paint()
+      ..color = color.withOpacity(0.15)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 3.0
+      ..strokeCap = StrokeCap.round;
+
+    final Paint fgPaint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 3.0
+      ..strokeCap = StrokeCap.round;
+
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = size.width / 2 - 3;
+    final startAngle = -pi / 2;
+    final sweepAngle = 2 * pi * progress;
+
+    canvas.drawCircle(center, radius, bgPaint);
+    canvas.drawArc(Rect.fromCircle(center: center, radius: radius), startAngle,
+        sweepAngle, false, fgPaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _CircleProgressPainter oldDelegate) {
+    return oldDelegate.progress != progress || oldDelegate.color != color;
+  }
+}
+
