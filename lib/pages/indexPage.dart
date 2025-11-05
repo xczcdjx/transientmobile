@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:transientmobile/components/common/botNavBar.dart';
 import 'package:transientmobile/hooks/useStore.dart';
+import 'package:transientmobile/music/musBotScreen.dart';
 import 'package:transientmobile/music/musMainPlay.dart';
 import 'package:transientmobile/pages/home/homePage.dart';
 import 'package:transientmobile/pages/home/minePage.dart';
@@ -25,15 +26,50 @@ class IndexPage extends ConsumerStatefulWidget {
 }
 
 class _IndexPageState extends ConsumerState<IndexPage> {
-  final List<Widget> pages = [
-    HomePage(),
-    MinePage()
-  ];
+  final List<Widget> pages = [HomePage(), MinePage()];
   int _pageIndex = 0;
-  void _upPageIndex(int i){
+
+  void _upPageIndex(int i) {
     setState(() {
-      _pageIndex=i;
+      _pageIndex = i;
     });
+  }
+
+  Widget _renderIndexBody(bool isTab) {
+    if (isTab) {
+      return Column(
+        children: [
+          Expanded(
+            child: Row(
+              children: [
+                  BotNavBar(
+                    onTabChange: _upPageIndex,
+                    isTablet: true,
+                  ),
+                Expanded(
+                    child: IndexedStack(
+                      index: _pageIndex,
+                      children: pages,
+                    )),
+              ],
+            ),
+          ),
+          // 后续会使用宽屏组件
+          MusBotScreen()
+        ],
+      );
+    } else {
+      return Column(
+        children: [
+          Expanded(
+              child: IndexedStack(
+            index: _pageIndex,
+            children: pages,
+          )),
+          MusBotScreen()
+        ],
+      );
+    }
   }
 
   @override
@@ -41,20 +77,7 @@ class _IndexPageState extends ConsumerState<IndexPage> {
     final isTab = isTabletAll(context);
     final dispatch = useDispatch(ref, settingProvider);
     return Scaffold(
-      body: Row(
-        children: [
-          if (isTab)
-            BotNavBar(
-              onTabChange:_upPageIndex,
-              isTablet: true,
-            ),
-          Expanded(
-              child: IndexedStack(
-            index: _pageIndex,
-            children: pages,
-          )),
-        ],
-      ),
+      body: _renderIndexBody(isTab),
       bottomNavigationBar: isTab
           ? null
           : BotNavBar(
