@@ -67,6 +67,7 @@ class MusPlaySlice extends StateNotifier<MusPlayState> {
       }
     };
     handler.onSkipTo=(f) async{
+      print("fff$f");
       if(f) next();
       else previous();
     };
@@ -77,6 +78,31 @@ class MusPlaySlice extends StateNotifier<MusPlayState> {
   }
 
   MediaItem? get curMedia=>state.curSong;
+  // 增删改
+  void addMusOne(MediaItem item) {
+    final list = [...state.playList];
+    final curIndex=state.curIndex;
+    final index=list.indexWhere((it)=>it.id==item.id);
+    print("index ${curMedia?.id},index=${item.id}");
+    if(index!=-1){
+      state = state.copyWith(
+        curIndex: index,
+      );
+      playToggle();
+    }else{
+      // ✅ 新歌插入当前位置之后
+      final insertIndex = (curIndex + 1).clamp(0, list.length);
+      list.insert(insertIndex, item);
+      // ✅ 更新状态
+      state = state.copyWith(
+        playList: list,
+        curIndex: insertIndex,
+      );
+      print("curIndex${curIndex},insertIndex${insertIndex}");
+      // handler.playMediaItem(curMedia!);
+      playAt(insertIndex);
+    }
+  }
   // ============== 列表管理 ==============
 
   /// 覆盖播放队列；可指定起始 index，并决定是否自动播放

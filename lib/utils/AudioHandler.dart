@@ -46,6 +46,7 @@ class AudioPlayerHandlerImpl extends BaseAudioHandler
       print('onPlayerStateChanged $state');
       this.state = state;
       if (state == PlayerState.completed) {
+        print("complete666666");
         await onCompleted?.call(state);
       } else if (state == PlayerState.playing) {
         _duration = await _audioPlayer.getDuration() as Duration;
@@ -158,7 +159,7 @@ class AudioPlayerHandlerImpl extends BaseAudioHandler
   @override
   Future<void> playMediaItem(MediaItem mediaItem) async {
     playbackState.add(playbackState.value.copyWith(
-      processingState: AudioProcessingState.ready,
+      processingState: AudioProcessingState.loading,
       playing: true,
       controls: [
         MediaControl.pause,

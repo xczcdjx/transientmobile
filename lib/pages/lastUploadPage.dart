@@ -1,3 +1,4 @@
+import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:transientmobile/api/httpSafeExt.dart';
@@ -29,23 +30,25 @@ class _LastUploadPageState extends ConsumerState<LastUploadPage> {
   final api = Http();
 
   // 模拟后端接口：基于 pageNo/pageSize 返回数据与 total
-  Future<PageResult<RecentUpEntity>> _mockFetch(int pageNo, int pageSize) async {
+  Future<PageResult<RecentUpEntity>> _mockFetch(
+      int pageNo, int pageSize) async {
     // 这里假装请求网络
     // await Future.delayed(const Duration(milliseconds: 1000));
-    final res1 = await api.safeGet<Map<String, dynamic>>(HomeU.recentUp, queryParameters: {"pageSize":pageSize,"pageNo":pageNo});
+    final res1 = await api.safeGet<Map<String, dynamic>>(HomeU.recentUp,
+        queryParameters: {"pageSize": pageSize, "pageNo": pageNo});
     if (res1.ok) {
-      final map = res1.success!.data!;  // Response.data
+      final map = res1.success!.data!; // Response.data
       // ✅ 取出真正分页对象
       final pageMap = map["data"] as Map<String, dynamic>;
-      try{
+      try {
         final res = PageRes.fromJson(
           pageMap,
-              (records) => (records as List)
+          (records) => (records as List)
               .map((e) => RecentUpEntity.fromJson(e as Map<String, dynamic>))
               .toList(),
         );
         return PageResult(items: res.records, total: res.total);
-      }catch(e){
+      } catch (e) {
         print(e);
       }
     } else {
@@ -65,7 +68,7 @@ class _LastUploadPageState extends ConsumerState<LastUploadPage> {
   Widget build(BuildContext context) {
     final musP = useSelector(ref, musPlayProvider, (s) => s);
     final dispatch = useDispatch(ref, musPlayProvider);
-    final curId=musP.curSong?.id;
+    final curId = musP.curSong?.id;
     return Scaffold(
       appBar: AppBar(
         leading: BackIcon(),
@@ -83,38 +86,65 @@ class _LastUploadPageState extends ConsumerState<LastUploadPage> {
             // 默认就是 10
             separatorBuilder: (_, __) => const Divider(height: 0),
             itemBuilder: (context, item, index) {
-              bool isPlaying = item.id.toString() == curId&&musP.isPlaying;
+              bool isPlaying = item.id.toString() == curId && musP.isPlaying;
               return ListTile(
-                onTap: (){
-
+                onTap: () {
+                  dispatch.addMusOne(MediaItem(
+                    id: item.id.toString(),
+                    title: item.name,
+                    album: item.payload?.album,
+                    artist: item.payload?.singers
+                        ?.map((it) => it.name)
+                        .toList()
+                        .join('、'),
+                    duration: Duration(seconds: item.duration),
+                    artUri: Uri.parse(
+                      scaleSizeUrlEmpty(item.payload?.imgUrl) ?? "",
+                    ),
+                    extras: <String, dynamic>{
+                      'musUrl': item.musUrl, // 播放用
+                      'size': item.size,
+                      'albumId': "",
+                      'encodeUrl': item.encodeUrl,
+                      // 'singers': item.payload?.singers as List<dynamic>? ?? [],
+                      'singers': [],
+                    },
+                  ));
                 },
-                title: Text(item.name,style: TextStyle(fontWeight: FontWeight.bold,color: isPlaying?context.pc:context.fc),maxLines: 1,overflow: TextOverflow.ellipsis,),
+                title: Text(
+                  item.name,
+                  style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: isPlaying ? context.pc : context.fc),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
                 leading: SizedBox(
                   width: 50,
                   height: 50,
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(8),
                     child: NetImage(
-                      url: scaleSizeUrlEmpty(item.payload?.imgUrl)??"",
+                      url: scaleSizeUrlEmpty(item.payload?.imgUrl) ?? "",
                       cache: true,
                       width: 50,
                       height: 50,
                       loadingWidget: (ctx, str) => const Padding(
                         padding: EdgeInsets.all(15),
-                        child:
-                        CircularProgressIndicator(strokeWidth: 2),
+                        child: CircularProgressIndicator(strokeWidth: 2),
                       ),
                     ),
                   ),
                 ),
-                subtitle: renderSingers(item.payload,onTap: (id){
+                subtitle: renderSingers(item.payload, onTap: (id) {
                   print(id);
-                },enabledStyle: TextStyle()),
+                }, enabledStyle: TextStyle()),
                 trailing: Row(
                   mainAxisSize: MainAxisSize.min, // 关键！避免占满行宽
                   children: [
-                    IconButton(onPressed: (){}, icon: Icon(Icons.favorite_border)),
-                    IconButton(onPressed: (){}, icon: Icon(Icons.more_vert)),
+                    IconButton(
+                        onPressed: () {}, icon: Icon(Icons.favorite_border)),
+                    IconButton(onPressed: () {}, icon: Icon(Icons.more_vert)),
                   ],
                 ),
               );
@@ -125,4 +155,14 @@ class _LastUploadPageState extends ConsumerState<LastUploadPage> {
       bottomNavigationBar: MusBotScreen(),
     );
   }
+}
+
+String getSingers(Map<String, dynamic>? payload) {
+  if (payload == null) return '-';
+  final singers = (payload['singers'] as List<dynamic>? ?? [])
+      .map((e) => (e as Map)['name']?.toString() ?? '')
+      .where((s) => s.isNotEmpty)
+      .toList()
+      .join('、');
+  return singers;
 }
