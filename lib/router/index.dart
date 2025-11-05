@@ -1,4 +1,5 @@
 import 'package:go_router/go_router.dart';
+import 'package:transientmobile/pages/lastUploadPage.dart';
 
 import '../pages/detailPage.dart';
 import '../pages/indexPage.dart';
@@ -30,6 +31,10 @@ final GoRouter router= GoRouter(
         final name = state.uri.queryParameters; // 获取查询参数
         return DetailPage();
       },
+    ),
+    GoRoute(
+      path: Routes.lastUpload,
+      builder: (context, state) => LastUploadPage(),
     ),
   ],
 );

@@ -99,8 +99,8 @@ class _HomePageState extends State<HomePage> {
                   },
                   child: Text('botPopup')),*/
               TextButton(
-                onPressed: () => MusPlayerController().show(context),
-                child: const Text('Show Player'),
+                onPressed: () => context.push(Routes.lastUpload),
+                child: const Text('go lastUpload page'),
               )
             ],
           ),
