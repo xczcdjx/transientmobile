@@ -1,17 +1,21 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:transientmobile/utils/NetImage.dart';
 
 /// 播放时旋转的封面组件（不使用 flutter_hooks）
 class RotatingAlbumCover extends StatefulWidget {
   final String imageUrl;
   final bool playing;
   final double size;
+  final EdgeInsetsGeometry pad;
 
   const RotatingAlbumCover({
     super.key,
     required this.imageUrl,
     required this.playing,
     this.size = 200,
+    this.pad=const EdgeInsets.all(8),
   });
 
   @override
@@ -58,18 +62,17 @@ class _RotatingAlbumCoverState extends State<RotatingAlbumCover>
       height: widget.size,
       // width: widget.size,
       child: Padding(
-        padding: const EdgeInsets.all(8.0),
+        padding: widget.pad,
         child: Center(
           child: RotationTransition(
             turns: _controller,
             child: ClipOval(
-              child: Image.network(
-                widget.imageUrl,
+              child: NetImage(
+                url:widget.imageUrl,
+                cache: true,
                 // width: widget.size,
                 // height: widget.size,
                 fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) =>
-                const Icon(Icons.music_note, size: 60, color: Colors.grey),
               ),
             ),
           ),

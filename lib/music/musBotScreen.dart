@@ -1,5 +1,7 @@
+import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:text_scroll/text_scroll.dart';
 import 'package:transientmobile/components/music/comControl.dart';
 import 'package:transientmobile/components/music/comSlider.dart';
 import 'package:transientmobile/extensions/customColors.dart';
@@ -8,13 +10,11 @@ import 'package:transientmobile/store/index.dart';
 import 'package:transientmobile/utils/formatDate.dart';
 
 import '../components/images/rotatingAlbumCover.dart';
-import '../components/music/comPlaySeek.dart';
 import '../service/audioHandlerService.dart';
 import '../service/mus_player_controller.dart';
 import '../service/play_list_controller.dart';
 import '../utils/NetImage.dart';
 import '../utils/getDevice.dart';
-import 'common.dart';
 
 class MusBotScreen extends ConsumerStatefulWidget {
   const MusBotScreen({super.key});
@@ -49,13 +49,18 @@ class _MusBotScreenState extends ConsumerState<MusBotScreen> {
                 onTap: () {
                   MusPlayerController().show(context);
                 },
-                child: RotatingAlbumCover(
-                  imageUrl: (musP.curSong?.artUri ?? "").toString(),
-                  playing: musP.isPlaying,
-                  size: 55,
+                child: SizedBox(
+                  height: 55,
+                  width: 55,
+                  child: RotatingAlbumCover(
+                    pad: const EdgeInsets.all(3.5),
+                    imageUrl: (musP.curSong?.artUri ?? "").toString(),
+                    playing: musP.isPlaying,
+                    size: 55,
+                  ),
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 10),
               // 标题 + 歌手
               Expanded(
                 child: Column(
@@ -63,40 +68,10 @@ class _MusBotScreenState extends ConsumerState<MusBotScreen> {
                   children: [
                     Row(
                       children: [
-                        Expanded(
-                            child: Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                m.title +
-                                    List.generate(100, (i) => i.toString())
-                                        .join(''),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: isPlaying
-                                      ? FontWeight.w600
-                                      : FontWeight.w500,
-                                  color: isPlaying ? context.pcr : context.fc,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 10),
-                            const Text("-"),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: Text(
-                                m.artist ?? '',
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  fontSize: 12,
-                                ),
-                              ),
-                            ),
-                          ],
-                        )),
+                        Expanded(child: _buildTitleArtist(m,isPlaying),),
+                        SizedBox(
+                          width: 10,
+                        ),
                         SizedBox(
                           width: 80,
                           child: Row(
@@ -186,11 +161,12 @@ class _MusBotScreenState extends ConsumerState<MusBotScreen> {
       );
     }
     return Container(
-      height: 45,
+      height: 50,
       color: context.musicStickBg.withOpacity(0.5),
       child: Padding(
         padding: const EdgeInsets.only(left: 10, right: 5, top: 5, bottom: 5),
         child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             GestureDetector(
               onTap: () {
@@ -219,18 +195,9 @@ class _MusBotScreenState extends ConsumerState<MusBotScreen> {
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
-                  Text(
-                    m.title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: isPlaying ? FontWeight.w600 : FontWeight.w500,
-                      color: isPlaying ? context.pcr : context.fc,
-                    ),
-                  ),
+                  _buildTitle(m,isPlaying),
                   // const SizedBox(height: 3),
                   Text(
                     m.artist ?? '',
@@ -256,17 +223,14 @@ class _MusBotScreenState extends ConsumerState<MusBotScreen> {
                         size: 24,
                       ),
                       onPressed: dispatch.previous),
-                  Transform.translate(
-                    offset: const Offset(0, 3),
-                    child: SizedBox(
-                      width: 35,
-                      height: 35,
-                      child: ComPlayCircleBtn(
-                          position: position,
-                          duration: duration,
-                          isPlaying: isPlaying,
-                          onPlayPause: dispatch.playToggle),
-                    ),
+                  SizedBox(
+                    width: 35,
+                    height: 35,
+                    child: ComPlayCircleBtn(
+                        position: position,
+                        duration: duration,
+                        isPlaying: isPlaying,
+                        onPlayPause: dispatch.playToggle),
                   ),
                   IconButton(
                       icon: const Icon(
@@ -295,6 +259,121 @@ class _MusBotScreenState extends ConsumerState<MusBotScreen> {
     return Text(
       str,
       style: TextStyle(color: ctx.line.withOpacity(0.7), fontSize: 11),
+    );
+  }
+
+  Widget _buildTitleArtist(MediaItem m, bool isPlaying) {
+    final title = m.title;
+    final artist = m.artist ?? '';
+    final text = "$title  -  $artist";
+
+    if (isPlaying) {
+      return _PlayingTitle(text: text,style: TextStyle(
+        fontSize: 14,
+        fontWeight: FontWeight.w500,
+        color: context.pcr,
+      ),);
+    }
+
+    return Text.rich(
+      TextSpan(
+        children: [
+          TextSpan(
+            text: title,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              color: context.fc,
+            ),
+          ),
+          const TextSpan(text: '  -  '),
+          TextSpan(
+            text: artist,
+            style: const TextStyle(fontSize: 12),
+          ),
+        ],
+      ),
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+    );
+  }
+  Widget _buildTitle(MediaItem m, bool isPlaying){
+    if (isPlaying) {
+      return _PlayingTitle(text: m.title,style: TextStyle(
+        fontSize: 12,
+        fontWeight: FontWeight.w600,
+        color: context.pcr,
+      ),);
+    }
+    return Text(
+      m.title,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      style: const TextStyle(
+        fontSize: 12,
+      ),
+    );
+  }
+}
+class _PlayingTitle extends StatelessWidget {
+  final String text;
+  final TextStyle style;
+
+  const _PlayingTitle({
+    Key? key,
+    required this.text,
+    required this.style,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final maxW = constraints.maxWidth;
+        // 父级必须给有界宽度，否则 TextScroll 不会动
+        if (!maxW.isFinite || maxW <= 0) {
+          return Text(
+            text,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: style,
+          );
+        }
+
+        // 测量文本宽度，只有溢出才滚动
+        final tp = TextPainter(
+          text: TextSpan(text: text, style: style),
+          textDirection: TextDirection.ltr,
+          maxLines: 1,
+        )..layout(maxWidth: double.infinity);
+
+        final needScroll = tp.width > maxW;
+
+        if (!needScroll) {
+          return Text(
+            text,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: style,
+          );
+        }
+
+        // 有界 + 溢出：启动 TextScroll
+        return ConstrainedBox(
+          constraints: BoxConstraints(maxWidth: maxW),
+          child: TextScroll(
+            text,
+            mode: TextScrollMode.endless,                 // endless 更直观
+            intervalSpaces: 8,                            // 循环间隔
+            velocity: const Velocity(pixelsPerSecond: Offset(50, 0)),
+            delayBefore: const Duration(milliseconds: 300),
+            pauseBetween: Duration.zero,                  // 也可给 300ms 小停顿
+            style: style,
+            textAlign: TextAlign.left,
+            selectable: false,                            // 先禁掉，避免个别布局冲突
+          ),
+        );
+      },
     );
   }
 }
