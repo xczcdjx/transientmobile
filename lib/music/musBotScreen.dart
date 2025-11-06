@@ -15,6 +15,7 @@ import '../service/mus_player_controller.dart';
 import '../service/play_list_controller.dart';
 import '../utils/NetImage.dart';
 import '../utils/getDevice.dart';
+import '../utils/screenUtil.dart';
 
 class MusBotScreen extends ConsumerStatefulWidget {
   const MusBotScreen({super.key});
@@ -68,7 +69,9 @@ class _MusBotScreenState extends ConsumerState<MusBotScreen> {
                   children: [
                     Row(
                       children: [
-                        Expanded(child: _buildTitleArtist(m,isPlaying),),
+                        Expanded(
+                          child: _buildTitleArtist(m, isPlaying),
+                        ),
                         SizedBox(
                           width: 10,
                         ),
@@ -197,7 +200,7 @@ class _MusBotScreenState extends ConsumerState<MusBotScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
-                  _buildTitle(m,isPlaying),
+                  _buildTitle(m, isPlaying),
                   // const SizedBox(height: 3),
                   Text(
                     m.artist ?? '',
@@ -268,11 +271,14 @@ class _MusBotScreenState extends ConsumerState<MusBotScreen> {
     final text = "$title  -  $artist";
 
     if (isPlaying) {
-      return _PlayingTitle(text: text,style: TextStyle(
-        fontSize: 14,
-        fontWeight: FontWeight.w500,
-        color: context.pcr,
-      ),);
+      return _PlayingTitle(
+        text: text,
+        style: TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.w500,
+          color: context.pcr,
+        ),
+      );
     }
 
     return Text.rich(
@@ -297,13 +303,17 @@ class _MusBotScreenState extends ConsumerState<MusBotScreen> {
       overflow: TextOverflow.ellipsis,
     );
   }
-  Widget _buildTitle(MediaItem m, bool isPlaying){
+
+  Widget _buildTitle(MediaItem m, bool isPlaying) {
     if (isPlaying) {
-      return _PlayingTitle(text: m.title,style: TextStyle(
-        fontSize: 12,
-        fontWeight: FontWeight.w600,
-        color: context.pcr,
-      ),);
+      return _PlayingTitle(
+        text: m.title,
+        style: TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+          color: context.pcr,
+        ),
+      );
     }
     return Text(
       m.title,
@@ -315,6 +325,7 @@ class _MusBotScreenState extends ConsumerState<MusBotScreen> {
     );
   }
 }
+
 class _PlayingTitle extends StatelessWidget {
   final String text;
   final TextStyle style;
@@ -363,17 +374,33 @@ class _PlayingTitle extends StatelessWidget {
           constraints: BoxConstraints(maxWidth: maxW),
           child: TextScroll(
             text,
-            mode: TextScrollMode.endless,                 // endless 更直观
-            intervalSpaces: 8,                            // 循环间隔
+            mode: TextScrollMode.endless,
+            // endless 更直观
+            intervalSpaces: 8,
+            // 循环间隔
             velocity: const Velocity(pixelsPerSecond: Offset(50, 0)),
             delayBefore: const Duration(milliseconds: 300),
-            pauseBetween: Duration.zero,                  // 也可给 300ms 小停顿
+            pauseBetween: Duration.zero,
+            // 也可给 300ms 小停顿
             style: style,
             textAlign: TextAlign.left,
-            selectable: false,                            // 先禁掉，避免个别布局冲突
+            selectable: false, // 先禁掉，避免个别布局冲突
           ),
         );
       },
     );
   }
+}
+
+class SafeMusBotScreen extends StatelessWidget {
+  final double offset;
+
+  const SafeMusBotScreen({super.key, this.offset = 0});
+
+  @override
+  Widget build(BuildContext context) => Padding(
+        padding: EdgeInsets.only(
+            bottom: ScreenUtil.bottomBarHeight(context) + offset),
+        child: const MusBotScreen(),
+      );
 }

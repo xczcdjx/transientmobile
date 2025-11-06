@@ -17,6 +17,7 @@ import '../models/comModels.dart';
 import '../store/index.dart';
 import '../utils/NetImage.dart';
 import '../utils/reqUrl.dart';
+import '../utils/screenUtil.dart';
 
 class LastUploadPage extends ConsumerStatefulWidget {
   const LastUploadPage({super.key});
@@ -102,7 +103,8 @@ class _LastUploadPageState extends ConsumerState<LastUploadPage> {
                       scaleSizeUrlEmpty(item.payload?.imgUrl) ?? "",
                     ),
                     extras: <String, dynamic>{
-                      'musUrl': item.musUrl, // 播放用
+                      'musUrl': item.musUrl,
+                      // 播放用
                       'size': item.size,
                       'albumId': "",
                       'encodeUrl': item.encodeUrl,
@@ -152,8 +154,7 @@ class _LastUploadPageState extends ConsumerState<LastUploadPage> {
           ))
         ],
       ),
-      bottomNavigationBar: MusBotScreen(),
-    );
+      bottomNavigationBar: const SafeMusBotScreen());
   }
 }
 
