@@ -38,6 +38,7 @@ class SeekBar extends StatefulWidget {
   final ValueChanged<Duration>? onChanged;
   final ValueChanged<Duration>? onChangeEnd;
   bool showDuration;
+  bool showRemain;
 
   SeekBar({
     Key? key,
@@ -47,6 +48,7 @@ class SeekBar extends StatefulWidget {
     this.onChanged,
     this.onChangeEnd,
     this.showDuration=true,
+    this.showRemain=false,
   }) : super(key: key);
 
   @override
@@ -83,6 +85,7 @@ class SeekBarState extends State<SeekBar> {
             thumbShape: HiddenThumbComponentShape(),
             activeTrackColor: Colors.blue.shade100,
             inactiveTrackColor: Colors.grey.shade300,
+            // trackShape: FullWidthTrackShape(),
           ),
           child: ExcludeSemantics(
             child: Slider(
@@ -122,6 +125,7 @@ class SeekBarState extends State<SeekBar> {
               enabledThumbRadius: 7.0, // 修改这里的大小，默认是 10.0
               pressedElevation: 3.5,    // 按下时的阴影
             ),
+            // trackShape: FullWidthTrackShape(),
           ),
           child: Slider(
             min: 0.0,
@@ -146,13 +150,13 @@ class SeekBarState extends State<SeekBar> {
             },
           ),
         ),
-        widget.showDuration?Container():Positioned(
+        widget.showRemain?Positioned(
           right: 16.0,
           bottom: 0.0,
           child: Text(
               tranTime(_remaining),
               style: Theme.of(context).textTheme.bodySmall),
-        ),
+        ):Container(),
       ],
     );
   }
@@ -517,3 +521,25 @@ void showSliderDialog({
     ),
   );
 }
+class FullWidthTrackShape extends RoundedRectSliderTrackShape {
+  final double horizontalMargin;
+
+  FullWidthTrackShape({this.horizontalMargin = 5.0});
+
+  @override
+  Rect getPreferredRect({
+    required RenderBox parentBox,
+    Offset offset = Offset.zero,
+    required SliderThemeData sliderTheme,
+    bool isEnabled = false,
+    bool isDiscrete = false,
+  }) {
+    final double trackHeight = sliderTheme.trackHeight ?? 2;
+    final double trackLeft = offset.dx + horizontalMargin;
+    final double trackTop = offset.dy + (parentBox.size.height - trackHeight) / 2;
+    final double trackWidth = parentBox.size.width - horizontalMargin * 2;
+
+    return Rect.fromLTWH(trackLeft, trackTop, trackWidth, trackHeight);
+  }
+}
+

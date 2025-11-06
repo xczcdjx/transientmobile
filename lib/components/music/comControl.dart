@@ -230,6 +230,8 @@ class ComPlayCircleBtn extends StatelessWidget {
   final Duration duration;
   final bool isPlaying;
   final VoidCallback onPlayPause;
+  final double iconSize;
+  final double outSize;
 
   const ComPlayCircleBtn({
     Key? key,
@@ -237,6 +239,8 @@ class ComPlayCircleBtn extends StatelessWidget {
     required this.duration,
     required this.isPlaying,
     required this.onPlayPause,
+    this.iconSize=28,
+    this.outSize=35
   }) : super(key: key);
 
   @override
@@ -248,8 +252,8 @@ class ComPlayCircleBtn extends StatelessWidget {
     return GestureDetector(
       onTap: onPlayPause,
       child: SizedBox(
-        width: 35,
-        height: 35,
+        width: outSize,
+        height: outSize,
         child: CustomPaint(
           painter: _CircleProgressPainter(
             progress: progress.clamp(0.0, 1.0),
@@ -258,7 +262,7 @@ class ComPlayCircleBtn extends StatelessWidget {
           child: Center(
             child: Icon(
               isPlaying ? Icons.pause_circle_filled : Icons.play_circle_fill,
-              size: 28,
+              size: iconSize,
               color: Theme.of(context).colorScheme.primary,
             ),
           ),

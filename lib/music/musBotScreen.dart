@@ -1,13 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:transientmobile/components/music/comControl.dart';
+import 'package:transientmobile/components/music/comSlider.dart';
 import 'package:transientmobile/extensions/customColors.dart';
 import 'package:transientmobile/hooks/useStore.dart';
 import 'package:transientmobile/store/index.dart';
+import 'package:transientmobile/utils/formatDate.dart';
 
+import '../components/images/rotatingAlbumCover.dart';
+import '../components/music/comPlaySeek.dart';
+import '../service/audioHandlerService.dart';
 import '../service/mus_player_controller.dart';
 import '../service/play_list_controller.dart';
 import '../utils/NetImage.dart';
+import '../utils/getDevice.dart';
+import 'common.dart';
 
 class MusBotScreen extends ConsumerStatefulWidget {
   const MusBotScreen({super.key});
@@ -17,8 +24,11 @@ class MusBotScreen extends ConsumerStatefulWidget {
 }
 
 class _MusBotScreenState extends ConsumerState<MusBotScreen> {
+  final audioHandler = AudioHandlerService.instance.handler;
+
   @override
   Widget build(BuildContext context) {
+    final isTab = isTabletAll(context);
     final musP = useSelector(ref, musPlayProvider, (mp) => mp);
     if (musP.curSong == null) return SizedBox();
     final mus = useSelector(ref, musProvider, (m) => m);
@@ -27,14 +37,163 @@ class _MusBotScreenState extends ConsumerState<MusBotScreen> {
     final duration = m.duration ?? Duration();
     final position = mus.position;
     final dispatch = useDispatch(ref, musPlayProvider);
+    if (isTab) {
+      return Container(
+        height: 70,
+        color: context.musicStickBg.withOpacity(0.5),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 12.5),
+          child: Row(
+            children: [
+              GestureDetector(
+                onTap: () {
+                  MusPlayerController().show(context);
+                },
+                child: RotatingAlbumCover(
+                  imageUrl: (musP.curSong?.artUri ?? "").toString(),
+                  playing: musP.isPlaying,
+                  size: 55,
+                ),
+              ),
+              const SizedBox(width: 12),
+              // 标题 + 歌手
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                            child: Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                m.title +
+                                    List.generate(100, (i) => i.toString())
+                                        .join(''),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: isPlaying
+                                      ? FontWeight.w600
+                                      : FontWeight.w500,
+                                  color: isPlaying ? context.pcr : context.fc,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            const Text("-"),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                m.artist ?? '',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ),
+                          ],
+                        )),
+                        SizedBox(
+                          width: 80,
+                          child: Row(
+                            children: [
+                              _renderText(tranTime(mus.position), context),
+                              SizedBox(
+                                width: 2.5,
+                              ),
+                              _renderText("/", context),
+                              SizedBox(
+                                width: 2.5,
+                              ),
+                              _renderText(
+                                  tranTime(musP.curSong?.duration ??
+                                      const Duration(seconds: 0)),
+                                  context),
+                            ],
+                          ),
+                        )
+                      ],
+                    ),
+                    Expanded(
+                      child: ComSeekBar(
+                        duration: musP.curSong?.duration ??
+                            const Duration(seconds: 0),
+                        position: mus.position,
+                        bufferedPosition: mus.bufferedPosition,
+                        showDuration: false,
+                        onChangeEnd: (newPosition) {
+                          audioHandler.seek(newPosition);
+                        },
+                      ),
+                    )
+                  ],
+                ),
+              ),
+              SizedBox(
+                width: 10,
+              ),
+              SizedBox(
+                width: 210,
+                height: 60,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    IconButton(
+                        icon: const Icon(
+                          Icons.skip_previous,
+                          size: 30,
+                        ),
+                        onPressed: dispatch.previous),
+                    Transform.translate(
+                      offset: const Offset(0, 1),
+                      child: SizedBox(
+                        width: 45,
+                        height: 45,
+                        child: ComPlayCircleBtn(
+                            outSize: 45,
+                            iconSize: 35,
+                            position: position,
+                            duration: duration,
+                            isPlaying: isPlaying,
+                            onPlayPause: dispatch.playToggle),
+                      ),
+                    ),
+                    IconButton(
+                        icon: const Icon(
+                          Icons.skip_next,
+                          size: 30,
+                        ),
+                        onPressed: dispatch.next),
+                    IconButton(
+                        onPressed: () {
+                          GlobalBottomSheet.show(context: context);
+                        },
+                        icon: Icon(
+                          Icons.queue_music_sharp,
+                          size: 30,
+                        ))
+                  ],
+                ),
+              )
+            ],
+          ),
+        ),
+      );
+    }
     return Container(
       height: 45,
+      color: context.musicStickBg.withOpacity(0.5),
       child: Padding(
-        padding: const EdgeInsets.only(left: 10,right: 5,top: 5,bottom: 5),
+        padding: const EdgeInsets.only(left: 10, right: 5, top: 5, bottom: 5),
         child: Row(
           children: [
             GestureDetector(
-              onTap: (){
+              onTap: () {
                 MusPlayerController().show(context);
               },
               child: SizedBox(
@@ -98,7 +257,7 @@ class _MusBotScreenState extends ConsumerState<MusBotScreen> {
                       ),
                       onPressed: dispatch.previous),
                   Transform.translate(
-                    offset: const Offset(0,3),
+                    offset: const Offset(0, 3),
                     child: SizedBox(
                       width: 35,
                       height: 35,
@@ -129,6 +288,13 @@ class _MusBotScreenState extends ConsumerState<MusBotScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _renderText(String str, BuildContext ctx) {
+    return Text(
+      str,
+      style: TextStyle(color: ctx.line.withOpacity(0.7), fontSize: 11),
     );
   }
 }
