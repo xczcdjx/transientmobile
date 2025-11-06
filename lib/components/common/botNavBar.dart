@@ -92,6 +92,9 @@ class _BotNavBarState extends State<BotNavBar> {
         mainAxisAlignment: MainAxisAlignment.center,
         tabBorderRadius: 16,
         selectedIndex: _selectedIndex,
+        iconSize: 20,                          // 图标大小
+        tabMargin: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
+        padding: const EdgeInsets.only(top: 15,bottom: 5,left: 10,right: 10),
         onTabChange: (index) {
           setState(() => _selectedIndex = index);
           widget.onTabChange?.call(index);

@@ -126,7 +126,7 @@ class MusScreen extends ConsumerWidget {
                 },
               ),
               // Repeat/shuffle controls
-              Row(
+              /*Row(
                 children: [
                   StreamBuilder<AudioServiceRepeatMode>(
                     stream: _audioHandler.playbackState
@@ -184,7 +184,7 @@ class MusScreen extends ConsumerWidget {
                     },
                   ),
                 ],
-              ),
+              ),*/
             ],
           ),
         ],
