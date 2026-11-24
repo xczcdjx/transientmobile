@@ -106,33 +106,47 @@ class _MusMainPlayState extends ConsumerState<MusMainPlay> {
               onTap: widget.onClose, // 点击背景关闭
               child: Stack(
                 children: [
+                  ColoredBox(
+                    color: context.bg.withOpacity(1),
+                  ),
                   // 背景模糊图
-                  ImageFiltered(
-                    imageFilter: ImageFilter.blur(sigmaX: 90, sigmaY: 90),
-                    child: NetImage(
-                      height: MediaQuery.of(context).size.height,
-                      width: MediaQuery.of(context).size.width,
-                      url: musPStore.curSong?.artUri?.toString() ?? "",
-                      fit: BoxFit.cover,
-                      cache: true,
-                      loadingWidget: (ctx, url) => Container(
-                        color: context.bg,
-                      ),
-                      errorWidget: (ctx, url, error) => Container(
-                        color: context.bg,
+                  Positioned.fill(
+                    child: ClipRect(
+                      child: ImageFiltered(
+                        imageFilter: ImageFilter.blur(
+                          sigmaX: 100,
+                          sigmaY: 100,
+                          tileMode: TileMode.clamp,
+                        ),
+                        child: NetImage(
+                          url: musPStore.curSong?.artUri?.toString() ?? "",
+                          height: MediaQuery.of(context).size.height,
+                          width: MediaQuery.of(context).size.width,
+                          fit: BoxFit.cover,
+                          cache: true,
+                          loadingWidget: (ctx, url) => Container(
+                            color: context.bg,
+                          ),
+                          errorWidget: (ctx, url, error) => Container(
+                            color: context.bg,
+                          ),
+                        ),
                       ),
                     ),
                   ),
-                  // 渐变遮罩
-                  Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          Colors.transparent,
-                          context.bg.withOpacity(0.7),
-                        ],
+                  Positioned.fill(
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            context.bg.withOpacity(0.15),
+                            context.bg.withOpacity(0.35),
+                            context.bg.withOpacity(0.95),
+                          ],
+                          stops: const [0.0, 0.45, 1.0],
+                        ),
                       ),
                     ),
                   ),
