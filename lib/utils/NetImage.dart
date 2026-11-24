@@ -46,12 +46,24 @@ class NetImage extends StatelessWidget {
 
   bool get _isSvg => url.toLowerCase().endsWith('.svg');
 
+  // The music.126.net image CDN rejects the default Dart User-Agent (403).
+  // Scope this compatibility header to that CDN, preserving other requests.
+  Map<String, String>? get _imageHeaders {
+    final host = Uri.tryParse(url)?.host.toLowerCase();
+    if (host == 'music.126.net' ||
+        (host?.endsWith('.music.126.net') ?? false)) {
+      return const {'User-Agent': 'Mozilla/5.0'};
+    }
+    return null;
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_isSvg) {
       // SVG 图片（flutter_svg 不自带缓存）
       return SvgPicture.network(
         url,
+        headers: _imageHeaders,
         width: width,
         height: height,
         fit: fit,
@@ -63,6 +75,7 @@ class NetImage extends StatelessWidget {
       if (cache) {
         return CachedNetworkImage(
           imageUrl: url,
+          httpHeaders: _imageHeaders,
           width: width,
           height: height,
           fit: fit,
@@ -77,6 +90,7 @@ class NetImage extends StatelessWidget {
       } else {
         return Image.network(
           url,
+          headers: _imageHeaders,
           width: width,
           height: height,
           fit: fit,

@@ -43,13 +43,11 @@ packages:
     source: git
     version: "0.18.13"
   audio_service_ohos:
-    dependency: transitive
+    dependency: "direct overridden"
     description:
-      path: audio_service_ohos
-      ref: HEAD
-      resolved-ref: "43be9f21aa33cde5a7855691a00ce52aa06014a7"
-      url: "https://gitcode.com/openharmony-sig/fluttertpc_audio_service.git"
-    source: git
+      path: "third_party/audio_service_ohos"
+      relative: true
+    source: path
     version: "0.18.15"
   audio_service_platform_interface:
     dependency: transitive
@@ -113,13 +111,11 @@ packages:
     source: git
     version: "2.1.0"
   audioplayers_ohos:
-    dependency: transitive
+    dependency: "direct overridden"
     description:
-      path: "packages/audioplayers_ohos"
-      ref: HEAD
-      resolved-ref: "5b1f0f972b200b543b5ac27c46f8efba63662e12"
-      url: "https://gitcode.com/openharmony-sig/flutter_audioplayers.git"
-    source: git
+      path: "third_party/audioplayers_ohos"
+      relative: true
+    source: path
     version: "3.0.2"
   audioplayers_platform_interface:
     dependency: transitive

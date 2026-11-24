@@ -7,11 +7,24 @@
         "material": {
           "certpath": "/Users/zhiqiangli/.ohos/config/default_ohos_U7hUK6OrnGDEkCLFdy3zgc1MsoX2ShjT2v6PqyFL3z4=.cer",
           "keyAlias": "debugKey",
-          "keyPassword": "0000001BE51454670197099F25A363C3FC89B8B6D47AA32CD1CB7681457FF87B6CF3089930046D396AA964",
+          "keyPassword": "0000001B86D5BBC056935710B48C862D3BCEF63CD09AA3CA7DDE6AC9E7A88CA2EA5C55E7D2838916F8EB62",
           "profile": "/Users/zhiqiangli/.ohos/config/default_ohos_U7hUK6OrnGDEkCLFdy3zgc1MsoX2ShjT2v6PqyFL3z4=.p7b",
           "signAlg": "SHA256withECDSA",
           "storeFile": "/Users/zhiqiangli/.ohos/config/default_ohos_U7hUK6OrnGDEkCLFdy3zgc1MsoX2ShjT2v6PqyFL3z4=.p12",
-          "storePassword": "0000001B8827E3203918693A257CED8F9313EC2DEE786E77496BE808AC095CA7CC7362906E5ADF8B46B739"
+          "storePassword": "0000001B843F2ECA7DDA6F951396934155665DCD3DED00A551BF20EDF3734C52B9B7C06513E745731FA735"
+        }
+      },
+      {
+        "name": "djx",
+        "type": "HarmonyOS",
+        "material": {
+          "certpath": "/Users/zhiqiangli/.ohos/config/djx_ohos_U7hUK6OrnGDEkCLFdy3zgc1MsoX2ShjT2v6PqyFL3z4=.cer",
+          "keyAlias": "debugKey",
+          "keyPassword": "0000001B6BDD9D9923210D27A597044C2CA1BA944A770C4B3174510DC0E59437F2B12ECD401A836D8122D7",
+          "profile": "/Users/zhiqiangli/.ohos/config/djx_ohos_U7hUK6OrnGDEkCLFdy3zgc1MsoX2ShjT2v6PqyFL3z4=.p7b",
+          "signAlg": "SHA256withECDSA",
+          "storeFile": "/Users/zhiqiangli/.ohos/config/djx_ohos_U7hUK6OrnGDEkCLFdy3zgc1MsoX2ShjT2v6PqyFL3z4=.p12",
+          "storePassword": "0000001BB1EF1ABC0C2A293E89C6FCD02389A0C9EE380549CFDBFD2DE7EBAFD16EA1903BEDC981F3221AF9"
         }
       }
     ],
@@ -20,7 +33,8 @@
         "name": "default",
         "signingConfig": "default",
         "compatibleSdkVersion": "5.0.0(12)",
-        "runtimeOS": "HarmonyOS"
+        "runtimeOS": "HarmonyOS",
+        "targetSdkVersion": "6.0.0(20)"
       }
     ]
   },
