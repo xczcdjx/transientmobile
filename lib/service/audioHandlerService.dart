@@ -43,6 +43,7 @@ class AudioHandlerService {
     _lyrics = AudioLyricsController(
       mediaItems: handler.currentItemStream,
       positions: handler.positionStream,
+      playbackStates: handler.playbackState,
       loadLyrics: (id) async {
         final response = await Http().get<Map<String, dynamic>>(
             ExploreU.lycdetail,

@@ -6,6 +6,8 @@ import 'package:transientmobile/utils/AudioHandler.dart';
 import 'package:transientmobile/store/index.dart';
 
 class TestPlayer extends Fake implements AudioPlayer {
+  @override
+  String get playerId => "test-player";
   final states = StreamController<PlayerState>.broadcast(sync: true);
   final positions = StreamController<Duration>.broadcast(sync: true);
   final durations = StreamController<Duration>.broadcast(sync: true);
@@ -219,6 +221,47 @@ void main() {
     expect(player.urls.length, 1);
     slice.dispose();
     await handler.dispose();
+  });
+
+  test('native buffered range, buffering state and stale-track isolation',
+      () async {
+    final events = StreamController<dynamic>.broadcast(sync: true);
+    final handler = AudioPlayerHandlerImpl(
+        player: TestPlayer(), bufferEvents: events.stream);
+    await handler.playMediaItem(track('a'));
+    void emit(int type,
+            {int? end, String id = 'a', String player = 'test-player'}) =>
+        events.add({
+          'playerId': player,
+          'url': 'https://example.com/$id.mp3',
+          'type': type,
+          if (end != null) 'bufferedPosition': end,
+        });
+    emit(4, end: 6000);
+    expect(handler.playbackState.value.bufferedPosition,
+        const Duration(seconds: 6));
+    emit(1);
+    expect(handler.playbackState.value.processingState,
+        AudioProcessingState.buffering);
+    expect(handler.playbackState.value.playing, isTrue);
+    emit(2);
+    expect(handler.playbackState.value.processingState,
+        AudioProcessingState.ready);
+    emit(4, end: 99000);
+    expect(handler.playbackState.value.bufferedPosition,
+        const Duration(seconds: 10));
+    await handler.playMediaItem(track('b'));
+    expect(handler.playbackState.value.bufferedPosition, Duration.zero);
+    emit(4, end: 9000); // Late information from A must not affect B.
+    emit(4, end: 9000, id: 'b', player: 'another-player');
+    expect(handler.playbackState.value.bufferedPosition, Duration.zero);
+    emit(4, end: -1, id: 'b');
+    expect(handler.playbackState.value.bufferedPosition, Duration.zero);
+    emit(4, end: 5000, id: 'b');
+    await handler.stop();
+    expect(handler.playbackState.value.bufferedPosition, Duration.zero);
+    await handler.dispose();
+    await events.close();
   });
 
   test('a bad track reports error and does not poison the next command',

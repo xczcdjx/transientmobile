@@ -307,8 +307,8 @@ export default class WrappedPlayer {
     this.ref.handleComplete(this)
   }
 
-  onBuffering(percent: number) {
-    // TODO(luan): expose this as a stream
+  onBuffering(infoType: number, value: number) {
+    this.ref.handleBuffering(this, infoType, value)
   }
 
   onSeekComplete() {

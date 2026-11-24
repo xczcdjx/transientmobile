@@ -5,6 +5,33 @@ import 'package:transientmobile/music/common.dart';
 import 'package:transientmobile/styles/theme.dart';
 
 void main() {
+  testWidgets('buffer track displays reported range and loading animation',
+      (tester) async {
+    await tester.pumpWidget(MaterialApp(
+        theme: lightTheme,
+        home: Scaffold(
+            body: SeekBar(
+                duration: const Duration(seconds: 100),
+                position: const Duration(seconds: 10),
+                bufferedPosition: const Duration(seconds: 40),
+                isBuffering: true))));
+    expect(tester.takeException(), isNull);
+    final indicators = tester
+        .widgetList<LinearProgressIndicator>(
+            find.byType(LinearProgressIndicator))
+        .toList();
+    expect(indicators.map((item) => item.value), [0.4, null]);
+    await tester.pumpWidget(MaterialApp(
+        theme: lightTheme,
+        home: Scaffold(
+            body: SeekBar(
+                duration: const Duration(seconds: 100),
+                position: const Duration(seconds: 10),
+                bufferedPosition: const Duration(seconds: 40)))));
+    await tester.pumpAndSettle();
+    expect(find.byType(LinearProgressIndicator), findsOneWidget);
+  });
+
   for (final compact in [false, true]) {
     Widget bar(
         {required Duration duration,

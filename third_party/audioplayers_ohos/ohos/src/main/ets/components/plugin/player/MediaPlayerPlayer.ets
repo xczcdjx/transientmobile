@@ -57,7 +57,7 @@ export default class MediaPlayerPlayer implements Player {
 
     avPlayer.on('bufferingUpdate', (infoType: media.BufferingInfoType, value: number) => {
       Log.d(TAG, `AVPlayer bufferingUpdate value is ${value}`);
-      this.wrappedPlayer.onBuffering(value)
+      this.wrappedPlayer.onBuffering(infoType, value)
     })
     avPlayer.on('speedDone', (speed: number) => {
       console.info('speedDone called,and speed value is:' + speed)

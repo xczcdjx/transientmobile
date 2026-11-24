@@ -21,6 +21,7 @@ class ComMusSeek extends ConsumerWidget {
       duration: musPStore.curSong?.duration ?? const Duration(seconds: 0),
       position: musStore.position,
       bufferedPosition: musStore.bufferedPosition,
+      isBuffering: musStore.isBuffering,
       onChangeEnd: (newPosition) {
         audioHandler.seek(newPosition);
       },

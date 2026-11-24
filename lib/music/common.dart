@@ -1,3 +1,4 @@
+import '../components/music/seek_buffer_track.dart';
 /*
 * Copyright (c) 2024 SwanLink (Jiangsu) Technology Development Co., LTD.
 * Licensed under the Apache License, Version 2.0 (the "License");
@@ -33,6 +34,7 @@ class SeekBar extends StatefulWidget {
   final Duration duration;
   final Duration position;
   final Duration bufferedPosition;
+  final bool isBuffering;
   final ValueChanged<Duration>? onChanged;
   final ValueChanged<Duration>? onChangeEnd;
   final bool showDuration;
@@ -43,6 +45,7 @@ class SeekBar extends StatefulWidget {
     required this.duration,
     required this.position,
     this.bufferedPosition = Duration.zero,
+    this.isBuffering = false,
     this.onChanged,
     this.onChangeEnd,
     this.showDuration = true,
@@ -73,27 +76,12 @@ class SeekBarState extends State<SeekBar> {
     final maxMs = durationMs > 0 ? durationMs : 1.0;
     final value = (_dragValue ?? widget.position.inMilliseconds.toDouble())
         .clamp(0.0, durationMs);
-    final buffered = widget.bufferedPosition.inMilliseconds
-        .toDouble()
-        .clamp(0.0, durationMs);
     return Stack(
       children: [
-        SliderTheme(
-          data: _sliderThemeData.copyWith(
-            thumbShape: HiddenThumbComponentShape(),
-            activeTrackColor: Colors.blue.shade100,
-            inactiveTrackColor: Colors.grey.shade300,
-            // trackShape: FullWidthTrackShape(),
-          ),
-          child: ExcludeSemantics(
-            child: Slider(
-              min: 0.0,
-              max: maxMs,
-              value: buffered,
-              onChanged: null,
-            ),
-          ),
-        ),
+        SeekBufferTrack(duration: widget.duration,
+          bufferedPosition: widget.bufferedPosition,
+          isLoading: widget.isBuffering, inset: 24),
+
         ...(widget.showDuration
             ? [
                 Positioned(

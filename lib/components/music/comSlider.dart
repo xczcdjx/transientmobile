@@ -1,4 +1,4 @@
-import 'dart:math' as math;
+import 'seek_buffer_track.dart';
 import 'package:flutter/material.dart';
 import 'package:transientmobile/extensions/customColors.dart';
 import 'package:transientmobile/music/common.dart';
@@ -9,6 +9,7 @@ class ComSeekBar extends StatefulWidget {
   final Duration duration;
   final Duration position;
   final Duration bufferedPosition;
+  final bool isBuffering;
   final ValueChanged<Duration>? onChanged;
   final ValueChanged<Duration>? onChangeEnd;
   final bool showDuration;
@@ -19,6 +20,7 @@ class ComSeekBar extends StatefulWidget {
     required this.duration,
     required this.position,
     this.bufferedPosition = Duration.zero,
+    this.isBuffering = false,
     this.onChanged,
     this.onChangeEnd,
     this.showDuration = true,
@@ -47,30 +49,17 @@ class ComSeekBarState extends State<ComSeekBar> {
         widget.duration.inMilliseconds.toDouble().clamp(0.0, double.infinity);
     final positionMs = (_dragValue ?? widget.position.inMilliseconds.toDouble())
         .clamp(0.0, maxMs);
-    final bufferedMs =
-        widget.bufferedPosition.inMilliseconds.toDouble().clamp(0.0, maxMs);
 
     // 计算“剩余时间”：拖动中显示基于拖动位置的剩余；否则基于实际播放位置
     final remaining = Duration(milliseconds: (maxMs - positionMs).round());
 
     return Stack(
       children: [
-        // 缓冲进度条（禁用拇指）
-        SliderTheme(
-          data: _sliderThemeData.copyWith(
-              thumbShape: const _HiddenThumbComponentShape(),
-              activeTrackColor: Colors.blue.shade100,
-              inactiveTrackColor: Colors.grey.shade300,
-              trackShape: FullWidthTrackShape()),
-          child: ExcludeSemantics(
-            child: Slider(
-              min: 0.0,
-              max: maxMs > 0 ? maxMs : 1.0, // 防 0
-              value: math.min(bufferedMs, maxMs),
-              onChanged: null, // 纯显示
-            ),
-          ),
-        ),
+        SeekBufferTrack(
+            duration: widget.duration,
+            bufferedPosition: widget.bufferedPosition,
+            isLoading: widget.isBuffering,
+            inset: 5),
 
         // 时间文本（左：当前位置 / 右：总时长）
         if (widget.showDuration) ...[
@@ -157,31 +146,5 @@ class ComSeekBarState extends State<ComSeekBar> {
   void didUpdateWidget(covariant ComSeekBar oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.duration != widget.duration) _dragValue = null;
-  }
-}
-
-/// 一个极简的隐藏拇指形状（若你工程里已有类似实现，可删除此类）
-class _HiddenThumbComponentShape extends SliderComponentShape {
-  const _HiddenThumbComponentShape();
-
-  @override
-  Size getPreferredSize(bool isEnabled, bool isDiscrete) => Size.zero;
-
-  @override
-  void paint(
-    PaintingContext context,
-    Offset center, {
-    required Animation<double> activationAnimation,
-    required Animation<double> enableAnimation,
-    required bool isDiscrete,
-    required TextPainter labelPainter,
-    required RenderBox parentBox,
-    required SliderThemeData sliderTheme,
-    required TextDirection textDirection,
-    required double value,
-    required double textScaleFactor,
-    required Size sizeWithOverflow,
-  }) {
-    // 故意不画任何东西
   }
 }

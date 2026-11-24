@@ -2,12 +2,13 @@ import 'dart:async';
 import 'package:audio_service/audio_service.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:rxdart/rxdart.dart';
 import 'media_artwork.dart';
 
 /// Owns the player and system media state; queue decisions belong to MusPlaySlice.
 class AudioPlayerHandlerImpl extends BaseAudioHandler with SeekHandler {
-  AudioPlayerHandlerImpl({AudioPlayer? player})
+  AudioPlayerHandlerImpl({AudioPlayer? player, Stream<dynamic>? bufferEvents})
       : _audioPlayer = player ?? AudioPlayer() {
     _subscriptions.add(_audioPlayer.onPlayerStateChanged
         .listen(_onPlayerState, onError: _onError));
@@ -22,6 +23,16 @@ class AudioPlayerHandlerImpl extends BaseAudioHandler with SeekHandler {
         _updateDuration(duration);
       }
     }, onError: _onError));
+    final events = bufferEvents ??
+        (!kIsWeb && defaultTargetPlatform.name == 'ohos'
+            ? const EventChannel('transient/audio_buffer/events')
+                .receiveBroadcastStream()
+            : null);
+    if (events != null) {
+      _subscriptions.add(events.listen(_onBufferEvent, onError: (Object error) {
+        debugPrint('Audio buffer information unavailable: $error');
+      }));
+    }
     _ready = _audioPlayer.setReleaseMode(ReleaseMode.stop);
     _publishState(AudioProcessingState.idle, playing: false);
   }
@@ -38,6 +49,8 @@ class AudioPlayerHandlerImpl extends BaseAudioHandler with SeekHandler {
   Duration? _pendingDuration;
   String? _notificationLine;
   Duration? _lastSystemPosition;
+  Duration _bufferedPosition = Duration.zero;
+  bool _buffering = false;
   PlayerState state = PlayerState.stopped;
 
   MediaItem? Function()? resolveCurrentItem;
@@ -78,6 +91,37 @@ class AudioPlayerHandlerImpl extends BaseAudioHandler with SeekHandler {
     ));
   }
 
+  void _onBufferEvent(dynamic event) {
+    if (_disposed ||
+        event is! Map ||
+        event['playerId'] != _audioPlayer.playerId) return;
+    final item = _currentItem.value;
+    if (item == null || (_loadedId == null && !_switching)) return;
+    final url = event['url'];
+    if (url is String &&
+        url != Uri.tryParse(item.extras?['musUrl'] ?? '')?.toString()) return;
+    final type = event['type'];
+    if (type == 1) _buffering = true;
+    if (type == 2) _buffering = false;
+    final end = event['bufferedPosition'];
+    if (type == 4 && end is num && end.isFinite && end >= 0) {
+      var milliseconds = end.round();
+      final duration = item.duration?.inMilliseconds;
+      if (duration != null && duration > 0) {
+        milliseconds = milliseconds.clamp(0, duration);
+      }
+      _bufferedPosition = Duration(milliseconds: milliseconds);
+    }
+    final processing = playbackState.value.processingState;
+    if (processing == AudioProcessingState.error ||
+        processing == AudioProcessingState.idle) return;
+    _publishState(
+        _loadedId == null
+            ? AudioProcessingState.loading
+            : AudioProcessingState.ready,
+        playing: playbackState.value.playing);
+  }
+
   void _setPosition(Duration position) {
     final value = position < Duration.zero ? Duration.zero : position;
     if (value != _position.value) _position.add(value);
@@ -106,7 +150,9 @@ class AudioPlayerHandlerImpl extends BaseAudioHandler with SeekHandler {
     if (_disposed) return;
     _lastSystemPosition = currentPosition;
     playbackState.add(playbackState.value.copyWith(
-      processingState: processing,
+      processingState: _buffering && processing == AudioProcessingState.ready
+          ? AudioProcessingState.buffering
+          : processing,
       errorCode: null,
       errorMessage: null,
       playing: playing,
@@ -120,9 +166,7 @@ class AudioPlayerHandlerImpl extends BaseAudioHandler with SeekHandler {
       androidCompactActionIndices: const [0, 1, 2],
       updatePosition: currentPosition,
       speed: speed.value,
-      // audioplayers does not report buffered ranges; do not claim the entire
-      // track has been downloaded by publishing its duration as bufferedPosition.
-      bufferedPosition: Duration.zero,
+      bufferedPosition: _bufferedPosition,
     ));
   }
 
@@ -155,6 +199,8 @@ class AudioPlayerHandlerImpl extends BaseAudioHandler with SeekHandler {
   }
 
   void _selectItem(MediaItem? item) {
+    _bufferedPosition = Duration.zero;
+    _buffering = false;
     if (_currentItem.value?.id != item?.id) _notificationLine = null;
     _setPosition(Duration.zero);
     _currentItem.add(item);
@@ -232,6 +278,8 @@ class AudioPlayerHandlerImpl extends BaseAudioHandler with SeekHandler {
   Future<void> stop() => _enqueue(() async {
         await _audioPlayer.stop();
         _loadedId = null;
+        _bufferedPosition = Duration.zero;
+        _buffering = false;
         _setPosition(Duration.zero);
         updateNotificationLyric(_currentItem.value?.id ?? '', null);
         _publishState(AudioProcessingState.idle, playing: false);

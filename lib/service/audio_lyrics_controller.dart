@@ -12,10 +12,21 @@ class AudioLyricsController {
     required Stream<Duration> positions,
     required this.loadLyrics,
     required this.publishLine,
+    Stream<PlaybackState>? playbackStates,
   }) {
     _subscriptions.add(
         mediaItems.distinct((a, b) => a?.id == b?.id).listen(_onMediaItem));
     _subscriptions.add(positions.distinct().listen(_onPosition));
+    if (playbackStates != null) {
+      _subscriptions.add(playbackStates.listen((playback) {
+        state.add(state.value.copyWith(
+            bufferedPosition: playback.bufferedPosition,
+            isBuffering: playback.playing &&
+                (playback.processingState == AudioProcessingState.loading ||
+                    playback.processingState ==
+                        AudioProcessingState.buffering)));
+      }));
+    }
   }
 
   final Future<String> Function(String id) loadLyrics;

@@ -16,7 +16,7 @@ import '../service/play_list_controller.dart';
 import '../utils/NetImage.dart';
 import '../utils/getDevice.dart';
 import '../utils/screenUtil.dart';
-
+// Music底部播放组件
 class MusBotScreen extends ConsumerStatefulWidget {
   const MusBotScreen({super.key});
 
@@ -103,6 +103,7 @@ class _MusBotScreenState extends ConsumerState<MusBotScreen> {
                             const Duration(seconds: 0),
                         position: mus.position,
                         bufferedPosition: mus.bufferedPosition,
+                        isBuffering: mus.isBuffering,
                         showDuration: false,
                         onChangeEnd: (newPosition) {
                           audioHandler.seek(newPosition);

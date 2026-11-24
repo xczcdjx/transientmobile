@@ -8,6 +8,43 @@ import 'package:transientmobile/utils/musFun.dart';
 Future<void> flush() => Future<void>.delayed(Duration.zero);
 
 void main() {
+  test('buffer updates reach UI state without reloading lyrics', () async {
+    final media = BehaviorSubject<MediaItem?>.seeded(
+        const MediaItem(id: 'a', title: 'A'));
+    final positions = BehaviorSubject<Duration>.seeded(Duration.zero);
+    final playback = BehaviorSubject<PlaybackState>.seeded(PlaybackState());
+    var loads = 0;
+    final controller = AudioLyricsController(
+        mediaItems: media,
+        positions: positions,
+        playbackStates: playback,
+        loadLyrics: (_) async {
+          loads++;
+          return '';
+        },
+        publishLine: (_, __) {});
+    await flush();
+    playback.add(PlaybackState(
+        playing: true,
+        processingState: AudioProcessingState.buffering,
+        bufferedPosition: const Duration(seconds: 20)));
+    await flush();
+    expect(
+        controller.state.value.bufferedPosition, const Duration(seconds: 20));
+    expect(controller.state.value.isBuffering, isTrue);
+    playback.add(PlaybackState(
+        playing: true,
+        processingState: AudioProcessingState.ready,
+        bufferedPosition: const Duration(seconds: 30)));
+    await flush();
+    expect(controller.state.value.isBuffering, isFalse);
+    expect(loads, 1);
+    await controller.dispose();
+    await media.close();
+    await positions.close();
+    await playback.close();
+  });
+
   test('LRC centiseconds, milliseconds, whole seconds and repeated tags', () {
     final parser =
         LrcParser.from('[00:02.50]two\n[00:01.005]one\n[00:03][00:05]repeat');

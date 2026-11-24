@@ -41,6 +41,7 @@ export default class AudioplayersPlugin implements FlutterPlugin, AbilityAware, 
   private methods?: MethodChannel = undefined;
   private globalMethods?: MethodChannel = undefined;
   private globalEvents?: EventHandler = undefined;
+  private bufferEvents?: EventHandler = undefined;
   private context?: Context = undefined;
   private binaryMessenger?: BinaryMessenger = undefined;
   private soundPoolManager?: SoundPoolManager = undefined;
@@ -71,6 +72,7 @@ export default class AudioplayersPlugin implements FlutterPlugin, AbilityAware, 
         this.globalMethodCall(call, result)
       }
     })
+    this.bufferEvents = new EventHandler(new EventChannel(binding.getBinaryMessenger(), "transient/audio_buffer/events"))
     this.globalEvents = new EventHandler(new EventChannel(binding.getBinaryMessenger(), "xyz.luan/audioplayers.global/events"))
   }
 
@@ -80,6 +82,7 @@ export default class AudioplayersPlugin implements FlutterPlugin, AbilityAware, 
     this.players.clear()
     this.soundPoolManager?.dispose()
     this.globalEvents?.dispose()
+    this.bufferEvents?.dispose()
     this.stopUpdates();
   }
 
@@ -231,6 +234,26 @@ export default class AudioplayersPlugin implements FlutterPlugin, AbilityAware, 
     let dutraion = player.getDuration();
     map.set("value", dutraion ? dutraion : 0);
     player.eventHandler.success("audio.onDuration", map);
+  }
+
+  handleBuffering(player: WrappedPlayer, infoType: number, value: number) {
+    this.players.forEach((candidate: WrappedPlayer, id: string) => {
+      if (candidate !== player) return;
+      let data = new Map<string, string | number>();
+      data.set("playerId", id);
+      data.set("type", infoType);
+      let source = player.getSource();
+      if (source instanceof UrlSource) data.set("url", source.url);
+      // CACHED_DURATION is buffered milliseconds ahead of the current position,
+      // not a percentage of the entire file.
+      if (infoType === 4 && value >= 0) {
+        let position = Math.max(0, player.getCurrentPosition() ?? 0);
+        let end = position + value;
+        let duration = player.getDuration() ?? 0;
+        data.set("bufferedPosition", duration > 0 ? Math.min(end, duration) : end);
+      }
+      this.bufferEvents?.success("audio.buffering", data);
+    });
   }
 
   handleComplete(player: WrappedPlayer) {

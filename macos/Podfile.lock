@@ -45,11 +45,11 @@ SPEC CHECKSUMS:
   audio_service: 0d9e4e25347bb3efb768f3b9f005911a81e587a7
   audio_session: 48ab6500f7a5e7c64363e206565a5dfe5a0c1441
   audioplayers_darwin: 761f2948df701d05b5db603220c384fb55720012
-  FlutterMacOS: 8f6f14fa908a6fb3fba0cd85dbd81ec4b251fb24
+  FlutterMacOS: d0db08ddef1a9af05a5ec4b724367152bb0500b1
   path_provider_foundation: 080d55be775b7414fd5a5ef3ac137b97b097e564
   shared_preferences_foundation: 9e1978ff2562383bd5676f64ec4e9aa8fa06a6f7
   sqflite: c35dad70033b8862124f8337cc994a809fcd9fa3
 
-PODFILE CHECKSUM: 236401fc2c932af29a9fcf0e97baeeb2d750d367
+PODFILE CHECKSUM: 9ebaf0ce3d369aaa26a9ea0e159195ed94724cf3
 
 COCOAPODS: 1.16.2

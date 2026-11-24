@@ -12,6 +12,10 @@ class MusPlaySlice extends StateNotifier<MusPlayState> {
         state = state.copyWith(isPlaying: s.playing);
       }
     });
+    // 初始化歌单列表
+/*    state = state.copyWith(playList: mediaItemsFromJson(musTest));
+    handler.setMediaItemOnly(state.curSong!);*/
+    //
     handler.onCompleted = (_) async {
       if (state.playList.isEmpty) return;
       if (state.repeatMode == AudioServiceRepeatMode.one) {
