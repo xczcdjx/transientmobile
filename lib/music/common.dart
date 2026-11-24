@@ -15,8 +15,6 @@
 
 // ignore_for_file: public_member_api_docs
 
-import 'dart:math';
-
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
 import 'package:rxdart/rxdart.dart';
@@ -37,8 +35,8 @@ class SeekBar extends StatefulWidget {
   final Duration bufferedPosition;
   final ValueChanged<Duration>? onChanged;
   final ValueChanged<Duration>? onChangeEnd;
-  bool showDuration;
-  bool showRemain;
+  final bool showDuration;
+  final bool showRemain;
 
   SeekBar({
     Key? key,
@@ -47,8 +45,8 @@ class SeekBar extends StatefulWidget {
     this.bufferedPosition = Duration.zero,
     this.onChanged,
     this.onChangeEnd,
-    this.showDuration=true,
-    this.showRemain=false,
+    this.showDuration = true,
+    this.showRemain = false,
   }) : super(key: key);
 
   @override
@@ -57,7 +55,6 @@ class SeekBar extends StatefulWidget {
 
 class SeekBarState extends State<SeekBar> {
   double? _dragValue;
-  bool _dragging = false;
   late SliderThemeData _sliderThemeData;
 
   @override
@@ -71,13 +68,14 @@ class SeekBarState extends State<SeekBar> {
 
   @override
   Widget build(BuildContext context) {
-    final value = min(
-      _dragValue ?? widget.position.inMilliseconds.toDouble(),
-      widget.duration.inMilliseconds.toDouble(),
-    );
-    if (_dragValue != null && !_dragging) {
-      _dragValue = null;
-    }
+    final durationMs =
+        widget.duration.inMilliseconds.toDouble().clamp(0.0, double.infinity);
+    final maxMs = durationMs > 0 ? durationMs : 1.0;
+    final value = (_dragValue ?? widget.position.inMilliseconds.toDouble())
+        .clamp(0.0, durationMs);
+    final buffered = widget.bufferedPosition.inMilliseconds
+        .toDouble()
+        .clamp(0.0, durationMs);
     return Stack(
       children: [
         SliderTheme(
@@ -90,78 +88,93 @@ class SeekBarState extends State<SeekBar> {
           child: ExcludeSemantics(
             child: Slider(
               min: 0.0,
-              max: widget.duration.inMilliseconds.toDouble(),
-              value: min(widget.bufferedPosition.inMilliseconds.toDouble(),
-                  widget.duration.inMilliseconds.toDouble()),
-              onChanged: (value) {},
+              max: maxMs,
+              value: buffered,
+              onChanged: null,
             ),
           ),
         ),
         ...(widget.showDuration
             ? [
-          Positioned(
-            left: 16.0,
-            bottom: -2.0,
-            child: Text(
-              tranTime(widget.position),
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-          ),
-          Positioned(
-            right: 16.0,
-            bottom: -2.0,
-            child: Text(
-              tranTime(widget.duration),
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-          ),
-        ]
+                Positioned(
+                  left: 16.0,
+                  bottom: -2.0,
+                  child: Text(
+                    tranTime(Duration(milliseconds: value.round())),
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ),
+                Positioned(
+                  right: 16.0,
+                  bottom: -2.0,
+                  child: Text(
+                    tranTime(Duration(milliseconds: durationMs.round())),
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ),
+              ]
             : const []),
-
         SliderTheme(
           data: _sliderThemeData.copyWith(
             inactiveTrackColor: Colors.transparent,
             thumbShape: RoundSliderThumbShape(
               enabledThumbRadius: 7.0, // 修改这里的大小，默认是 10.0
-              pressedElevation: 3.5,    // 按下时的阴影
+              pressedElevation: 3.5, // 按下时的阴影
             ),
             // trackShape: FullWidthTrackShape(),
           ),
           child: Slider(
             min: 0.0,
-            max: widget.duration.inMilliseconds.toDouble(),
+            max: maxMs,
             value: value,
-            onChanged: (value) {
-              if (!_dragging) {
-                _dragging = true;
-              }
-              setState(() {
-                _dragValue = value;
-              });
-              if (widget.onChanged != null) {
-                widget.onChanged!(Duration(milliseconds: value.round()));
-              }
-            },
-            onChangeEnd: (value) {
-              if (widget.onChangeEnd != null) {
-                widget.onChangeEnd!(Duration(milliseconds: value.round()));
-              }
-              _dragging = false;
-            },
+            onChanged: durationMs <= 0
+                ? null
+                : (value) {
+                    setState(() {
+                      _dragValue = value;
+                    });
+                    if (widget.onChanged != null) {
+                      widget.onChanged!(Duration(milliseconds: value.round()));
+                    }
+                  },
+            onChangeEnd: durationMs <= 0
+                ? null
+                : (value) {
+                    if (widget.onChangeEnd != null) {
+                      widget
+                          .onChangeEnd!(Duration(milliseconds: value.round()));
+                    }
+                    setState(() {
+                      _dragValue = null;
+                    });
+                  },
           ),
         ),
-        widget.showRemain?Positioned(
-          right: 16.0,
-          bottom: 0.0,
-          child: Text(
-              tranTime(_remaining),
-              style: Theme.of(context).textTheme.bodySmall),
-        ):Container(),
+        widget.showRemain
+            ? Positioned(
+                right: 16.0,
+                bottom: 0.0,
+                child: Text(tranTime(_remaining),
+                    style: Theme.of(context).textTheme.bodySmall),
+              )
+            : Container(),
       ],
     );
   }
 
-  Duration get _remaining => widget.duration - widget.position;
+  @override
+  void didUpdateWidget(covariant SeekBar oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.duration != widget.duration) {
+      _dragValue = null;
+    }
+  }
+
+  Duration get _remaining {
+    final duration = widget.duration.isNegative ? 0 : widget.duration.inMilliseconds;
+    final position = widget.position.inMilliseconds.clamp(0, duration);
+    return Duration(milliseconds: duration - position);
+  }
 }
 
 class HiddenThumbComponentShape extends SliderComponentShape {

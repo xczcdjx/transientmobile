@@ -147,6 +147,80 @@ void main() {
     await handler.dispose();
   });
 
+  test('system artwork retains CDN headers across lyric and duration updates',
+      () async {
+    final player = TestPlayer();
+    final handler = AudioPlayerHandlerImpl(player: player);
+    final item = track('cover').copyWith(
+        artUri: Uri.parse('http://p1.music.126.net/example/cover.jpg'));
+    await handler.playMediaItem(item);
+    expect(handler.mediaItem.value!.artHeaders?['User-Agent'], 'Mozilla/5.0');
+    handler.updateNotificationLyric('cover', 'first line');
+    expect(handler.mediaItem.value!.artHeaders?['User-Agent'], 'Mozilla/5.0');
+    player.durations.add(const Duration(seconds: 20));
+    expect(handler.mediaItem.value!.duration, const Duration(seconds: 20));
+    expect(handler.mediaItem.value!.artist, 'first line');
+    expect(handler.mediaItem.value!.artHeaders?['User-Agent'], 'Mozilla/5.0');
+    handler.updateNotificationLyric('cover', null);
+    expect(handler.mediaItem.value!.artist, 'Artist cover');
+    expect(handler.mediaItem.value!.artHeaders?['User-Agent'], 'Mozilla/5.0');
+    await handler.dispose();
+  });
+
+  test(
+      'lyric metadata uses current progress and retains remote play/pause action',
+      () async {
+    final player = TestPlayer();
+    final handler = AudioPlayerHandlerImpl(player: player);
+    await handler.playMediaItem(track('progress'));
+    player.positions.add(const Duration(milliseconds: 2345));
+    expect(handler.playbackState.value.updatePosition,
+        const Duration(milliseconds: 2345));
+    // Less than one second later: metadata publication must still send the
+    // exact latest anchor rather than resetting native elapsed time backwards.
+    player.positions.add(const Duration(milliseconds: 2600));
+    handler.updateNotificationLyric('progress', 'line');
+    expect(handler.playbackState.value.updatePosition,
+        const Duration(milliseconds: 2600));
+    expect(handler.playbackState.value.systemActions,
+        contains(MediaAction.playPause));
+    expect(handler.playbackState.value.controls, contains(MediaControl.pause));
+    await handler.pause();
+    expect(handler.playbackState.value.playing, isFalse);
+    expect(handler.playbackState.value.controls, contains(MediaControl.play));
+    handler.updateNotificationLyric('progress', 'paused line');
+    expect(handler.playbackState.value.playing, isFalse);
+    await handler.dispose();
+  });
+
+  test(
+      'default queue is empty; only selected songs are added and clearing stops playback',
+      () async {
+    final player = TestPlayer();
+    final handler = AudioPlayerHandlerImpl(player: player);
+    final slice = MusPlaySlice(handler);
+    handler.resolveCurrentItem = () => slice.curMedia;
+    expect(slice.state.playList, isEmpty);
+    expect(slice.curMedia, isNull);
+    expect(handler.mediaItem.value, isNull);
+    await slice.play();
+    await slice.next();
+    await slice.previous();
+    slice.toggleShuffle();
+    expect(player.urls, isEmpty);
+    await slice.addMusOne(track('selected'));
+    expect(slice.state.playList.map((item) => item.id), ['selected']);
+    expect(handler.mediaItem.value!.id, 'selected');
+    await slice.setQueue([]);
+    expect(slice.state.playList, isEmpty);
+    expect(handler.mediaItem.value, isNull);
+    expect(handler.playbackState.value.playing, isFalse);
+    await slice.play();
+    expect(player.urls.length, 1);
+    slice.dispose();
+    await handler.dispose();
+  });
+
   test('a bad track reports error and does not poison the next command',
       () async {
     final handler = AudioPlayerHandlerImpl(player: TestPlayer());

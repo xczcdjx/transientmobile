@@ -6,6 +6,7 @@ import '../api/url.dart';
 import '../models/req/lyric_entity.dart';
 import '../store/index.dart';
 import '../utils/AudioHandler.dart';
+import '../utils/media_artwork.dart';
 import 'audio_lyrics_controller.dart';
 
 class AudioHandlerService {
@@ -56,7 +57,8 @@ class AudioHandlerService {
     handler.resolveCurrentItem = () => slice.curMedia;
     _queueSubscription = container.listen<List<MediaItem>>(
       musPlayProvider.select((value) => value.playList),
-      (_, items) => handler.queue.add(List.unmodifiable(items)),
+      (_, items) =>
+          handler.queue.add(List.unmodifiable(items.map(withArtworkHeaders))),
       fireImmediately: true,
     );
     // Keep the UI projection alive; lyric ownership remains in this service.

@@ -12,50 +12,8 @@ class MusPlaySlice extends StateNotifier<MusPlayState> {
         state = state.copyWith(isPlaying: s.playing);
       }
     });
-    state = state.copyWith(playList: [
-      MediaItem(
-        id: '781',
-        album: "听歌背四六级单词",
-        title: "听歌背高考单词01-Rise in the Rhythm",
-        artist: "王哪写英语",
-        duration: const Duration(seconds: 187),
-        artUri: Uri.parse(
-            'http://p2.music.126.net/9IfoCT65tKR2oIFYnv6UbQ==/109951171017564109.jpg'),
-        extras: {
-          'musUrl':
-              'http://transient.online/static/mediaMul/2025/06/19/王哪写英语 - 听歌背高考单词01-Rise in the Rhythm-1750329794877.mp3',
-        },
-      ),
-      MediaItem(
-        id: '779',
-        album: "听歌背四六级单词",
-        title: "听歌背四六级单词系列-03",
-        artist: "王哪写英语",
-        duration: const Duration(seconds: 214),
-        artUri: Uri.parse(
-            'http://p1.music.126.net/9IfoCT65tKR2oIFYnv6UbQ==/109951171017564109.jpg'),
-        extras: {
-          'musUrl':
-              'http://transient.online/static/mediaMul/2025/06/19/王哪写英语 - 听歌背四六级单词系列-03-1750329794844.mp3',
-        },
-      ),
-      MediaItem(
-        id: '29',
-        album: "Plants Vs. Zombies (Original Video Game Soundtrack)",
-        title: "Zombies on Your Lawn",
-        artist: "Laura Shigihara",
-        duration: const Duration(seconds: 159),
-        artUri: Uri.parse(
-            'http://imge.kugou.com/stdmusic/300/20150719/20150719061122429450.jpg'),
-        extras: {
-          'musUrl':
-              'http://transient.online/static/mediaMul/2025/05/23/Laura Shigihara - Zombies on Your Lawn-1747991750364.mp3',
-        },
-      ),
-      ...mediaItemsFromJson(musTest),
-    ]);
-    handler.setMediaItemOnly(state.curSong!);
     handler.onCompleted = (_) async {
+      if (state.playList.isEmpty) return;
       if (state.repeatMode == AudioServiceRepeatMode.one) {
         await _playCurrent();
       } else if (state.repeatMode == AudioServiceRepeatMode.none &&
@@ -96,7 +54,15 @@ class MusPlaySlice extends StateNotifier<MusPlayState> {
   /// 覆盖播放队列；可指定起始 index，并决定是否自动播放
   Future<void> setQueue(List<MediaItem> list,
       {int startIndex = 0, bool autoPlay = true}) async {
-    if (list.isEmpty) return;
+    if (list.isEmpty) {
+      state = state.copyWith(
+          playList: const [],
+          curIndex: 0,
+          isShuffling: false,
+          randomIdList: const []);
+      await handler.setMediaItemOnly(null);
+      return;
+    }
     final idx = startIndex.clamp(0, list.length - 1);
     state = state.copyWith(playList: List.unmodifiable(list), curIndex: idx);
     _rebuildShuffleIfNeeded();

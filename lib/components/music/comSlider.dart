@@ -31,7 +31,6 @@ class ComSeekBar extends StatefulWidget {
 
 class ComSeekBarState extends State<ComSeekBar> {
   double? _dragValue; // ms
-  bool _dragging = false;
   late SliderThemeData _sliderThemeData;
 
   @override
@@ -51,14 +50,8 @@ class ComSeekBarState extends State<ComSeekBar> {
     final bufferedMs =
         widget.bufferedPosition.inMilliseconds.toDouble().clamp(0.0, maxMs);
 
-    // 拖动结束后下一帧清空 _dragValue（避免卡住）
-    if (_dragValue != null && !_dragging) {
-      _dragValue = null;
-    }
-
     // 计算“剩余时间”：拖动中显示基于拖动位置的剩余；否则基于实际播放位置
-    final remaining =
-        widget.duration - Duration(milliseconds: positionMs.round());
+    final remaining = Duration(milliseconds: (maxMs - positionMs).round());
 
     return Stack(
       children: [
@@ -86,15 +79,15 @@ class ComSeekBarState extends State<ComSeekBar> {
             bottom: -2.0,
             child: Text(
               tranTime(Duration(milliseconds: positionMs.round())),
-              style: TextStyle(color: context.fc,fontSize: 13),
+              style: TextStyle(color: context.fc, fontSize: 13),
             ),
           ),
           Positioned(
             right: 16.0,
             bottom: -2.0,
             child: Text(
-              tranTime(widget.duration),
-              style: TextStyle(color: context.fc,fontSize: 13),
+              tranTime(Duration(milliseconds: maxMs.round())),
+              style: TextStyle(color: context.fc, fontSize: 13),
             ),
           ),
         ],
@@ -112,26 +105,29 @@ class ComSeekBarState extends State<ComSeekBar> {
             min: 0.0,
             max: maxMs > 0 ? maxMs : 1.0,
             value: positionMs.isFinite ? positionMs : 0.0,
-            onChanged: (v) {
-              if (!_dragging) _dragging = true;
+            onChanged: maxMs <= 0
+                ? null
+                : (v) {
+                    // 仅当值确实变化时再刷新
+                    if ((_dragValue ?? -1) != v) {
+                      setState(() {
+                        _dragValue = v.clamp(0.0, maxMs);
+                      });
+                    }
 
-              // 仅当值确实变化时再刷新
-              if ((_dragValue ?? -1) != v) {
-                setState(() {
-                  _dragValue = v.clamp(0.0, maxMs);
-                });
-              }
-
-              final d = Duration(milliseconds: _dragValue!.round());
-              widget.onChanged?.call(d);
-            },
-            onChangeEnd: (v) {
-              final clamped = v.clamp(0.0, maxMs);
-              widget.onChangeEnd?.call(Duration(milliseconds: clamped.round()));
-              _dragging = false;
-              // 不在这里 setState 清空 _dragValue，交给下一帧顶部逻辑清理，避免抖动
-              setState(() {});
-            },
+                    final d = Duration(milliseconds: _dragValue!.round());
+                    widget.onChanged?.call(d);
+                  },
+            onChangeEnd: maxMs <= 0
+                ? null
+                : (v) {
+                    final clamped = v.clamp(0.0, maxMs);
+                    widget.onChangeEnd
+                        ?.call(Duration(milliseconds: clamped.round()));
+                    setState(() {
+                      _dragValue = null;
+                    });
+                  },
           ),
         ),
 
@@ -150,7 +146,18 @@ class ComSeekBarState extends State<ComSeekBar> {
   }
 
   /// 外部可读的“剩余时间”（不考虑拖动中的临时位置）
-  Duration get remaining => widget.duration - widget.position;
+  Duration get remaining {
+    final duration =
+        widget.duration.isNegative ? 0 : widget.duration.inMilliseconds;
+    final position = widget.position.inMilliseconds.clamp(0, duration);
+    return Duration(milliseconds: duration - position);
+  }
+
+  @override
+  void didUpdateWidget(covariant ComSeekBar oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.duration != widget.duration) _dragValue = null;
+  }
 }
 
 /// 一个极简的隐藏拇指形状（若你工程里已有类似实现，可删除此类）

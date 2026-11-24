@@ -1,3 +1,4 @@
+import 'image_request_headers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -46,16 +47,7 @@ class NetImage extends StatelessWidget {
 
   bool get _isSvg => url.toLowerCase().endsWith('.svg');
 
-  // The music.126.net image CDN rejects the default Dart User-Agent (403).
-  // Scope this compatibility header to that CDN, preserving other requests.
-  Map<String, String>? get _imageHeaders {
-    final host = Uri.tryParse(url)?.host.toLowerCase();
-    if (host == 'music.126.net' ||
-        (host?.endsWith('.music.126.net') ?? false)) {
-      return const {'User-Agent': 'Mozilla/5.0'};
-    }
-    return null;
-  }
+  Map<String, String>? get _imageHeaders => imageRequestHeaders(url);
 
   @override
   Widget build(BuildContext context) {

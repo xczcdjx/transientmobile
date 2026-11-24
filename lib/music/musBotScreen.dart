@@ -98,6 +98,7 @@ class _MusBotScreenState extends ConsumerState<MusBotScreen> {
                     ),
                     Expanded(
                       child: ComSeekBar(
+                        key: ValueKey(m.id),
                         duration: musP.curSong?.duration ??
                             const Duration(seconds: 0),
                         position: mus.position,

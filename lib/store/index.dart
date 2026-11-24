@@ -4,7 +4,6 @@ import 'dart:async';
 
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
-import 'package:transientmobile/constants/musTest.dart';
 import 'package:transientmobile/models/store/music_state.dart';
 import 'package:transientmobile/models/store/setting_state.dart';
 import 'package:transientmobile/utils/shareStorage.dart';
@@ -14,7 +13,6 @@ import 'package:transientmobile/models/store/count_state.dart';
 import 'package:transientmobile/models/store/num_state.dart';
 import 'package:transientmobile/models/store/mus_play_state.dart';
 
-import '../constants/testData.dart';
 import '../service/audioHandlerService.dart';
 import '../utils/AudioHandler.dart';
 import '../utils/musFun.dart';

@@ -3,6 +3,7 @@ import 'package:audio_service/audio_service.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/foundation.dart';
 import 'package:rxdart/rxdart.dart';
+import 'media_artwork.dart';
 
 /// Owns the player and system media state; queue decisions belong to MusPlaySlice.
 class AudioPlayerHandlerImpl extends BaseAudioHandler with SeekHandler {
@@ -36,6 +37,7 @@ class AudioPlayerHandlerImpl extends BaseAudioHandler with SeekHandler {
   String? _loadedId;
   Duration? _pendingDuration;
   String? _notificationLine;
+  Duration? _lastSystemPosition;
   PlayerState state = PlayerState.stopped;
 
   MediaItem? Function()? resolveCurrentItem;
@@ -79,6 +81,15 @@ class AudioPlayerHandlerImpl extends BaseAudioHandler with SeekHandler {
   void _setPosition(Duration position) {
     final value = position < Duration.zero ? Duration.zero : position;
     if (value != _position.value) _position.add(value);
+    // Keep native Now Playing anchored to the actual player position. Its
+    // metadata refresh otherwise reuses the last play/seek snapshot.
+    final previous = _lastSystemPosition;
+    if (playbackState.value.playing &&
+        !_switching &&
+        (previous == null ||
+            (value - previous).abs() >= const Duration(seconds: 1))) {
+      _publishState(playbackState.value.processingState, playing: true);
+    }
   }
 
   void _updateDuration(Duration duration) {
@@ -87,12 +98,13 @@ class AudioPlayerHandlerImpl extends BaseAudioHandler with SeekHandler {
     _currentItem.add(item.copyWith(duration: duration));
     final display = mediaItem.value;
     if (display?.id == item.id) {
-      mediaItem.add(display!.copyWith(duration: duration));
+      _publishMediaItem(display!.copyWith(duration: duration));
     }
   }
 
   void _publishState(AudioProcessingState processing, {required bool playing}) {
     if (_disposed) return;
+    _lastSystemPosition = currentPosition;
     playbackState.add(playbackState.value.copyWith(
       processingState: processing,
       errorCode: null,
@@ -104,7 +116,7 @@ class AudioPlayerHandlerImpl extends BaseAudioHandler with SeekHandler {
         MediaControl.skipToNext,
         MediaControl.stop
       ],
-      systemActions: const {MediaAction.seek},
+      systemActions: const {MediaAction.seek, MediaAction.playPause},
       androidCompactActionIndices: const [0, 1, 2],
       updatePosition: currentPosition,
       speed: speed.value,
@@ -146,7 +158,7 @@ class AudioPlayerHandlerImpl extends BaseAudioHandler with SeekHandler {
     if (_currentItem.value?.id != item?.id) _notificationLine = null;
     _setPosition(Duration.zero);
     _currentItem.add(item);
-    mediaItem.add(item == null || _notificationLine == null
+    _publishMediaItem(item == null || _notificationLine == null
         ? item
         : item.copyWith(artist: _notificationLine));
   }
@@ -238,6 +250,14 @@ class AudioPlayerHandlerImpl extends BaseAudioHandler with SeekHandler {
             playing: playbackState.value.playing);
       });
 
+  void _publishMediaItem(MediaItem? item) {
+    // Native metadata updates reset elapsed time to their last state snapshot.
+    // Send the current anchor before changing lyrics, artwork or duration.
+    _publishState(playbackState.value.processingState,
+        playing: playbackState.value.playing);
+    mediaItem.add(item == null ? null : withArtworkHeaders(item));
+  }
+
   /// Keep canonical metadata intact; only the system subtitle displays lyrics.
   void updateNotificationLyric(String id, String? line) {
     final item = _currentItem.value;
@@ -246,8 +266,8 @@ class AudioPlayerHandlerImpl extends BaseAudioHandler with SeekHandler {
     final normalized = text == null || text.isEmpty ? null : text;
     if (_notificationLine == normalized) return;
     _notificationLine = normalized;
-    mediaItem
-        .add(normalized == null ? item : item.copyWith(artist: normalized));
+    _publishMediaItem(
+        normalized == null ? item : item.copyWith(artist: normalized));
   }
 
   @override

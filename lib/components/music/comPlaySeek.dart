@@ -6,23 +6,24 @@ import '../../hooks/useStore.dart';
 import '../../music/common.dart';
 
 import '../../utils/AudioHandler.dart';
-class ComMusSeek extends ConsumerWidget {
 
+class ComMusSeek extends ConsumerWidget {
   final AudioPlayerHandlerImpl audioHandler;
-  const ComMusSeek({super.key,required this.audioHandler});
+  const ComMusSeek({super.key, required this.audioHandler});
 
   @override
-  Widget build(BuildContext context,WidgetRef ref) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final musStore = useSelector(ref, musProvider, (s) => s);
     final musPStore = useSelector(ref, musPlayProvider, (s) => s);
     return // A seek bar.
-      SeekBar(
-        duration: musPStore.curSong?.duration??const Duration(seconds: 0),
-        position: musStore.position,
-        bufferedPosition: musStore.bufferedPosition,
-        onChangeEnd: (newPosition) {
-          audioHandler.seek(newPosition);
-        },
-      );
+        SeekBar(
+      key: ValueKey(musPStore.curSong?.id),
+      duration: musPStore.curSong?.duration ?? const Duration(seconds: 0),
+      position: musStore.position,
+      bufferedPosition: musStore.bufferedPosition,
+      onChangeEnd: (newPosition) {
+        audioHandler.seek(newPosition);
+      },
+    );
   }
 }
