@@ -1,0 +1,6 @@
+**/build/
+**/oh_modules/
+**/.hvigor/
+**/.idea/
+**/local.properties
+**/oh-package-lock.json5
