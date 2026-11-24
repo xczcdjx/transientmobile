@@ -1,7 +1,6 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:oktoast/oktoast.dart';
-import 'package:transientmobile/hooks/useStore.dart';
 import 'package:transientmobile/router/index.dart';
 import 'package:transientmobile/service/audioHandlerService.dart';
 import 'package:transientmobile/store/index.dart';
@@ -41,11 +40,11 @@ class MyApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     // print("lang ${Localizations.localeOf(context)}");
-    final themeMode = useSelector(ref, settingProvider, (s) => s.themeMode);
+    final settings = ref.watch(settingProvider);
     return MaterialApp.router(
-      theme: lightTheme,
-      darkTheme: darkTheme,
-      themeMode: themeMode,
+      theme: buildAppTheme(Brightness.light, settings.themeColor),
+      darkTheme: buildAppTheme(Brightness.dark, settings.themeColor),
+      themeMode: settings.themeMode,
       localizationsDelegates: context.localizationDelegates,
       supportedLocales: context.supportedLocales,
       locale: context.locale,

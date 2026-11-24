@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:transientmobile/pages/testPage2.dart';
+import 'package:go_router/go_router.dart';
+import '../../router/routes.dart';
 
 class MinePage extends StatefulWidget {
   const MinePage({super.key});
@@ -22,7 +23,13 @@ class _MinePageState extends State<MinePage> {
             title: Text("My test"),
             trailing: Icon(Icons.chevron_right),
           ),
-          ListTile(),
+          ListTile(
+            leading: const Icon(Icons.palette_outlined),
+            title: const Text('主题设置'),
+            subtitle: const Text('外观模式与主题色'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.push(Routes.themeSettings),
+          ),
         ],
       ),
     );

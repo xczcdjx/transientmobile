@@ -146,10 +146,10 @@ class ComControlBtn extends ConsumerWidget {
                 .distinct(),
             builder: (context, snapshot) {
               final repeatMode = snapshot.data ?? AudioServiceRepeatMode.none;
-              const icons = [
+              final icons = [
                 Icon(Icons.repeat, color: Colors.grey, size: 30),
-                Icon(Icons.repeat, color: Colors.orange, size: 30),
-                Icon(Icons.repeat_one, color: Colors.orange, size: 30),
+                Icon(Icons.repeat, color: Theme.of(context).colorScheme.primary, size: 30),
+                Icon(Icons.repeat_one, color: Theme.of(context).colorScheme.primary, size: 30),
               ];
               const cycleModes = [
                 AudioServiceRepeatMode.none,

@@ -59,3 +59,50 @@ final darkTheme = ThemeData.dark().copyWith(
     )
   ],
 );
+
+/// Apply the chosen accent to both Material widgets and existing custom tokens.
+ThemeData buildAppTheme(Brightness brightness, Color accent) {
+  final dark = brightness == Brightness.dark;
+  final base = dark ? darkTheme : lightTheme;
+  final background = dark ? const Color(0xFF101727) : const Color(0xFFF6F7FA);
+  final surface = dark ? const Color(0xFF202838) : Colors.white;
+  final scheme = ColorScheme.fromSeed(seedColor: accent, brightness: brightness)
+      .copyWith(surface: surface);
+  final tokens = base.extension<CustomColors>()!.copyWith(
+        bg: background,
+        mainBg: background,
+        fc: dark ? const Color(0xFFF3F4F6) : const Color(0xFF18202D),
+        pc: accent,
+        pcr: accent,
+        navTopBarBg: background,
+        musicStickBg: surface,
+        playRangeProgressBg: accent,
+        playRangeDotBg: accent,
+        coverBorder: accent.withOpacity(0.65),
+        explainBorder: accent,
+      );
+  return base.copyWith(
+    colorScheme: scheme,
+    scaffoldBackgroundColor: background,
+    canvasColor: background,
+    cardColor: surface,
+    dialogBackgroundColor: surface,
+    appBarTheme: AppBarTheme(
+        backgroundColor: background,
+        foregroundColor: scheme.onSurface,
+        elevation: 0,
+        surfaceTintColor: Colors.transparent),
+    sliderTheme: base.sliderTheme.copyWith(
+        activeTrackColor: accent,
+        thumbColor: accent,
+        overlayColor: accent.withOpacity(0.15)),
+    progressIndicatorTheme: ProgressIndicatorThemeData(color: accent),
+    switchTheme: SwitchThemeData(
+      thumbColor: WidgetStateProperty.resolveWith((states) =>
+          states.contains(WidgetState.selected) ? scheme.onPrimary : null),
+      trackColor: WidgetStateProperty.resolveWith((states) =>
+          states.contains(WidgetState.selected) ? scheme.primary : null),
+    ),
+    extensions: [tokens],
+  );
+}

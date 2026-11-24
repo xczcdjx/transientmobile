@@ -125,10 +125,10 @@ class TableMusScreen extends ConsumerWidget {
                     builder: (context, snapshot) {
                       final repeatMode =
                           snapshot.data ?? AudioServiceRepeatMode.none;
-                      const icons = [
+                      final icons = [
                         Icon(Icons.repeat, color: Colors.grey),
-                        Icon(Icons.repeat, color: Colors.orange),
-                        Icon(Icons.repeat_one, color: Colors.orange),
+                        Icon(Icons.repeat, color: Theme.of(context).colorScheme.primary),
+                        Icon(Icons.repeat_one, color: Theme.of(context).colorScheme.primary),
                       ];
                       const cycleModes = [
                         AudioServiceRepeatMode.none,
@@ -162,7 +162,7 @@ class TableMusScreen extends ConsumerWidget {
                       final shuffleModeEnabled = snapshot.data ?? false;
                       return IconButton(
                         icon: shuffleModeEnabled
-                            ? const Icon(Icons.shuffle, color: Colors.orange)
+                            ? Icon(Icons.shuffle, color: Theme.of(context).colorScheme.primary)
                             : const Icon(Icons.shuffle, color: Colors.grey),
                         onPressed: () async {
                           final enable = !shuffleModeEnabled;
