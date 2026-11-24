@@ -5,13 +5,14 @@ class MusPlaySlice extends StateNotifier<MusPlayState> {
 
   StreamSubscription<PlaybackState>? _pbSub;
 
-
   MusPlaySlice(this.handler) : super(MusPlayState()) {
     // 监听底层播放状态，只同步 playing 标记
     _pbSub = handler.playbackState.listen((s) {
-      state = state.copyWith(isPlaying: s.playing);
+      if (state.isPlaying != s.playing) {
+        state = state.copyWith(isPlaying: s.playing);
+      }
     });
-    state=state.copyWith(playList: [
+    state = state.copyWith(playList: [
       MediaItem(
         id: '781',
         album: "听歌背四六级单词",
@@ -21,7 +22,8 @@ class MusPlaySlice extends StateNotifier<MusPlayState> {
         artUri: Uri.parse(
             'http://p2.music.126.net/9IfoCT65tKR2oIFYnv6UbQ==/109951171017564109.jpg'),
         extras: {
-          'musUrl': 'http://transient.online/static/mediaMul/2025/06/19/王哪写英语 - 听歌背高考单词01-Rise in the Rhythm-1750329794877.mp3',
+          'musUrl':
+              'http://transient.online/static/mediaMul/2025/06/19/王哪写英语 - 听歌背高考单词01-Rise in the Rhythm-1750329794877.mp3',
         },
       ),
       MediaItem(
@@ -33,7 +35,8 @@ class MusPlaySlice extends StateNotifier<MusPlayState> {
         artUri: Uri.parse(
             'http://p1.music.126.net/9IfoCT65tKR2oIFYnv6UbQ==/109951171017564109.jpg'),
         extras: {
-          'musUrl': 'http://transient.online/static/mediaMul/2025/06/19/王哪写英语 - 听歌背四六级单词系列-03-1750329794844.mp3',
+          'musUrl':
+              'http://transient.online/static/mediaMul/2025/06/19/王哪写英语 - 听歌背四六级单词系列-03-1750329794844.mp3',
         },
       ),
       MediaItem(
@@ -45,62 +48,47 @@ class MusPlaySlice extends StateNotifier<MusPlayState> {
         artUri: Uri.parse(
             'http://imge.kugou.com/stdmusic/300/20150719/20150719061122429450.jpg'),
         extras: {
-          'musUrl': 'http://transient.online/static/mediaMul/2025/05/23/Laura Shigihara - Zombies on Your Lawn-1747991750364.mp3',
+          'musUrl':
+              'http://transient.online/static/mediaMul/2025/05/23/Laura Shigihara - Zombies on Your Lawn-1747991750364.mp3',
         },
       ),
       ...mediaItemsFromJson(musTest),
     ]);
     handler.setMediaItemOnly(state.curSong!);
-    handler.onCompleted= (s) async{
-      final mode = state.repeatMode;
-      switch (mode) {
-        case AudioServiceRepeatMode.none:
-          await next();
-          break;
-        case AudioServiceRepeatMode.one:
-          await play();      // 重播当前
-          break;
-        case AudioServiceRepeatMode.all:
-          await next();
-          break;
-        default:
+    handler.onCompleted = (_) async {
+      if (state.repeatMode == AudioServiceRepeatMode.one) {
+        await _playCurrent();
+      } else if (state.repeatMode == AudioServiceRepeatMode.none &&
+          ((!state.isShuffling &&
+                  state.curIndex == state.playList.length - 1) ||
+              (state.isShuffling &&
+                  state.curSong?.id == state.randomIdList.lastOrNull))) {
+        await stop();
+      } else {
+        await next();
       }
     };
-    handler.onSkipTo=(f) async{
-      print("fff$f");
-      if(f) next();
-      else previous();
-    };
-    // 暂不处理
-    handler.onRepeatMode=(m) async{
-      // setRepeat(m);
-    };
+    handler.onSkipTo = (forward) => forward ? next() : previous();
+    handler.onRepeatMode = (mode) async => setRepeat(mode);
+    handler.onShuffleMode =
+        (mode) async => toggleShuffle(mode == AudioServiceShuffleMode.all);
   }
 
-  MediaItem? get curMedia=>state.curSong;
+  MediaItem? get curMedia => state.curSong;
   // 增删改
-  void addMusOne(MediaItem item) {
+  Future<void> addMusOne(MediaItem item) async {
     final list = [...state.playList];
-    final curIndex=state.curIndex;
-    final index=list.indexWhere((it)=>it.id==item.id);
-    print("index ${curMedia?.id},index=${item.id}");
-    if(index!=-1){
-      state = state.copyWith(
-        curIndex: index,
-      );
-      playToggle();
-    }else{
-      // ✅ 新歌插入当前位置之后
-      final insertIndex = (curIndex + 1).clamp(0, list.length);
+    final index = list.indexWhere((entry) => entry.id == item.id);
+    if (index == state.curIndex) {
+      await playToggle();
+    } else if (index >= 0) {
+      await playAt(index);
+    } else {
+      final insertIndex = (state.curIndex + 1).clamp(0, list.length);
       list.insert(insertIndex, item);
-      // ✅ 更新状态
-      state = state.copyWith(
-        playList: list,
-        curIndex: insertIndex,
-      );
-      print("curIndex${curIndex},insertIndex${insertIndex}");
-      // handler.playMediaItem(curMedia!);
-      playAt(insertIndex);
+      state = state.copyWith(playList: List.unmodifiable(list));
+      _rebuildShuffleIfNeeded();
+      await playAt(insertIndex);
     }
   }
   // ============== 列表管理 ==============
@@ -111,8 +99,11 @@ class MusPlaySlice extends StateNotifier<MusPlayState> {
     if (list.isEmpty) return;
     final idx = startIndex.clamp(0, list.length - 1);
     state = state.copyWith(playList: List.unmodifiable(list), curIndex: idx);
+    _rebuildShuffleIfNeeded();
     if (autoPlay) {
       await _playCurrent();
+    } else {
+      await handler.setMediaItemOnly(state.curSong);
     }
   }
 
@@ -128,7 +119,10 @@ class MusPlaySlice extends StateNotifier<MusPlayState> {
     final list = [...state.playList];
     final i = index.clamp(0, list.length);
     list.insert(i, item);
-    state = state.copyWith(playList: List.unmodifiable(list));
+    final cur = state.curSong != null && i <= state.curIndex
+        ? state.curIndex + 1
+        : state.curIndex;
+    state = state.copyWith(playList: List.unmodifiable(list), curIndex: cur);
     _rebuildShuffleIfNeeded();
   }
 
@@ -162,8 +156,12 @@ class MusPlaySlice extends StateNotifier<MusPlayState> {
     list.removeAt(index);
 
     if (list.isEmpty) {
-      state = state.copyWith(playList: const [], curIndex: 0);
-      await stop();
+      state = state.copyWith(
+          playList: const [],
+          curIndex: 0,
+          isShuffling: false,
+          randomIdList: const []);
+      await handler.setMediaItemOnly(null);
       return;
     }
 
@@ -184,11 +182,11 @@ class MusPlaySlice extends StateNotifier<MusPlayState> {
 
   // ============== 播放控制（对外 API，UI 只调这些） ==============
 
-  Future<void> playToggle() async{
-    if(state.isPlaying) {
-      handler.pause();
+  Future<void> playToggle() async {
+    if (state.isPlaying) {
+      await handler.pause();
     } else {
-      handler.play();
+      await handler.play();
     }
   }
 
@@ -205,8 +203,7 @@ class MusPlaySlice extends StateNotifier<MusPlayState> {
     if (state.playList.isEmpty) return;
     final i = index.clamp(0, state.playList.length - 1);
     state = state.copyWith(curIndex: i);
-    handler.switchMediaItem();
-    // await _playCurrent();
+    await _playCurrent();
   }
 
   /// 下一首
@@ -215,11 +212,8 @@ class MusPlaySlice extends StateNotifier<MusPlayState> {
 
     final nextIndex = _calcNextIndex(forward: true);
 
-    print("nextIndex ${nextIndex}");
     state = state.copyWith(curIndex: nextIndex);
-    print("cur ${state.curSong}");
-    handler.switchMediaItem();
-    // await _playCurrent();
+    await _playCurrent();
   }
 
   /// 上一首
@@ -227,11 +221,8 @@ class MusPlaySlice extends StateNotifier<MusPlayState> {
     if (state.playList.isEmpty) return;
 
     final prevIndex = _calcNextIndex(forward: false);
-    // print("prevIndex ${prevIndex}");
     state = state.copyWith(curIndex: prevIndex);
-    // print("cur ${state.curSong}");
-    handler.switchMediaItem();
-    // await _playCurrent();
+    await _playCurrent();
   }
 
   /// 设置循环模式（none/one/all）
@@ -243,6 +234,7 @@ class MusPlaySlice extends StateNotifier<MusPlayState> {
 // 切换随机播放（洗牌）：使用 MediaItem.id
   void toggleShuffle([bool? enable]) {
     final willEnable = enable ?? !state.isShuffling;
+    if (state.playList.isEmpty) return;
     if (!willEnable) {
       state =
           state.copyWith(isShuffling: false, randomIdList: const <String>[]);
@@ -292,7 +284,6 @@ class MusPlaySlice extends StateNotifier<MusPlayState> {
     return next;
   }
 
-
   Future<void> _playCurrent() async {
     final item = state.playList.elementAtOrNull(state.curIndex);
     if (item == null) return;
@@ -316,7 +307,10 @@ class MusPlaySlice extends StateNotifier<MusPlayState> {
   @override
   void dispose() {
     _pbSub?.cancel();
+    handler.onCompleted = null;
+    handler.onSkipTo = null;
+    handler.onRepeatMode = null;
+    handler.onShuffleMode = null;
     super.dispose();
   }
 }
-

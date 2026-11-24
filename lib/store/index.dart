@@ -1,13 +1,10 @@
 library store;
+
 import 'dart:async';
 
 import 'package:audio_service/audio_service.dart';
-import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
-import 'package:transientmobile/api/http.dart';
 import 'package:transientmobile/constants/musTest.dart';
-import 'package:transientmobile/extensions/customColors.dart';
-import 'package:transientmobile/models/req/lyric_entity.dart';
 import 'package:transientmobile/models/store/music_state.dart';
 import 'package:transientmobile/models/store/setting_state.dart';
 import 'package:transientmobile/utils/shareStorage.dart';
@@ -17,28 +14,31 @@ import 'package:transientmobile/models/store/count_state.dart';
 import 'package:transientmobile/models/store/num_state.dart';
 import 'package:transientmobile/models/store/mus_play_state.dart';
 
-import '../api/url.dart';
 import '../constants/testData.dart';
 import '../service/audioHandlerService.dart';
 import '../utils/AudioHandler.dart';
 import '../utils/musFun.dart';
 // reducers
-part  'reducers/countSlice.dart';
-part  'reducers/numSlice.dart';
-part  'reducers/settingSlice.dart';
-part  'reducers/musSlice.dart';
-part  'reducers/musPlaySlice.dart';
+part 'reducers/countSlice.dart';
+part 'reducers/numSlice.dart';
+part 'reducers/settingSlice.dart';
+part 'reducers/musSlice.dart';
+part 'reducers/musPlaySlice.dart';
 
 // 基数据类型
-final counterProvider = StateNotifierProvider<CounterSlice, CountState>((ref) => CounterSlice());
-final numProvider = StateNotifierProvider<NumSlice, NumState>((ref) => NumSlice());
-final settingProvider = StateNotifierProvider<SettingSlice, SettingState>((ref) => SettingSlice());
-final musProvider = StateNotifierProvider<MusSlice, MusicState>((ref) => MusSlice());
-final musPlayProvider = StateNotifierProvider<MusPlaySlice, MusPlayState>((ref) {
- return MusPlaySlice(AudioHandlerService.instance.handler);
+final counterProvider =
+    StateNotifierProvider<CounterSlice, CountState>((ref) => CounterSlice());
+final numProvider =
+    StateNotifierProvider<NumSlice, NumState>((ref) => NumSlice());
+final settingProvider =
+    StateNotifierProvider<SettingSlice, SettingState>((ref) => SettingSlice());
+final musProvider =
+    StateNotifierProvider<MusSlice, MusicState>((ref) => MusSlice());
+final musPlayProvider =
+    StateNotifierProvider<MusPlaySlice, MusPlayState>((ref) {
+  return MusPlaySlice(AudioHandlerService.instance.handler);
 });
 /*final localeProvider = StateProvider<Locale>((ref) {
   // 默认用英文，可以从本地存储恢复
   return const Locale('en');
 });*/
-

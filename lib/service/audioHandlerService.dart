@@ -1,17 +1,34 @@
 import 'dart:async';
-
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../api/http.dart';
+import '../api/url.dart';
+import '../models/req/lyric_entity.dart';
 import '../store/index.dart';
 import '../utils/AudioHandler.dart';
+import 'audio_lyrics_controller.dart';
 
 class AudioHandlerService {
   static final AudioHandlerService instance = AudioHandlerService._internal();
-  late final AudioPlayerHandlerImpl _handler;
-
   AudioHandlerService._internal();
 
-  Future<void> init(ProviderContainer container) async {
+  AudioPlayerHandlerImpl? _handler;
+  AudioLyricsController? _lyrics;
+  Future<void>? _initialization;
+  ProviderSubscription<List<MediaItem>>? _queueSubscription;
+
+  AudioPlayerHandlerImpl get handler =>
+      _handler ??
+      (throw StateError('AudioHandlerService.init must complete first'));
+  AudioLyricsController get lyrics =>
+      _lyrics ??
+      (throw StateError('AudioHandlerService.init must complete first'));
+
+  /// Concurrent callers share initialization and never create a second player.
+  Future<void> init(ProviderContainer container) =>
+      _initialization ??= _initialize(container);
+
+  Future<void> _initialize(ProviderContainer container) async {
     _handler = await AudioService.init(
       builder: () => AudioPlayerHandlerImpl(),
       config: const AudioServiceConfig(
@@ -19,20 +36,41 @@ class AudioHandlerService {
         androidNotificationChannelName: 'Audio playback',
         androidNotificationOngoing: true,
         androidResumeOnClick: true,
-        // 点击通知恢复 app
-        androidShowNotificationBadge: true, // 显示通知小图标
-        // androidNotificationIcon: 'mipmap/ic_launcher', // 图标资源 (在 android/app/src/main/res/mipmap 下)
-        // notificationColor: Color(0xFF3A85FF),         // 可选：通知栏主色调
+        androidShowNotificationBadge: true,
       ),
     );
-    // ✅ 初始化完毕绑定slice
-    _audioBindSlice(container);
+    _lyrics = AudioLyricsController(
+      mediaItems: handler.currentItemStream,
+      positions: handler.positionStream,
+      loadLyrics: (id) async {
+        final response = await Http().get<Map<String, dynamic>>(
+            ExploreU.lycdetail,
+            queryParameters: {'musId': id});
+        final data = response.data?['data'];
+        if (data is! Map<String, dynamic>) return '';
+        return LyricEntity.fromJson(data).lyric?.lyric ?? '';
+      },
+      publishLine: handler.updateNotificationLyric,
+    );
+    final slice = container.read(musPlayProvider.notifier);
+    handler.resolveCurrentItem = () => slice.curMedia;
+    _queueSubscription = container.listen<List<MediaItem>>(
+      musPlayProvider.select((value) => value.playList),
+      (_, items) => handler.queue.add(List.unmodifiable(items)),
+      fireImmediately: true,
+    );
+    // Keep the UI projection alive; lyric ownership remains in this service.
+    container.read(musProvider);
   }
 
-  AudioPlayerHandlerImpl get handler => _handler;
-
-  void _audioBindSlice(ProviderContainer container) {
-    final slice = container.read(musPlayProvider.notifier);
-    _handler.bindMusPlaySlice(slice);
+  Future<void> dispose() async {
+    await _initialization;
+    _queueSubscription?.close();
+    _queueSubscription = null;
+    await _lyrics?.dispose();
+    await _handler?.dispose();
+    _lyrics = null;
+    _handler = null;
+    _initialization = null;
   }
 }

@@ -1,4 +1,3 @@
-import 'package:audio_service/audio_service.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:oktoast/oktoast.dart';
@@ -7,9 +6,9 @@ import 'package:transientmobile/router/index.dart';
 import 'package:transientmobile/service/audioHandlerService.dart';
 import 'package:transientmobile/store/index.dart';
 import 'package:transientmobile/styles/theme.dart';
-import 'package:transientmobile/utils/AudioHandler.dart';
 import 'package:transientmobile/utils/shareStorage.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 // late AudioPlayerHandler _audioHandler;
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -20,15 +19,6 @@ void main() async {
   // 尝试读取用户上次选择的语言
   // final savedLocale=ShareStorage.get<String>('locale');
 
-/*  _audioHandler = await AudioService.init(
-    builder: () => AudioPlayerHandlerImpl(),
-    config: const AudioServiceConfig(
-      androidNotificationChannelId: 'com.ryanheise.myapp.channel.audio',
-      androidNotificationChannelName: 'Audio playback',
-      androidNotificationOngoing: true,
-    ),
-  );*/
-
   runApp(UncontrolledProviderScope(
     container: container,
     child: EasyLocalization(
@@ -37,7 +27,7 @@ void main() async {
       fallbackLocale: const Locale('en'),
       // startLocale: savedLocale != null ? Locale(savedLocale) : null,
       saveLocale: true,
-      child: OKToast(
+      child: const OKToast(
         child: MyApp(),
       ),
     ),
@@ -45,7 +35,7 @@ void main() async {
 }
 
 class MyApp extends ConsumerWidget {
-  MyApp({super.key});
+  const MyApp({super.key});
 
   // This widget is the root of your application.
   @override

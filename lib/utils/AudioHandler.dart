@@ -1,311 +1,311 @@
-// audio_player_handler_impl.dart
 import 'dart:async';
 import 'package:audio_service/audio_service.dart';
 import 'package:audioplayers/audioplayers.dart';
+import 'package:flutter/foundation.dart';
 import 'package:rxdart/rxdart.dart';
 
-import '../store/index.dart';
+/// Owns the player and system media state; queue decisions belong to MusPlaySlice.
+class AudioPlayerHandlerImpl extends BaseAudioHandler with SeekHandler {
+  AudioPlayerHandlerImpl({AudioPlayer? player})
+      : _audioPlayer = player ?? AudioPlayer() {
+    _subscriptions.add(_audioPlayer.onPlayerStateChanged
+        .listen(_onPlayerState, onError: _onError));
+    _subscriptions.add(_audioPlayer.onPositionChanged.listen((position) {
+      if (!_switching && !_disposed) _setPosition(position);
+    }, onError: _onError));
+    _subscriptions.add(_audioPlayer.onDurationChanged.listen((duration) {
+      if (_disposed || duration <= Duration.zero) return;
+      if (_switching) {
+        _pendingDuration = duration;
+      } else {
+        _updateDuration(duration);
+      }
+    }, onError: _onError));
+    _ready = _audioPlayer.setReleaseMode(ReleaseMode.stop);
+    _publishState(AudioProcessingState.idle, playing: false);
+  }
 
-class AudioPlayerHandlerImpl extends BaseAudioHandler
-    with SeekHandler
-    implements AudioHandler {
-  final AudioPlayer _audioPlayer = AudioPlayer()..setReleaseMode(ReleaseMode.stop);
+  final AudioPlayer _audioPlayer;
+  late final Future<void> _ready;
+  final List<StreamSubscription<dynamic>> _subscriptions = [];
+  final _position = BehaviorSubject<Duration>.seeded(Duration.zero);
+  final _currentItem = BehaviorSubject<MediaItem?>.seeded(null);
+  Future<void> _commands = Future.value();
+  bool _disposed = false;
+  bool _switching = false;
+  String? _loadedId;
+  Duration? _pendingDuration;
+  String? _notificationLine;
+  PlayerState state = PlayerState.stopped;
 
-  // 绑定musPlaySlice
-  late MusPlaySlice musPlaySlice;
-
-  // 外部（上层 Slice）可监听，播放完成触发
+  MediaItem? Function()? resolveCurrentItem;
   Future<void> Function(PlayerState state)? onCompleted;
   Future<void> Function(bool isNext)? onSkipTo;
   Future<void> Function(AudioServiceRepeatMode mode)? onRepeatMode;
+  Future<void> Function(AudioServiceShuffleMode mode)? onShuffleMode;
 
-  // AudioPlayerHandlerImpl
-  /*Stream<Duration> get positionStream =>
-      _audioPlayer.onPositionChanged.distinct();*/
-
-  // 公开：进度 / 音量 / 速度
-  @override
   final BehaviorSubject<double> volume = BehaviorSubject.seeded(1.0);
-  @override
   final BehaviorSubject<double> speed = BehaviorSubject.seeded(1.0);
 
-  // 当前位置（可选）
-  Duration currentPosition = Duration.zero;
-  bool _isLoading = false;
-  PlayerState state = PlayerState.disposed;
-  Duration _duration = Duration.zero;
+  Stream<MediaItem?> get currentItemStream => _currentItem.stream;
+  Stream<Duration> get positionStream => _position;
+  // Kept for existing consumers; every subscriber shares the same native stream.
+  Stream<Duration> get durationStream => positionStream;
+  Duration get currentPosition => _position.value;
 
-  // 初始化监听
-  void bindMusPlaySlice(MusPlaySlice mus){
-    musPlaySlice=mus;
+  Future<void> _enqueue(Future<void> Function() operation) {
+    final command = _commands.then((_) async {
+      if (_disposed) return;
+      await _ready;
+      await operation();
+    });
+    _commands = command.catchError((Object error, StackTrace stack) {
+      _onError(error);
+    });
+    return command;
   }
 
-  AudioPlayerHandlerImpl() {
-    _audioPlayer.onPlayerStateChanged.listen(
-            (state) async {
-      print('onPlayerStateChanged $state');
-      this.state = state;
-      if (state == PlayerState.completed) {
-        print("complete666666");
-        await onCompleted?.call(state);
-      } else if (state == PlayerState.playing) {
-        _duration = await _audioPlayer.getDuration() as Duration;
-        print(_duration.inMilliseconds.toString());
-        playbackState.add(playbackState.value.copyWith(
-            processingState: AudioProcessingState.ready,
-            playing: true,
-            controls: [
-              MediaControl.skipToPrevious,
-              MediaControl.pause,
-              // MediaControl.stop,
-              MediaControl.skipToNext,
-            ],
-            bufferedPosition: _duration,
-            updatePosition: currentPosition));
-        _isLoading = false;
-      } else if (state == PlayerState.paused) {
-        playbackState.add(playbackState.value.copyWith(
-          processingState: AudioProcessingState.ready,
-          bufferedPosition: _duration,
-          updatePosition: currentPosition,
-          playing: false,
-          controls: [
-            MediaControl.skipToPrevious,
-            MediaControl.play,
-            // MediaControl.stop,
-            MediaControl.skipToNext,
-          ],
-        ));
+  void _onError(Object error) {
+    if (_disposed) return;
+    debugPrint('Audio playback failed: $error');
+    playbackState.add(playbackState.value.copyWith(
+      processingState: AudioProcessingState.error,
+      playing: false,
+      errorCode: 1,
+      errorMessage: '音频播放失败，请重试',
+    ));
+  }
+
+  void _setPosition(Duration position) {
+    final value = position < Duration.zero ? Duration.zero : position;
+    if (value != _position.value) _position.add(value);
+  }
+
+  void _updateDuration(Duration duration) {
+    final item = _currentItem.value;
+    if (item == null || item.duration == duration) return;
+    _currentItem.add(item.copyWith(duration: duration));
+    final display = mediaItem.value;
+    if (display?.id == item.id) {
+      mediaItem.add(display!.copyWith(duration: duration));
+    }
+  }
+
+  void _publishState(AudioProcessingState processing, {required bool playing}) {
+    if (_disposed) return;
+    playbackState.add(playbackState.value.copyWith(
+      processingState: processing,
+      errorCode: null,
+      errorMessage: null,
+      playing: playing,
+      controls: [
+        MediaControl.skipToPrevious,
+        playing ? MediaControl.pause : MediaControl.play,
+        MediaControl.skipToNext,
+        MediaControl.stop
+      ],
+      systemActions: const {MediaAction.seek},
+      androidCompactActionIndices: const [0, 1, 2],
+      updatePosition: currentPosition,
+      speed: speed.value,
+      // audioplayers does not report buffered ranges; do not claim the entire
+      // track has been downloaded by publishing its duration as bufferedPosition.
+      bufferedPosition: Duration.zero,
+    ));
+  }
+
+  void _onPlayerState(PlayerState value) {
+    if (_disposed) return;
+    if (value == PlayerState.completed && state == value) return;
+    state = value;
+    if (_switching) return;
+    switch (value) {
+      case PlayerState.playing:
+        _publishState(AudioProcessingState.ready, playing: true);
+        break;
+      case PlayerState.paused:
+        _publishState(AudioProcessingState.ready, playing: false);
+        break;
+      case PlayerState.completed:
+        _publishState(AudioProcessingState.completed, playing: false);
+        final callback = onCompleted;
+        if (callback != null) {
+          unawaited(callback(value).catchError((Object error) {
+            _onError(error);
+          }));
+        }
+        break;
+      case PlayerState.stopped:
+      case PlayerState.disposed:
+        _publishState(AudioProcessingState.idle, playing: false);
+        break;
+    }
+  }
+
+  void _selectItem(MediaItem? item) {
+    if (_currentItem.value?.id != item?.id) _notificationLine = null;
+    _setPosition(Duration.zero);
+    _currentItem.add(item);
+    mediaItem.add(item == null || _notificationLine == null
+        ? item
+        : item.copyWith(artist: _notificationLine));
+  }
+
+  Future<void> setMediaItemOnly(MediaItem? item) => _enqueue(() async {
+        await _audioPlayer.stop();
+        _loadedId = null;
+        _selectItem(item);
+        _publishState(AudioProcessingState.idle, playing: false);
+      });
+
+  @override
+  Future<void> playMediaItem(MediaItem mediaItem) =>
+      _enqueue(() => _loadAndPlay(mediaItem));
+
+  Future<void> switchMediaItem() {
+    final item = resolveCurrentItem?.call();
+    return item == null ? stop() : playMediaItem(item);
+  }
+
+  Future<void> _loadAndPlay(MediaItem item) async {
+    final rawUrl = item.extras?['musUrl'];
+    if (rawUrl is! String || rawUrl.trim().isEmpty) {
+      throw StateError('Track ${item.id} has no audio URL');
+    }
+    final uri = Uri.tryParse(rawUrl);
+    if (uri == null ||
+        !uri.hasAuthority ||
+        (uri.scheme != 'http' && uri.scheme != 'https')) {
+      throw StateError('Track ${item.id} has an invalid audio URL');
+    }
+    _switching = true;
+    _pendingDuration = null;
+    try {
+      _selectItem(item);
+      _publishState(AudioProcessingState.loading, playing: true);
+      await _audioPlayer.stop();
+      _loadedId = null;
+      await _audioPlayer.play(UrlSource(uri.toString()));
+      _loadedId = item.id;
+      final duration = _pendingDuration;
+      if (duration != null) _updateDuration(duration);
+    } finally {
+      _switching = false;
+    }
+    _publishState(AudioProcessingState.ready, playing: true);
+  }
+
+  @override
+  Future<void> play() {
+    final item = resolveCurrentItem?.call() ?? _currentItem.value;
+    return _enqueue(() async {
+      if (item == null) return;
+      if (_loadedId == item.id && state == PlayerState.playing) return;
+      if (_loadedId == item.id && state == PlayerState.paused) {
+        await _audioPlayer.resume();
+        _publishState(AudioProcessingState.ready, playing: true);
+      } else {
+        await _loadAndPlay(item);
       }
     });
   }
 
-  Stream<Duration> get durationStream => createPositionStream(
-      steps: 800,
-      minPeriod: const Duration(milliseconds: 16),
-      maxPeriod: const Duration(milliseconds: 200));
-
-  Stream<Duration> createPositionStream({
-    int steps = 800,
-    Duration minPeriod = const Duration(milliseconds: 200),
-    Duration maxPeriod = const Duration(milliseconds: 200),
-  }) {
-    assert(minPeriod <= maxPeriod);
-    assert(minPeriod > Duration.zero);
-    Duration? last;
-    late StreamController<Duration> controller;
-    late StreamSubscription<MediaItem?> mediaItemSubscription;
-    late StreamSubscription<PlaybackState> playbackStateSubscription;
-    Timer? currentTimer;
-    Duration duration() => mediaItem.value?.duration ?? Duration.zero;
-    Duration step() {
-      var s = duration() ~/ steps;
-      if (s < minPeriod) s = minPeriod;
-      if (s > maxPeriod) s = maxPeriod;
-      return s;
-    }
-
-    void yieldPosition(Timer? timer) {
-      _audioPlayer.getCurrentPosition().then((value) {
-        currentPosition = value ?? Duration.zero;
-        if (last != currentPosition && currentPosition.inMilliseconds != -1) {
-          controller.add(last = currentPosition);
-        }
+  @override
+  Future<void> pause() => _enqueue(() async {
+        await _audioPlayer.pause();
+        _publishState(AudioProcessingState.ready, playing: false);
       });
-    }
-
-    controller = StreamController.broadcast(
-      sync: true,
-      onListen: () {
-        mediaItemSubscription = mediaItem.listen((MediaItem? mediaItem) {
-          // Potentially a new duration
-          currentTimer?.cancel();
-          currentTimer = Timer.periodic(step(), yieldPosition);
-        });
-        playbackStateSubscription = playbackState.listen((PlaybackState state) {
-          // Potentially a time discontinuity
-          yieldPosition(currentTimer);
-        });
-      },
-      onCancel: () {
-        mediaItemSubscription.cancel();
-        playbackStateSubscription.cancel();
-      },
-    );
-    return controller.stream;
-  }
-
-  // ======== 仅保留“如何播放一个 MediaItem” ========
-  /// 仅设置当前 mediaItem，不播放。
-  /// 可用于：预载歌词 / 展示封面 / 准备播放队列中的下一首。
-  Future<void> setMediaItemOnly(MediaItem? item) async {
-    // 更新当前 mediaItem（通知系统与 UI）
-    mediaItem.add(item);
-
-    // 更新播放状态为 idle（非播放中）
-    playbackState.add(playbackState.value.copyWith(
-      processingState: AudioProcessingState.idle,
-      playing: false,
-      updatePosition: Duration.zero,
-      controls: const [
-        MediaControl.play,
-        MediaControl.stop,
-      ],
-    ));
-  }
-
-
-  /// 直接播放一个媒体；由上层决定哪一个是“当前曲目”
-  @override
-  Future<void> playMediaItem(MediaItem mediaItem) async {
-    playbackState.add(playbackState.value.copyWith(
-      processingState: AudioProcessingState.loading,
-      playing: true,
-      controls: [
-        MediaControl.pause,
-        MediaControl.stop,
-      ],
-    ));
-    this.mediaItem.add(mediaItem);
-    await play();
-  }
-
-  /// 直接播放一个媒体；由上层决定哪一个是“当前曲目”
-  Future<void> switchMediaItem() async {
-    await _audioPlayer.stop();
-    await play();
-  }
-
-
-  /// 通用播放控制：
-  /// - 若暂停则 resume
-  /// - 若无当前媒体但有历史队列，则重播当前曲目
-  /// - 若完全无媒体，则不做事
-  @override
-  Future<void> play() async {
-    final mi=musPlaySlice.curMedia;
-    print("url ${mi?.extras?["musUrl"]}");
-    if (_audioPlayer.state == PlayerState.paused) {
-      await _audioPlayer.resume();
-    } else {
-      await _audioPlayer.stop();
-      playbackState.add(playbackState.value.copyWith(
-        processingState: AudioProcessingState.loading,
-      ));
-      mediaItem.add(mi);
-      final url = Uri.encodeFull(mi?.extras?["musUrl"]);
-      await _audioPlayer.play(UrlSource(url));
-    }
-    playbackState.add(playbackState.value.copyWith(
-      processingState: AudioProcessingState.ready,
-      playing: true,
-    ));
-  }
-
 
   @override
-  Future<void> pause() async {
-    await _audioPlayer.pause();
-    playbackState.add(playbackState.value.copyWith(
-      processingState: AudioProcessingState.ready,
-      playing: false,
-    ));
+  Future<void> stop() => _enqueue(() async {
+        await _audioPlayer.stop();
+        _loadedId = null;
+        _setPosition(Duration.zero);
+        updateNotificationLyric(_currentItem.value?.id ?? '', null);
+        _publishState(AudioProcessingState.idle, playing: false);
+      });
+
+  @override
+  Future<void> seek(Duration position) => _enqueue(() async {
+        final duration = _currentItem.value?.duration;
+        var target = position < Duration.zero ? Duration.zero : position;
+        if (duration != null && duration > Duration.zero && target > duration) {
+          target = duration;
+        }
+        await _audioPlayer.seek(target);
+        _setPosition(target);
+        _publishState(playbackState.value.processingState,
+            playing: playbackState.value.playing);
+      });
+
+  /// Keep canonical metadata intact; only the system subtitle displays lyrics.
+  void updateNotificationLyric(String id, String? line) {
+    final item = _currentItem.value;
+    if (_disposed || item == null || item.id != id) return;
+    final text = line?.trim();
+    final normalized = text == null || text.isEmpty ? null : text;
+    if (_notificationLine == normalized) return;
+    _notificationLine = normalized;
+    mediaItem
+        .add(normalized == null ? item : item.copyWith(artist: normalized));
   }
 
   @override
-  Future<void> stop() async {
-    await _audioPlayer.stop();
-    playbackState.add(playbackState.value.copyWith(
-        processingState: AudioProcessingState.idle,
-        playing: false,
-        updatePosition: Duration.zero));
-  }
+  Future<void> setSpeed(double speed) => _enqueue(() async {
+        if (!speed.isFinite || speed <= 0) return;
+        await _audioPlayer.setPlaybackRate(speed);
+        this.speed.add(speed);
+        _publishState(playbackState.value.processingState,
+            playing: playbackState.value.playing);
+      });
 
-  // 修改进度
-  @override
-  Future<void> seek(Duration position) async {
-    currentPosition = position;
-    playbackState.add(playbackState.value.copyWith(updatePosition: position));
-    await _audioPlayer.seek(position);
-  }
-
-  // 仅更新通知栏/锁屏的演唱者标题（可选）
-  Future<void> updateArtist(String lyric) async {
-    final cur = musPlaySlice.curMedia;
-    if (cur == null) return;
-    String title=cur.title;
-    if(cur.extras?["singers"]!=null){
-      title='${cur.title} - ${getSingersName(cur.extras)}';
-      // print("tit $title");
-    }
-    mediaItem.add(cur.copyWith(artist: lyric, title: title));
-  }
-
-  // ======== 速率/音量 ========
-
-  @override
-  Future<void> setSpeed(double s) async {
-    speed.add(s);
-    await _audioPlayer.setPlaybackRate(s);
-  }
-
-  @override
-  Future<void> setVolume(double v) async {
-    volume.add(v);
-    await _audioPlayer.setVolume(v);
-  }
+  Future<void> setVolume(double value) => _enqueue(() async {
+        if (!value.isFinite) return;
+        final clamped = value.clamp(0.0, 1.0).toDouble();
+        await _audioPlayer.setVolume(clamped);
+        volume.add(clamped);
+      });
 
   @override
   Future<void> skipToPrevious() async {
-    onSkipTo?.call(false);
+    await onSkipTo?.call(false);
   }
 
   @override
   Future<void> skipToNext() async {
-    onSkipTo?.call(true);
-  }
-
-
-  @override
-  Future<void> setShuffleMode(AudioServiceShuffleMode shuffleMode) async {
-    // final enabled = shuffleMode == AudioServiceShuffleMode.all;
-    // if (enabled) {
-    // await _audioPlayer.shuffle();
-    // }
-    // playbackState.add(playbackState.value.copyWith(shuffleMode: shuffleMode));
-    // await _audioPlayer.setShuffleModeEnabled(enabled);
+    await onSkipTo?.call(true);
   }
 
   @override
   Future<void> setRepeatMode(AudioServiceRepeatMode repeatMode) async {
+    await onRepeatMode?.call(repeatMode);
     playbackState.add(playbackState.value.copyWith(repeatMode: repeatMode));
-    onRepeatMode?.call(repeatMode);
   }
 
-  // ======== 队列相关（全部由上层接管；这里 NO-OP，避免误用） ========
-/*
   @override
-  Future<void> addQueueItem(MediaItem item) async {}
-  @override
-  Future<void> addQueueItems(List<MediaItem> items) async {}
-  @override
-  Future<void> insertQueueItem(int index, MediaItem item) async {}
-  @override
-  Future<void> updateQueue(List<MediaItem> queue) async {}
-  @override
-  Future<void> removeQueueItemAt(int index) async {}
-  @override
-  Future<void> skipToNext() async {*//* 上层调用 slice.next() *//*}
-  @override
-  Future<void> skipToPrevious() async {*//* 上层调用 slice.previous() *//*}
-  @override
-  Future<void> skipToQueueItem(int index) async {*//* 上层调用 slice.playAt(index) *//*}
-  @override
-  Future<void> setRepeatMode(AudioServiceRepeatMode mode) async {*//* 上层管理 *//*}
-  @override
-  Future<void> setShuffleMode(AudioServiceShuffleMode mode) async {*//* 上层管理 *//*}*/
-}
-String getSingersName(Map<String, dynamic>? extra){
-  final s=extra?["singers"];
-  return s==null?'':s.map((e)=>e["name"]).join('、');
+  Future<void> setShuffleMode(AudioServiceShuffleMode shuffleMode) async {
+    await onShuffleMode?.call(shuffleMode);
+    playbackState.add(playbackState.value.copyWith(shuffleMode: shuffleMode));
+  }
+
+  Future<void> dispose() async {
+    if (_disposed) return;
+    await _commands;
+    await _audioPlayer.stop();
+    _publishState(AudioProcessingState.idle, playing: false);
+    _disposed = true;
+    onCompleted = null;
+    onSkipTo = null;
+    onRepeatMode = null;
+    onShuffleMode = null;
+    resolveCurrentItem = null;
+    for (final subscription in _subscriptions) {
+      await subscription.cancel();
+    }
+    await _audioPlayer.dispose();
+    await _position.close();
+    await _currentItem.close();
+    await volume.close();
+    await speed.close();
+  }
 }
