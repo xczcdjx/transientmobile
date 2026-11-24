@@ -8,7 +8,7 @@ class Http {
 
   Http._internal() {
     dio = Dio(BaseOptions(
-      baseUrl: "http://transient.online/client", // 统一配置baseUrl
+      baseUrl: "http://transient.cloud/client", // 统一配置baseUrl
       connectTimeout: const Duration(seconds: 10),
       receiveTimeout: const Duration(seconds: 10),
       headers: {
