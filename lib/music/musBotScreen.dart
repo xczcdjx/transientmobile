@@ -1,5 +1,6 @@
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
+import 'package:oktoast/oktoast.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:text_scroll/text_scroll.dart';
 import 'package:transientmobile/components/music/comControl.dart';
@@ -10,7 +11,9 @@ import 'package:transientmobile/store/index.dart';
 import 'package:transientmobile/utils/formatDate.dart';
 
 import '../components/images/rotatingAlbumCover.dart';
+import '../components/music/empty_mini_player.dart';
 import '../service/audioHandlerService.dart';
+import '../utils/AudioHandler.dart';
 import '../service/mus_player_controller.dart';
 import '../service/play_list_controller.dart';
 import '../utils/NetImage.dart';
@@ -19,20 +22,29 @@ import '../utils/screenUtil.dart';
 
 // Music底部播放组件
 class MusBotScreen extends ConsumerStatefulWidget {
-  const MusBotScreen({super.key});
+  const MusBotScreen({super.key, this.onEmptyPlay});
+  final VoidCallback? onEmptyPlay;
 
   @override
   ConsumerState<MusBotScreen> createState() => _MusBotScreenState();
 }
 
 class _MusBotScreenState extends ConsumerState<MusBotScreen> {
-  final audioHandler = AudioHandlerService.instance.handler;
+  AudioPlayerHandlerImpl get audioHandler =>
+      AudioHandlerService.instance.handler;
 
   @override
   Widget build(BuildContext context) {
     final isTab = isTabletAll(context);
     final musP = useSelector(ref, musPlayProvider, (mp) => mp);
-    if (musP.curSong == null) return SizedBox();
+    if (musP.curSong == null) {
+      return EmptyMiniPlayer(
+          wide: isTab,
+          onPlay: widget.onEmptyPlay ??
+              () {
+                showToast('请先选择一首歌曲');
+              });
+    }
     final mus = useSelector(ref, musProvider, (m) => m);
     final isPlaying = musP.isPlaying;
     final m = musP.curSong!;

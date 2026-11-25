@@ -1,164 +1,186 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:transientmobile/extensions/customColors.dart';
-import 'package:transientmobile/utils/NetImage.dart';
-
-import '../hooks/useStore.dart';
+import '../service/play_list_controller.dart';
 import '../store/index.dart';
+import '../utils/NetImage.dart';
 
-// 播放列表
 class PlayMainList extends ConsumerStatefulWidget {
   const PlayMainList({super.key});
-
   @override
-  ConsumerState createState() => _PlayMainList();
+  ConsumerState<PlayMainList> createState() => _PlayMainListState();
 }
 
-class _PlayMainList extends ConsumerState<PlayMainList> {
-  ScrollController _listController = ScrollController();
+class _PlayMainListState extends ConsumerState<PlayMainList> {
+  final _listController = ScrollController();
+  static const _rowHeight = 76.0;
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
-    // ✅ 等待第一帧绘制完成后再滚动
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final list = ref.read(musPlayProvider).playList;
-      final curIndex = ref.read(musPlayProvider).curIndex;
-
-      if (list.isNotEmpty && curIndex >= 3 && curIndex < list.length) {
-        // 每个 item 大概高度（含 Divider、Padding 等），自己可调
-        const double itemExtent = 70;
-        double offset = curIndex * itemExtent - 3 * itemExtent;
-
-        _listController.jumpTo(
-          offset,
-        );
-      }
+      if (!mounted || !_listController.hasClients) return;
+      final queue = ref.read(musPlayProvider);
+      final target = ((queue.curIndex - 2) * _rowHeight)
+          .clamp(0.0, _listController.position.maxScrollExtent)
+          .toDouble();
+      _listController.jumpTo(target);
     });
   }
 
   @override
-  Widget build(BuildContext context) {
-    final musP = useSelector(ref, musPlayProvider, (s) => s);
-    final dispatch = useDispatch(ref, musPlayProvider);
-    final list=musP.playList;
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(left: 12.0, right: 12.0, top: 5),
-          child: Container(
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  "播放列表 (${list.length})",
-                  style: const TextStyle(
-                      fontSize: 20, fontWeight: FontWeight.bold),
-                ),
-                IconButton(onPressed: () {}, icon: Icon(Icons.close_rounded))
-              ],
-            ),
-          ),
-        ),
-        list.isEmpty
-            ? const Center(
-                child: Text('暂无播放列表', style: TextStyle(color: Colors.grey)),
-              )
-            : Expanded(
-                child: ListView.separated(
-                controller: _listController,
-                padding: const EdgeInsets.symmetric(vertical: 10),
-                itemCount: list.length,
-                separatorBuilder: (_, __) =>
-                    const Divider(height: 1, indent: 70, endIndent: 15),
-                itemBuilder: (context, i) {
-                  final m = list[i];
-                  final bool isPlaying = i == musP.curIndex&&musP.isPlaying;
-                  return InkWell(
-                    borderRadius: BorderRadius.circular(12),
-                    onTap: () {
-                      dispatch.playAt(i);
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 15, vertical: 8),
-                      decoration: BoxDecoration(
-                        color: i==musP.curIndex
-                            ? context.line
-                                .withOpacity(0.08)
-                            : null,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Row(
-                        children: [
-                          // 封面
-                          SizedBox(
-                            width: 50,
-                            height: 50,
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(8),
-                              child: NetImage(
-                                url: m.artUri.toString(),
-                                cache: true,
-                                width: 50,
-                                height: 50,
-                                loadingWidget: (ctx, str) => const Padding(
-                                  padding: EdgeInsets.all(15),
-                                  child:
-                                      CircularProgressIndicator(strokeWidth: 2),
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          // 标题 + 歌手
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  m.title,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: isPlaying
-                                        ? FontWeight.w600
-                                        : FontWeight.w500,
-                                    color: isPlaying
-                                        ? context.pcr
-                                        : context.fc,
-                                  ),
-                                ),
-                                const SizedBox(height: 3),
-                                Text(
-                                  m.artist ?? '',
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          // 当前播放标识
-                          if (isPlaying)
-                            const Icon(Icons.equalizer,
-                                color: Colors.blueAccent, size: 20),
-                          IconButton(onPressed: (){
+  void dispose() {
+    _listController.dispose();
+    super.dispose();
+  }
 
-                          }, icon: Icon(Icons.close,color: context.line,))
-                        ],
+  @override
+  Widget build(BuildContext context) {
+    final queue = ref.watch(musPlayProvider);
+    final actions = ref.read(musPlayProvider.notifier);
+    final colors = Theme.of(context).colorScheme;
+    return Column(children: [
+      Padding(
+        padding: const EdgeInsets.fromLTRB(22, 0, 14, 14),
+        child: Row(children: [
+          Expanded(
+              child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                Text('播放列表',
+                    style: Theme.of(context)
+                        .textTheme
+                        .titleLarge
+                        ?.copyWith(fontWeight: FontWeight.w700)),
+                const SizedBox(height: 4),
+                Text('${queue.playList.length} 首歌曲',
+                    style: TextStyle(
+                        color: colors.onSurfaceVariant, fontSize: 13)),
+              ])),
+          IconButton.filledTonal(
+              tooltip: '关闭播放列表',
+              onPressed: GlobalBottomSheet.hide,
+              icon: const Icon(Icons.close_rounded)),
+        ]),
+      ),
+      Padding(
+        padding: const EdgeInsets.fromLTRB(20, 0, 16, 10),
+        child: Row(children: [
+          Icon(Icons.queue_music_rounded, size: 20, color: colors.primary),
+          const SizedBox(width: 8),
+          Expanded(
+              child: Text('当前列表 (${queue.playList.length})',
+                  style: TextStyle(color: colors.onSurfaceVariant))),
+          TextButton.icon(
+            onPressed: queue.playList.isEmpty
+                ? null
+                : () async {
+                    final confirmed =
+                        await GlobalBottomSheet.confirmClear(context);
+                    if (confirmed && mounted) await actions.setQueue([]);
+                  },
+            icon: const Icon(Icons.delete_outline_rounded, size: 20),
+            label: const Text('全部清除'),
+          ),
+        ]),
+      ),
+      Expanded(
+          child: queue.playList.isEmpty
+              ? Center(
+                  child: Column(mainAxisSize: MainAxisSize.min, children: [
+                  Icon(Icons.queue_music_rounded,
+                      size: 48, color: colors.onSurfaceVariant),
+                  const SizedBox(height: 12),
+                  const Text('播放列表为空'),
+                  const SizedBox(height: 6),
+                  Text('选择喜欢的歌曲，开始收听',
+                      style: TextStyle(color: colors.onSurfaceVariant)),
+                ]))
+              : ListView.builder(
+                  controller: _listController,
+                  padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+                  itemExtent: _rowHeight,
+                  itemCount: queue.playList.length,
+                  itemBuilder: (context, index) {
+                    final item = queue.playList[index];
+                    final current = index == queue.curIndex;
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 6),
+                      child: Material(
+                        color: current
+                            ? colors.primary.withValues(alpha: 0.1)
+                            : Colors.transparent,
+                        borderRadius: BorderRadius.circular(18),
+                        clipBehavior: Clip.antiAlias,
+                        child: InkWell(
+                          onTap: () => actions.playAt(index),
+                          child: Padding(
+                            padding: const EdgeInsets.only(left: 10, right: 4),
+                            child: Row(children: [
+                              ClipRRect(
+                                  borderRadius: BorderRadius.circular(12),
+                                  child: SizedBox(
+                                      width: 48,
+                                      height: 48,
+                                      child: item.artUri == null
+                                          ? ColoredBox(
+                                              color: colors
+                                                  .surfaceContainerHighest,
+                                              child: Icon(Icons.music_note,
+                                                  color:
+                                                      colors.onSurfaceVariant))
+                                          : NetImage(
+                                              url: item.artUri.toString(),
+                                              cache: true,
+                                              width: 48,
+                                              height: 48))),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                  child: Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                    Text(item.title,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(
+                                            color: current
+                                                ? colors.primary
+                                                : colors.onSurface,
+                                            fontWeight: current
+                                                ? FontWeight.w600
+                                                : FontWeight.w500)),
+                                    const SizedBox(height: 4),
+                                    Text(item.artist ?? '',
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(
+                                            color: colors.onSurfaceVariant,
+                                            fontSize: 12)),
+                                  ])),
+                              if (current)
+                                Padding(
+                                    padding: const EdgeInsets.only(left: 8),
+                                    child: Icon(
+                                        queue.isPlaying
+                                            ? Icons.equalizer_rounded
+                                            : Icons.pause_rounded,
+                                        color: colors.primary,
+                                        size: 20)),
+                              IconButton(
+                                  tooltip: '移除 ${item.title}',
+                                  onPressed: () => actions.removeAt(index),
+                                  icon: Icon(Icons.close_rounded,
+                                      color: colors.onSurfaceVariant,
+                                      size: 20)),
+                            ]),
+                          ),
+                        ),
                       ),
-                    ),
-                  );
-                },
-              ))
-      ],
-    );
+                    );
+                  },
+                )),
+    ]);
   }
 }

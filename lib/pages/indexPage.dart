@@ -51,10 +51,8 @@ class _IndexPageState extends ConsumerState<IndexPage> {
   @override
   Widget build(BuildContext context) {
     final wide = isTabletAll(context);
-    final hasSong = ref.watch(musPlayProvider.select((s) => s.curSong != null));
     final colors = Theme.of(context).colorScheme;
-    final bottomHeight =
-        wide ? (hasSong ? 86.0 : 0.0) : (hasSong ? 152.0 : 86.0);
+    final bottomHeight = wide ? 86.0 : 152.0;
     // Read insets below SafeArea so its consumed top padding is not restored.
     // Only add scrolling clearance for the floating controls at the bottom.
     final body = Builder(builder: (context) {
@@ -94,26 +92,24 @@ class _IndexPageState extends ConsumerState<IndexPage> {
               : body),
       bottomBarHeight: bottomHeight,
       bottomBar: Column(mainAxisSize: MainAxisSize.min, children: [
-        if (hasSong)
-          Padding(
-            padding: EdgeInsets.fromLTRB(wide ? 120 : 20, 8, 20, 4),
-            child: wide
-                ? const FrostedSurface(child: MusBotScreen())
-                : Container(
-                    transform: Matrix4.translationValues(0, 15, 0),
-                    decoration: BoxDecoration(
-                        color: colors.surface.withValues(alpha: 0.92),
-                        borderRadius: BorderRadius.circular(22),
-                        border: Border.all(
-                            color:
-                                colors.outlineVariant.withValues(alpha: 0.45))),
-                    clipBehavior: Clip.antiAlias,
-                    child: const MusBotScreen(),
-                  ),
-          ),
+        Padding(
+          padding: EdgeInsets.fromLTRB(wide ? 120 : 20, 8, 20, 4),
+          child: wide
+              ? const FrostedSurface(child: MusBotScreen())
+              : Container(
+                  transform: Matrix4.translationValues(0, 15, 0),
+                  decoration: BoxDecoration(
+                      color: colors.surface.withValues(alpha: 0.92),
+                      borderRadius: BorderRadius.circular(22),
+                      border: Border.all(
+                          color:
+                              colors.outlineVariant.withValues(alpha: 0.45))),
+                  clipBehavior: Clip.antiAlias,
+                  child: const MusBotScreen(),
+                ),
+        ),
         if (!wide) BotNavBar(selectedIndex: _pageIndex, onTabChange: _select),
-        if (wide && hasSong)
-          SizedBox(height: MediaQuery.paddingOf(context).bottom + 8),
+        if (wide) SizedBox(height: MediaQuery.paddingOf(context).bottom + 8),
       ]),
     );
   }

@@ -1,194 +1,183 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
-import 'package:transientmobile/extensions/customColors.dart';
-
 import '../music/playMainList.dart';
-class GlobalBottomSheet {
-  static OverlayEntry? _entry;
 
-  static bool get isShowing => _entry != null;
+/// A real modal route makes Android back dismiss the queue before its player.
+class GlobalBottomSheet {
+  static _PlaylistRoute? _route;
+  static bool get isShowing => _route != null;
 
   static void show({
     required BuildContext context,
-    Widget? child, // 可自定义内容，默认用 PlayMainList()
+    Widget? child,
     double maxHeight = 620,
-    BorderRadiusGeometry radius =
-    const BorderRadius.vertical(top: Radius.circular(16)),
+    BorderRadiusGeometry radius = const BorderRadius.all(Radius.circular(28)),
     Color barrierColor = Colors.black54,
     Duration duration = const Duration(milliseconds: 280),
     Curve curve = Curves.easeOutCubic,
   }) {
-    // 若已存在，先移除（保证“单例效果”）
-    _entry?.remove();
-
-    final overlay = Overlay.of(context, rootOverlay: true);
-    _entry = OverlayEntry(
-      maintainState: true,
-      opaque: false,
-      builder: (_) => _BottomSheetHost(
-        barrierColor: barrierColor,
-        maxHeight: maxHeight,
-        radius: radius,
-        duration: duration,
-        curve: curve,
-        onClose: hide,
-        child: child ?? PlayMainList(),
-      ),
+    if (isShowing) return;
+    final route = _PlaylistRoute(
+      child: child ?? const PlayMainList(),
+      maxHeight: maxHeight,
+      radius: radius,
+      barrierColor: barrierColor,
+      duration: duration,
+      curve: curve,
+      themes: InheritedTheme.capture(
+          from: context,
+          to: Navigator.of(context, rootNavigator: true).context),
     );
-    overlay.insert(_entry!);
+    _route = route;
+    Navigator.of(context, rootNavigator: true).push(route).whenComplete(() {
+      if (identical(_route, route)) _route = null;
+    });
+  }
+
+  static Future<bool> confirmClear(BuildContext context) async {
+    final navigator = Navigator.of(context, rootNavigator: true);
+    final dialog = DialogRoute<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+              title: const Text('清空播放列表？'),
+              content: const Text('全部歌曲将从当前列表移除，并停止播放。'),
+              actions: [
+                TextButton(
+                    onPressed: () => Navigator.pop(context, false),
+                    child: const Text('取消')),
+                FilledButton(
+                    onPressed: () => Navigator.pop(context, true),
+                    child: const Text('确认清空')),
+              ],
+            ));
+    final result = navigator.push(dialog);
+    return await result ?? false;
   }
 
   static void hide() {
-    _entry?.remove();
-    _entry = null;
+    final route = _route;
+    if (route == null) return;
+    if (route.isCurrent) {
+      route.navigator?.pop();
+    } else if (route.isActive) {
+      route.navigator?.removeRoute(route);
+    }
   }
 }
 
-/// 内部真正承载动画+手势的 Widget
-class _BottomSheetHost extends StatefulWidget {
+class _PlaylistRoute extends PopupRoute<void> {
+  _PlaylistRoute(
+      {required this.child,
+      required this.maxHeight,
+      required this.radius,
+      required this.barrierColor,
+      required this.duration,
+      required this.curve,
+      required this.themes});
   final Widget child;
-  final VoidCallback onClose;
   final double maxHeight;
   final BorderRadiusGeometry radius;
-  final Color barrierColor;
   final Duration duration;
   final Curve curve;
-
-  const _BottomSheetHost({
-    super.key,
-    required this.child,
-    required this.onClose,
-    required this.maxHeight,
-    required this.radius,
-    required this.barrierColor,
-    required this.duration,
-    required this.curve,
-  });
+  final CapturedThemes themes;
+  @override
+  final Color barrierColor;
+  @override
+  bool get barrierDismissible => true;
+  @override
+  String get barrierLabel => '关闭播放列表';
+  @override
+  Duration get transitionDuration => duration;
 
   @override
-  State<_BottomSheetHost> createState() => _BottomSheetHostState();
-}
-
-class _BottomSheetHostState extends State<_BottomSheetHost>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _ctrl;
-  late final Animation<double> _anim; // 0=完全展开，1=完全隐藏（从底部）
-  double _dragDy = 0.0; // 记录拖拽的像素位移（正数=向下）
-  double _sheetHeight = 0.0;
-
-  @override
-  void initState() {
-    super.initState();
-    _ctrl = AnimationController(vsync: this, duration: widget.duration);
-    _anim = CurvedAnimation(parent: _ctrl, curve: widget.curve);
-    // 初始在底部（隐藏）
-    _ctrl.value = 1.0;
-    // 播放进入动画：自下而上
-    _ctrl.reverse(); // 1.0 -> 0.0
-  }
-
-  @override
-  void dispose() {
-    _ctrl.dispose();
-    super.dispose();
-  }
-
-  void _dismiss() async {
-    await _ctrl.forward(); // 0.0 -> 1.0（下滑离场）
-    widget.onClose();
-  }
-
-  // 手势：根据下拉位移，实时设定 controller.value
-  void _onVerticalDragUpdate(DragUpdateDetails d) {
-    if (_sheetHeight <= 0) return;
-    _dragDy += d.delta.dy;
-    // 将位移映射为 0..1 的进度偏移（只允许“向下”增加进度；向上不超过展开状态）
-    final delta = (_dragDy / _sheetHeight).clamp(0.0, 1.0);
-    _ctrl.value = delta; // 0 展开；1 隐藏
-  }
-
-  void _onVerticalDragEnd(DragEndDetails d) {
-    final vy = d.primaryVelocity ?? 0.0; // 正数=向下，负数=向上
-    const velocityThreshold = 650.0; // 速度阈值
-    const progressThreshold = 0.35;  // 进度阈值（拖拽超过 35% 就关闭）
-
-    final shouldClose =
-        vy > velocityThreshold || _ctrl.value > progressThreshold;
-
-    if (shouldClose) {
-      _dismiss();
-    } else {
-      // 回弹至展开
-      _ctrl.reverse();
-    }
-    _dragDy = 0.0;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    // 用 LayoutBuilder 拿到实际 sheet 高度
-    final media = MediaQuery.of(context);
-    final bottomInset = media.viewInsets.bottom; // 兼容键盘
-    final maxH = widget.maxHeight;
-
-    return Stack(
-      children: [
-        // 半透明遮罩
-        Positioned.fill(
-          child: GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onTap: _dismiss,
-            child: FadeTransition(
-              opacity: _anim.drive(Tween(begin: 1.0, end: 0.0)), // 展开=1.0，隐藏=0.0
-              child: Container(color: widget.barrierColor),
-            ),
-          ),
-        ),
-
-        // 底部弹窗
-        AnimatedBuilder(
-          animation: _anim,
-          builder: (context, _) {
-            // 根据进度将 sheet 从底部位移：1.0 → 完全在屏外；0.0 → 贴底
-            final translateY = _anim.value * (_sheetHeight == 0 ? maxH : _sheetHeight);
-
-            return Align(
-              alignment: Alignment.bottomCenter,
-              child: Transform.translate(
-                offset: Offset(0, translateY),
-                child: Padding(
-                  // 兼容键盘顶起
-                  padding: EdgeInsets.only(bottom: bottomInset),
-                  child: Material(
-                    color: Colors.transparent,
-                    child: ConstrainedBox(
-                      constraints: BoxConstraints(maxHeight: maxH),
-                      child: LayoutBuilder(
-                        builder: (context, bc) {
-                          _sheetHeight = bc.maxHeight; // 记录高度用于拖拽进度
-                          return GestureDetector(
-                            onVerticalDragUpdate: _onVerticalDragUpdate,
-                            onVerticalDragEnd: _onVerticalDragEnd,
-                            child: Container(
-                              decoration: BoxDecoration(
-                                color: context.bg.withOpacity(0.8),
-                                borderRadius: widget.radius,
-                              ),
-                              child: SafeArea(
-                                top: false,
-                                child: widget.child,
-                              ),
-                            ),
-                          );
-                        },
+  Widget buildPage(BuildContext context, Animation<double> animation,
+          Animation<double> secondaryAnimation) =>
+      themes.wrap(Builder(builder: (context) {
+        final media = MediaQuery.of(context);
+        final wide = media.size.width > 756;
+        final colors = Theme.of(context).colorScheme;
+        final bottom = wide ? 20.0 : 0.0;
+        final height = math.min(
+            maxHeight,
+            math.max(
+                0.0,
+                media.size.height -
+                    media.padding.top -
+                    media.viewInsets.bottom -
+                    bottom -
+                    20));
+        return AnimatedPadding(
+          duration: const Duration(milliseconds: 160),
+          padding: EdgeInsets.only(bottom: media.viewInsets.bottom),
+          child: Align(
+            alignment: Alignment.bottomCenter,
+            child: Padding(
+              padding:
+                  EdgeInsets.fromLTRB(wide ? 20 : 0, 0, wide ? 20 : 0, bottom),
+              child: SizedBox(
+                width: 560,
+                height: height,
+                child: Material(
+                  color: colors.surface,
+                  borderRadius: radius,
+                  clipBehavior: Clip.antiAlias,
+                  child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              Color.alphaBlend(
+                                  colors.primary.withValues(alpha: 0.08),
+                                  colors.surface),
+                              colors.surface
+                            ]),
+                        border: Border.all(
+                            color:
+                                colors.outlineVariant.withValues(alpha: 0.4)),
+                        borderRadius: radius,
                       ),
-                    ),
-                  ),
+                      child: SafeArea(
+                          top: false,
+                          child: Column(children: [
+                            GestureDetector(
+                              behavior: HitTestBehavior.opaque,
+                              onVerticalDragEnd: (details) {
+                                if ((details.primaryVelocity ?? 0) > 250) {
+                                  GlobalBottomSheet.hide();
+                                }
+                              },
+                              child: SizedBox(
+                                  height: 24,
+                                  width: double.infinity,
+                                  child: Center(
+                                      child: Container(
+                                          width: 36,
+                                          height: 4,
+                                          decoration: BoxDecoration(
+                                              color: colors.onSurfaceVariant
+                                                  .withValues(alpha: 0.3),
+                                              borderRadius:
+                                                  BorderRadius.circular(4))))),
+                            ),
+                            Expanded(child: child),
+                          ]))),
                 ),
               ),
-            );
-          },
-        ),
-      ],
-    );
-  }
+            ),
+          ),
+        );
+      }));
+
+  @override
+  Widget buildTransitions(BuildContext context, Animation<double> animation,
+          Animation<double> secondaryAnimation, Widget child) =>
+      SlideTransition(
+        position: Tween(begin: const Offset(0, 1), end: Offset.zero).animate(
+            CurvedAnimation(
+                parent: animation,
+                curve: curve,
+                reverseCurve: Curves.easeInCubic)),
+        child: child,
+      );
 }
