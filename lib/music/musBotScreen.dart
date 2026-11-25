@@ -171,7 +171,7 @@ class _MusBotScreenState extends ConsumerState<MusBotScreen> {
                 color: context.musicStickBg.withOpacity(0.5),
                 child: Padding(
                   padding: const EdgeInsets.only(
-                      left: 10, right: 5, top: 5, bottom: 5),
+                      left: 10, right: 5, top: 5, bottom: 0),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [

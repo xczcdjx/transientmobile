@@ -20,7 +20,6 @@ import 'package:flutter/material.dart';
 
 //  桌面版音词处理
 class TableMusScreen extends ConsumerWidget {
-
   TableMusScreen({super.key});
 
   final _audioHandler = AudioHandlerService.instance.handler;
@@ -40,14 +39,14 @@ class TableMusScreen extends ConsumerWidget {
                 Flexible(
                   flex: 1,
                   child: // MediaItem display
-                  musPlayStore.curSong == null
+                      musPlayStore.curSong == null
                           ? SizedBox()
                           : LayoutBuilder(
                               builder: (context, constraints) {
                                 final maxWidth = constraints.maxWidth;
                                 return RotatingAlbumCover(
-                                  imageUrl:
-                                      (musPlayStore.curSong?.artUri??"").toString(),
+                                  imageUrl: (musPlayStore.curSong?.artUri ?? "")
+                                      .toString(),
                                   playing: musPlayStore.isPlaying,
                                   size: maxWidth / 2.1,
                                 );
@@ -55,20 +54,19 @@ class TableMusScreen extends ConsumerWidget {
                             ),
                 ),
                 Flexible(
-                  flex: 1,
-                  child:
-                  /*LyricScreen(
+                    flex: 1,
+                    child:
+                        /*LyricScreen(
                     hideControl: true,
                     lines: lines,
                   ),*/
-                  NewLyricScreen()
-                ),
+                        NewLyricScreen()),
               ],
             ),
           ),
           // control
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 15.0, vertical: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 16),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -78,12 +76,12 @@ class TableMusScreen extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        musPlayStore.curSong?.album ?? 'Xxx',
+                        musPlayStore.curSong?.title ?? '',
                         style: Theme.of(context).textTheme.titleLarge,
                         overflow: TextOverflow.ellipsis,
                         maxLines: 1,
                       ),
-                      Text(musPlayStore.curSong?.title ?? "xxx",
+                      Text(musPlayStore.curSong?.artist ?? '',
                           overflow: TextOverflow.ellipsis, maxLines: 1),
                     ],
                   ),

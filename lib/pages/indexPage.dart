@@ -96,6 +96,7 @@ class _IndexPageState extends ConsumerState<IndexPage> {
             child: wide
                 ? const FrostedSurface(child: MusBotScreen())
                 : Container(
+                    transform: Matrix4.translationValues(0, 15, 0),
                     decoration: BoxDecoration(
                         color: colors.surface.withValues(alpha: 0.92),
                         borderRadius: BorderRadius.circular(22),

@@ -79,7 +79,7 @@ class BotNavBar extends StatelessWidget {
             decoration: TextDecoration.none,
           ),
       horizontalPadding: 24,
-      verticalPadding: 12,
+      verticalPadding: 18,
       barHeight: 62,
       tabs: const [
         GlassTab(icon: Icon(Icons.home_outlined), label: '探索'),

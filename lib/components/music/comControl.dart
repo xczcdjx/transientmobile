@@ -3,227 +3,160 @@ import 'dart:math';
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
 
-import '../../hooks/useStore.dart';
-import '../../music/common.dart';
+import '../../styles/app_glass.dart';
 import '../../store/index.dart';
 import '../../utils/AudioHandler.dart';
 
-/*class ControlButtons extends ConsumerWidget {
-  final AudioPlayerHandlerImpl audioHandler;
-
-  const ControlButtons(this.audioHandler, {Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context,WidgetRef ref) {
-
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        IconButton(
-          icon: const Icon(Icons.volume_up),
-          onPressed: () {
-            showSliderDialog(
-              context: context,
-              title: "Adjust volume",
-              divisions: 10,
-              min: 0.0,
-              max: 1.0,
-              value: audioHandler.volume.value,
-              stream: audioHandler.volume,
-              onChanged: audioHandler.setVolume,
-            );
-          },
-        ),
-        StreamBuilder<QueueState>(
-          stream: audioHandler.queueState,
-          builder: (context, snapshot) {
-            final queueState = snapshot.data ?? QueueState.empty;
-            return IconButton(
-              icon: const Icon(Icons.skip_previous),
-              onPressed:
-                  queueState.hasPrevious ? audioHandler.skipToPrevious : null,
-            );
-          },
-        ),
-        StreamBuilder<PlaybackState>(
-          stream: audioHandler.playbackState,
-          builder: (context, snapshot) {
-            final playbackState = snapshot.data;
-            final processingState = playbackState?.processingState;
-            final playing = playbackState?.playing;
-            if (processingState == AudioProcessingState.loading ||
-                processingState == AudioProcessingState.buffering) {
-              return Container(
-                margin: const EdgeInsets.all(8.0),
-                width: 64.0,
-                height: 64.0,
-                child: const CircularProgressIndicator(),
-              );
-            } else if (playing != true) {
-              return IconButton(
-                icon: const Icon(Icons.play_arrow),
-                iconSize: 64.0,
-                onPressed: audioHandler.play,
-              );
-            } else {
-              return IconButton(
-                icon: const Icon(Icons.pause),
-                iconSize: 64.0,
-                onPressed: audioHandler.pause,
-              );
-            }
-          },
-        ),
-        StreamBuilder<QueueState>(
-          stream: audioHandler.queueState,
-          builder: (context, snapshot) {
-            final queueState = snapshot.data ?? QueueState.empty;
-            return IconButton(
-              icon: const Icon(Icons.skip_next),
-              onPressed: queueState.hasNext ? audioHandler.skipToNext : null,
-            );
-          },
-        ),
-        StreamBuilder<PlaybackState>(
-          stream: audioHandler.playbackState,
-          builder: (context, snapshot) {
-            final queueState = snapshot.data ?? QueueState.empty;
-            return IconButton(
-              icon: const Icon(Icons.stop),
-              onPressed: audioHandler.stop,
-            );
-          },
-        ),
-        StreamBuilder<double>(
-          stream: audioHandler.speed,
-          builder: (context, snapshot) => IconButton(
-            icon: Text("${snapshot.data?.toStringAsFixed(2)}x",
-                style:
-                    const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-            onPressed: () {
-              showSliderDialog(
-                context: context,
-                title: "Adjust speed",
-                divisions: 6,
-                min: 0.5,
-                max: 2,
-                value: audioHandler.speed.value,
-                stream: audioHandler.speed,
-                onChanged: audioHandler.setSpeed,
-              );
-            },
-          ),
-        ),
-      ],
-    );
-  }
-}*/
-
+/// Shared by cover, lyrics and wide layouts; transport behavior stays in the store.
 class ComControlBtn extends ConsumerWidget {
+  const ComControlBtn(
+    this.audioHandler, {
+    super.key,
+    this.openPlayList,
+    this.mainAxisAlignment = MainAxisAlignment.spaceBetween,
+  });
+
   final AudioPlayerHandlerImpl audioHandler;
   final VoidCallback? openPlayList;
-  MainAxisAlignment mainAxisAlignment;
-
-  ComControlBtn(this.audioHandler,
-      {Key? key,
-      this.openPlayList,
-      this.mainAxisAlignment = MainAxisAlignment.spaceBetween})
-      : super(key: key);
+  final MainAxisAlignment mainAxisAlignment;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // final musPStore = useSelector(ref, musPlayProvider, (s) => s);
-    final dispatch = useDispatch(ref, musPlayProvider);
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8),
-      child: Row(
-        mainAxisAlignment: mainAxisAlignment,
-        children: [
-          StreamBuilder<AudioServiceRepeatMode>(
-            stream: audioHandler.playbackState
-                .map((state) => state.repeatMode)
-                .distinct(),
-            builder: (context, snapshot) {
-              final repeatMode = snapshot.data ?? AudioServiceRepeatMode.none;
-              final icons = [
-                Icon(Icons.repeat, color: Colors.grey, size: 30),
-                Icon(Icons.repeat, color: Theme.of(context).colorScheme.primary, size: 30),
-                Icon(Icons.repeat_one, color: Theme.of(context).colorScheme.primary, size: 30),
-              ];
-              const cycleModes = [
-                AudioServiceRepeatMode.none,
-                AudioServiceRepeatMode.all,
-                AudioServiceRepeatMode.one,
-              ];
-              final index = cycleModes.indexOf(repeatMode);
-              return IconButton(
-                icon: icons[index],
-                onPressed: () {
-                  audioHandler.setRepeatMode(cycleModes[
-                      (cycleModes.indexOf(repeatMode) + 1) %
-                          cycleModes.length]);
-                },
+    final accent = Theme.of(context).colorScheme.primary;
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 460),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+          child: LayoutBuilder(builder: (context, constraints) {
+            final compact = constraints.maxWidth < 340;
+            final secondarySize = compact ? 44.0 : 50.0;
+            final skipSize = compact ? 52.0 : 58.0;
+            final playSize = compact ? 72.0 : 82.0;
+            Widget button(
+                {required IconData icon,
+                required String label,
+                required VoidCallback? onTap,
+                required double size,
+                bool active = false,
+                bool secondary = false}) {
+              return Tooltip(
+                message: label,
+                child: GlassButton(
+                  icon: Icon(icon),
+                  label: label,
+                  width: size,
+                  height: size,
+                  iconSize: secondary ? 23 : 28,
+                  iconColor: active ? accent : Colors.white,
+                  quality: secondary ? GlassQuality.minimal : AppGlass.quality,
+                  enabled: onTap != null,
+                  onTap: onTap ?? () {},
+                ),
               );
-            },
-          ),
-          IconButton(
-              icon: const Icon(
-                Icons.skip_previous,
-                size: 32,
-              ),
-              onPressed: dispatch.previous),
-          StreamBuilder<PlaybackState>(
-            stream: audioHandler.playbackState,
-            builder: (context, snapshot) {
-              final playbackState = snapshot.data;
-              final processingState = playbackState?.processingState;
-              final playing = playbackState?.playing;
-              if (processingState == AudioProcessingState.loading ||
-                  processingState == AudioProcessingState.buffering) {
-                return Container(
-                  margin: const EdgeInsets.all(8.0),
-                  width: 64.0,
-                  height: 64.0,
-                  child: const CircularProgressIndicator(),
-                );
-              } else if (playing != true) {
-                return IconButton(
-                  icon: const Icon(Icons.play_arrow),
-                  iconSize: 64.0,
-                  onPressed: (){
-                    dispatch.play();
+            }
+
+            return Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                StreamBuilder<AudioServiceRepeatMode>(
+                  initialData: audioHandler.playbackState.value.repeatMode,
+                  stream: audioHandler.playbackState
+                      .map((s) => s.repeatMode)
+                      .distinct(),
+                  builder: (context, snapshot) {
+                    final mode = snapshot.data ?? AudioServiceRepeatMode.none;
+                    const cycle = [
+                      AudioServiceRepeatMode.none,
+                      AudioServiceRepeatMode.all,
+                      AudioServiceRepeatMode.one
+                    ];
+                    final label = switch (mode) {
+                      AudioServiceRepeatMode.one => '单曲循环',
+                      AudioServiceRepeatMode.all => '列表循环',
+                      _ => '顺序播放',
+                    };
+                    return button(
+                      icon: mode == AudioServiceRepeatMode.one
+                          ? Icons.repeat_one_rounded
+                          : Icons.repeat_rounded,
+                      label: label,
+                      size: secondarySize,
+                      secondary: true,
+                      active: mode != AudioServiceRepeatMode.none,
+                      onTap: () => audioHandler.setRepeatMode(
+                          cycle[(cycle.indexOf(mode) + 1) % cycle.length]),
+                    );
                   },
-                );
-              } else {
-                return IconButton(
-                  icon: const Icon(Icons.pause),
-                  iconSize: 64.0,
-                  onPressed: (){
-                    dispatch.pause();
+                ),
+                button(
+                    icon: Icons.skip_previous_rounded,
+                    label: '上一首',
+                    size: skipSize,
+                    onTap: () => ref.read(musPlayProvider.notifier).previous()),
+                StreamBuilder<PlaybackState>(
+                  initialData: audioHandler.playbackState.value,
+                  stream: audioHandler.playbackState,
+                  builder: (context, snapshot) {
+                    final state = snapshot.data!;
+                    final busy = state.processingState ==
+                            AudioProcessingState.loading ||
+                        state.processingState == AudioProcessingState.buffering;
+                    final label = busy
+                        ? '正在加载'
+                        : state.playing
+                            ? '暂停'
+                            : '播放';
+                    return Tooltip(
+                      message: label,
+                      child: GlassButton.custom(
+                        width: playSize,
+                        height: playSize,
+                        label: label,
+                        enabled: !busy,
+                        quality: AppGlass.quality,
+                        tintColor: Colors.white.withValues(alpha: 0.12),
+                        onTap: () {
+                          final actions = ref.read(musPlayProvider.notifier);
+                          state.playing ? actions.pause() : actions.play();
+                        },
+                        child: busy
+                            ? const SizedBox(
+                                width: 28,
+                                height: 28,
+                                child: CircularProgressIndicator(
+                                    strokeWidth: 2.5, color: Colors.white))
+                            : Icon(
+                                state.playing
+                                    ? Icons.pause_rounded
+                                    : Icons.play_arrow_rounded,
+                                size: 40,
+                                color: Colors.white),
+                      ),
+                    );
                   },
-                );
-              }
-            },
-          ),
-          IconButton(
-              icon: const Icon(
-                Icons.skip_next,
-                size: 32,
-              ),
-              onPressed: dispatch.next),
-          IconButton(
-              onPressed: openPlayList,
-              icon: Icon(
-                Icons.queue_music_sharp,
-                size: 32,
-              ))
-        ],
+                ),
+                button(
+                    icon: Icons.skip_next_rounded,
+                    label: '下一首',
+                    size: skipSize,
+                    onTap: () => ref.read(musPlayProvider.notifier).next()),
+                button(
+                    icon: Icons.queue_music_rounded,
+                    label: '播放列表',
+                    size: secondarySize,
+                    secondary: true,
+                    onTap: openPlayList),
+              ],
+            );
+          }),
+        ),
       ),
     );
   }
 }
-
 
 class ComPlayCircleBtn extends StatelessWidget {
   final Duration position;
@@ -233,15 +166,15 @@ class ComPlayCircleBtn extends StatelessWidget {
   final double iconSize;
   final double outSize;
 
-  const ComPlayCircleBtn({
-    Key? key,
-    required this.position,
-    required this.duration,
-    required this.isPlaying,
-    required this.onPlayPause,
-    this.iconSize=28,
-    this.outSize=35
-  }) : super(key: key);
+  const ComPlayCircleBtn(
+      {Key? key,
+      required this.position,
+      required this.duration,
+      required this.isPlaying,
+      required this.onPlayPause,
+      this.iconSize = 28,
+      this.outSize = 35})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -307,4 +240,3 @@ class _CircleProgressPainter extends CustomPainter {
     return oldDelegate.progress != progress || oldDelegate.color != color;
   }
 }
-
