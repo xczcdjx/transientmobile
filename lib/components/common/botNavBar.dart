@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
 import '../../styles/app_glass.dart';
+import '../../widgets/frosted_surface.dart';
 
 /// Selection belongs to the shell, so resizing never resets the active tab.
 class BotNavBar extends StatelessWidget {
@@ -20,9 +21,8 @@ class BotNavBar extends StatelessWidget {
     if (isTablet) {
       return Padding(
         padding: const EdgeInsets.fromLTRB(16, 16, 8, 16),
-        child: GlassContainer(
-          quality: AppGlass.quality,
-          shape: const LiquidRoundedSuperellipse(borderRadius: 28),
+        child: FrostedSurface(
+          radius: 28,
           child: NavigationRail(
             selectedIndex: selectedIndex,
             onDestinationSelected: onTabChange,

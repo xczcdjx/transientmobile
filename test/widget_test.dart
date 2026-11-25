@@ -31,16 +31,16 @@ void main() {
     await tester.pump();
     await tester.tap(find.text('我的').hitTestable().first);
     await tester.pump(const Duration(milliseconds: 500));
-    expect(selected, 1);
+    expect(selected, 3);
     expect(
-        tester.widget<GlassTabBar>(find.byType(GlassTabBar)).selectedIndex, 1);
+        tester.widget<GlassTabBar>(find.byType(GlassTabBar)).selectedIndex, 3);
     update(() => wide = true);
     await tester.pump(const Duration(milliseconds: 500));
     expect(
         tester
             .widget<NavigationRail>(find.byType(NavigationRail))
             .selectedIndex,
-        1);
+        3);
     await tester.tap(find.text('首页').hitTestable().first);
     await tester.pump(const Duration(milliseconds: 500));
     expect(selected, 0);

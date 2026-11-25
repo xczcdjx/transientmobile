@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:transientmobile/styles/app_glass.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:transientmobile/pages/liquid_glass_test_page.dart';
+import 'package:transientmobile/pages/test/liquid_glass_test_page.dart';
 
 void main() {
   testWidgets('glass playground initializes and responds to playback preview',

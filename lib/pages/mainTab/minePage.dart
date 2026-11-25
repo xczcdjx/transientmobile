@@ -13,7 +13,8 @@ class MinePage extends StatelessWidget {
       appBar:
           AppBar(title: const Text('我的'), backgroundColor: Colors.transparent),
       body: ListView(
-          padding: const EdgeInsets.fromLTRB(24, 16, 24, 28),
+          padding: EdgeInsets.fromLTRB(
+              24, 16, 24, 28 + MediaQuery.paddingOf(context).bottom),
           children: [
             Align(
                 alignment: Alignment.topCenter,

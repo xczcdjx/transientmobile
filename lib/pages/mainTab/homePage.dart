@@ -1,5 +1,7 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:transientmobile/components/common/bannerCom.dart';
 import '../../router/routes.dart';
 import '../../widgets/langSwitch.dart';
 import '../../widgets/themeSwitch.dart';
@@ -17,7 +19,8 @@ class HomePage extends StatelessWidget {
           title: const Text('Transient'),
           actions: [ThemeSwitch(), LangSwitch(), const SizedBox(width: 12)]),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(24, 16, 24, 28),
+        padding: EdgeInsets.fromLTRB(
+            24, 16, 24, 28 + MediaQuery.paddingOf(context).bottom),
         child: Align(
             alignment: Alignment.topCenter,
             child: ConstrainedBox(
@@ -25,7 +28,7 @@ class HomePage extends StatelessWidget {
               child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Text('你的音乐空间',
+                    /*Text('你的音乐空间',
                         style: TextStyle(
                             color: colors.primary,
                             fontWeight: FontWeight.w600)),
@@ -35,8 +38,8 @@ class HomePage extends StatelessWidget {
                             .textTheme
                             .headlineLarge
                             ?.copyWith(
-                                fontWeight: FontWeight.w700, height: 1.3)),
-                    const SizedBox(height: 28),
+                                fontWeight: FontWeight.w700, height: 1.3)),*/
+                    /*const SizedBox(height: 28),
                     Card(
                         child: InkWell(
                       borderRadius: BorderRadius.circular(24),
@@ -90,7 +93,14 @@ class HomePage extends StatelessWidget {
                                   style: TextStyle(
                                       color: colors.onSurfaceVariant,
                                       height: 1.6))),
-                        ]),
+                        ]),*/
+                    BannerWidget(),
+                    Text(
+                      'hello'.tr(),
+                    ),
+                    Text(
+                      '事必专任，乃可责成，力无他分，乃可就绪',
+                    ),
                   ]),
             )),
       ),

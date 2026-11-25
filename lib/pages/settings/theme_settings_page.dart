@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../store/index.dart';
-import '../styles/theme_palette.dart';
+import '../../store/index.dart';
+import '../../styles/theme_palette.dart';
 
 class ThemeSettingsPage extends ConsumerWidget {
   const ThemeSettingsPage({super.key});

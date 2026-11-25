@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../styles/app_glass.dart';
+import '../../styles/app_glass.dart';
 import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
 
 /// Isolated visual playground: controls here do not change actual playback.

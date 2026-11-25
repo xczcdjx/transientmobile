@@ -8,7 +8,7 @@ final normalLyric = """[ti:If I Didn't Love You]
 [00:11.15]I wouldn't mind being alone
 [00:12.85]
 [00:13.68]I wouldn't keep checking my phone
-[00:16.29]Wouldn't take the long way home
+[00:16.29]Wouldn't take the long way mainTab
 [00:18.00]Just to drive myself crazy
 [00:20.56]
 [00:21.53]I wouldn't be losing sleep
@@ -124,7 +124,7 @@ final advancedLyric = """[ti:If I Didn't Love You]
 [457,2039]If (457,177)I (634,182)Didn't (816,210)Love (1026,183)You - (1209,207)Jason (1416,217)Aldean/(1633,208)Carrie (1841,230)Underwood(2071,425)
 [11155,1697]I (11155,161)wouldn't (11316,223)mind (11539,345)being (11884,423)alone(12307,545)
 [13684,2128]I (13684,159)wouldn't (13843,272)keep (14115,345)checking (14460,330)my (14790,318)phone(15108,704)
-[16292,1712]Wouldn't (16292,192)take (16484,287)the (16771,216)long (16987,384)way (17371,153)home(17524,480)
+[16292,1712]Wouldn't (16292,192)take (16484,287)the (16771,216)long (16987,384)way (17371,153)mainTab(17524,480)
 [18004,2560]Just (18004,192)to (18196,193)drive (18389,367)myself (18756,608)crazy(19364,1200)
 [21532,1744]I (21532,177)wouldn't (21709,255)be (21964,296)losing (22260,608)sleep(22868,408)
 [24243,1856]Remembering (24243,665)everything(24908,1191)

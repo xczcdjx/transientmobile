@@ -1,13 +1,12 @@
-import '../pages/liquid_glass_test_page.dart';
-import '../pages/theme_settings_page.dart';
+import '../pages/test/liquid_glass_test_page.dart';
+import '../pages/settings/theme_settings_page.dart';
 import 'package:go_router/go_router.dart';
-import 'package:transientmobile/pages/lastUploadPage.dart';
+import 'package:transientmobile/pages/other/lastUploadPage.dart';
 
-import '../pages/detailPage.dart';
+import '../pages/other/detailPage.dart';
 import '../pages/indexPage.dart';
-import '../pages/testPage.dart';
-
-import '../pages/testPage2.dart';
+import '../pages/test/testPage.dart';
+import '../pages/test/testPage2.dart';
 import 'routes.dart';
 
 final GoRouter router = GoRouter(

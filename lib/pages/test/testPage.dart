@@ -5,7 +5,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:transientmobile/test/lyricPluginTest.dart';
 
-import '../utils/getDevice.dart';
+import '../../utils/getDevice.dart';
 
 const playUrl="http://transient.online/static/mediaMul/2025/05/23/小霞、海洋Bo - 向云端-1747994192850.mp3";
 class TestPage extends StatefulWidget {

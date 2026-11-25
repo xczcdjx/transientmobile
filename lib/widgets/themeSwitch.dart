@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../router/routes.dart';
 
-/// Opens the same theme settings from the home toolbar and personal page.
+/// Opens the same theme settings from the mainTab toolbar and personal page.
 class ThemeSwitch extends StatelessWidget {
   const ThemeSwitch({super.key});
   @override

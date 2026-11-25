@@ -46,7 +46,7 @@ class _MusBotScreenState extends ConsumerState<MusBotScreen> {
         child: isTab
             ? Container(
                 height: 70,
-                color: context.musicStickBg.withOpacity(0.5),
+                color: Colors.transparent,
                 child: Padding(
                   padding: const EdgeInsets.symmetric(
                       horizontal: 15, vertical: 12.5),
