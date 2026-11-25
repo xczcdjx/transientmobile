@@ -36,13 +36,20 @@
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
 
-    <!-- ✅ 允许 transient.online 使用 HTTP 播放音频 -->
+    <!-- 允许 API 和音频服务域名使用 HTTP -->
     <key>NSAppTransportSecurity</key>
     <dict>
         <key>NSAllowsLocalNetworking</key><true/>
         <key>NSExceptionDomains</key>
         <dict>
             <key>music.126.net</key>
+            <dict>
+                <key>NSIncludesSubdomains</key>
+                <true/>
+                <key>NSExceptionAllowsInsecureHTTPLoads</key>
+                <true/>
+            </dict>
+            <key>transient.cloud</key>
             <dict>
                 <key>NSIncludesSubdomains</key>
                 <true/>
