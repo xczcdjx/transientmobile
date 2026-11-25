@@ -1,109 +1,92 @@
 import 'package:flutter/material.dart';
-import 'package:google_nav_bar/google_nav_bar.dart';
-import 'package:transientmobile/extensions/customColors.dart';
-import 'package:transientmobile/utils/screenUtil.dart';
+import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
+import '../../styles/app_glass.dart';
 
-class BotNavBar extends StatefulWidget {
-  final void Function(int)? onTabChange;
-  bool isTablet;
-  BotNavBar({super.key, required this.onTabChange,this.isTablet=false});
+/// Selection belongs to the shell, so resizing never resets the active tab.
+class BotNavBar extends StatelessWidget {
+  const BotNavBar(
+      {super.key,
+      required this.onTabChange,
+      this.selectedIndex = 0,
+      this.isTablet = false});
 
-  @override
-  State<BotNavBar> createState() => _BotNavBarState();
-}
-
-class _BotNavBarState extends State<BotNavBar> {
-  int _selectedIndex = 0;
+  final ValueChanged<int>? onTabChange;
+  final int selectedIndex;
+  final bool isTablet;
 
   @override
   Widget build(BuildContext context) {
-    final items = const [
-      {'icon': Icons.home, 'text': 'Home'},
-      {'icon': Icons.person, 'text': 'Me'},
-    ];
-
-    if (widget.isTablet) {
-      // ✅ 平板模式：左侧垂直导航栏
-      return Center(
-        child: Container(
-          width: 90,
-          decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surface,
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.05),
-                blurRadius: 4,
-                offset: const Offset(1, 0),
-              ),
-            ],
-          ),
-          child:
-          NavigationRail(
-            selectedIndex: _selectedIndex,
-            labelType: NavigationRailLabelType.all,
+    final colors = Theme.of(context).colorScheme;
+    if (isTablet) {
+      return Padding(
+        padding: const EdgeInsets.fromLTRB(16, 16, 8, 16),
+        child: GlassContainer(
+          quality: AppGlass.quality,
+          shape: const LiquidRoundedSuperellipse(borderRadius: 28),
+          child: NavigationRail(
+            selectedIndex: selectedIndex,
+            onDestinationSelected: onTabChange,
             backgroundColor: Colors.transparent,
-            groupAlignment: 0.0,
-            onDestinationSelected: (index) {
-              setState(() => _selectedIndex = index);
-              widget.onTabChange?.call(index);
-            },
-           /* leading: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              child: Icon(Icons.menu, color: context.fc),
-            ),*/
-            destinations: [
-              for (final item in items)
-                NavigationRailDestination(
-                  icon: Icon(item['icon'] as IconData, color: Colors.grey[400]),
-                  selectedIcon:
-                  Icon(item['icon'] as IconData, color: context.pcr),
-                  label: Text(
-                    item['text'] as String,
-                    style: TextStyle(
-                      color: _selectedIndex == items.indexOf(item)
-                          ? context.pcr
-                          : Colors.grey[400],
-                    ),
-                  ),
-                ),
+            indicatorColor: colors.primary.withValues(alpha: 0.14),
+            selectedIconTheme: IconThemeData(color: colors.primary),
+            selectedLabelTextStyle: TextStyle(color: colors.primary),
+            labelType: NavigationRailLabelType.all,
+            leading: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 20),
+              child: Icon(Icons.graphic_eq, color: colors.primary, size: 30),
+            ),
+            destinations: const [
+              NavigationRailDestination(
+                  icon: Icon(Icons.home_outlined),
+                  selectedIcon: Icon(Icons.home_rounded),
+                  label: Text('首页')),
+              NavigationRailDestination(
+                  icon: Icon(Icons.search_outlined),
+                  selectedIcon: Icon(Icons.search),
+                  label: Text('搜索')),
+              NavigationRailDestination(
+                  icon: Icon(Icons.music_note_outlined),
+                  selectedIcon: Icon(Icons.music_note),
+                  label: Text('乐库')),
+              NavigationRailDestination(
+                  icon: Icon(Icons.person_outline),
+                  selectedIcon: Icon(Icons.person_rounded),
+                  label: Text('我的')),
             ],
           ),
         ),
       );
     }
-
-    // ✅ 手机模式：底部导航栏（原逻辑保留）
-    return Container(
-      padding: EdgeInsets.only(bottom: ScreenUtil.bottomBarHeight(context) + 10),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 4,
-            offset: const Offset(0, -2),
+    return GlassTabBar.bottom(
+      selectedIndex: selectedIndex,
+      onTabSelected: (index) => onTabChange?.call(index),
+      quality: AppGlass.quality,
+      backgroundQuality: AppGlass.quality,
+      selectedIconColor: colors.primary,
+      selectedLabelColor: colors.primary,
+      unselectedIconColor: colors.onSurfaceVariant,
+      unselectedLabelColor: colors.onSurfaceVariant,
+      textStyle: Theme.of(context).textTheme.labelMedium?.copyWith(
+            decoration: TextDecoration.none,
           ),
-        ],
-      ),
-      child: GNav(
-        color: Colors.grey[400],
-        gap: 8,
-        activeColor: context.pcr,
-        mainAxisAlignment: MainAxisAlignment.center,
-        tabBorderRadius: 16,
-        selectedIndex: _selectedIndex,
-        iconSize: 20,                          // 图标大小
-        tabMargin: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
-        padding: const EdgeInsets.only(top: 15,bottom: 5,left: 10,right: 10),
-        onTabChange: (index) {
-          setState(() => _selectedIndex = index);
-          widget.onTabChange?.call(index);
-        },
-        tabs: [
-          for (final item in items)
-            GButton(icon: item['icon'] as IconData, text: item['text'] as String),
-        ],
-      ),
+      selectedLabelStyle: Theme.of(context).textTheme.labelMedium?.copyWith(
+            color: colors.primary,
+            decoration: TextDecoration.none,
+            fontWeight: FontWeight.w600,
+          ),
+      unselectedLabelStyle: Theme.of(context).textTheme.labelMedium?.copyWith(
+            color: colors.onSurfaceVariant,
+            decoration: TextDecoration.none,
+          ),
+      horizontalPadding: 24,
+      verticalPadding: 12,
+      barHeight: 62,
+      tabs: const [
+        GlassTab(icon: Icon(Icons.home_outlined), label: '探索'),
+        GlassTab(icon: Icon(Icons.search), label: '搜索'),
+        GlassTab(icon: Icon(Icons.music_note), label: '乐库'),
+        GlassTab(icon: Icon(Icons.person_outline), label: '我的'),
+      ],
     );
   }
 }

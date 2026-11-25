@@ -1,22 +1,14 @@
-import 'package:easy_localization/easy_localization.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:oktoast/oktoast.dart';
-import 'package:transientmobile/components/common/botNavBar.dart';
-import 'package:transientmobile/hooks/useStore.dart';
-import 'package:transientmobile/music/musBotScreen.dart';
-import 'package:transientmobile/music/musMainPlay.dart';
-import 'package:transientmobile/pages/home/homePage.dart';
-import 'package:transientmobile/pages/home/minePage.dart';
-import 'package:transientmobile/store/index.dart';
-import 'package:transientmobile/widgets/langSwitch.dart';
-import 'package:transientmobile/widgets/themeSwitch.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
-
-import '../router/routes.dart';
-import '../extensions/customColors.dart';
+import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
+import 'package:transientmobile/pages/home/musicPage.dart';
+import 'package:transientmobile/pages/home/searchPage.dart';
+import '../components/common/botNavBar.dart';
+import '../music/musBotScreen.dart';
+import '../store/index.dart';
 import '../utils/getDevice.dart';
+import 'home/homePage.dart';
+import 'home/minePage.dart';
 
 class IndexPage extends ConsumerStatefulWidget {
   const IndexPage({super.key});
@@ -26,63 +18,66 @@ class IndexPage extends ConsumerStatefulWidget {
 }
 
 class _IndexPageState extends ConsumerState<IndexPage> {
-  final List<Widget> pages = [HomePage(), MinePage()];
   int _pageIndex = 0;
+  final _pages = const [HomePage(), SearchPage(), MusicPage(), MinePage()];
 
-  void _upPageIndex(int i) {
-    setState(() {
-      _pageIndex = i;
-    });
-  }
-
-  Widget _renderIndexBody(bool isTab) {
-    if (isTab) {
-      return Column(
-        children: [
-          Expanded(
-            child: Row(
-              children: [
-                  BotNavBar(
-                    onTabChange: _upPageIndex,
-                    isTablet: true,
-                  ),
-                Expanded(
-                    child: IndexedStack(
-                      index: _pageIndex,
-                      children: pages,
-                    )),
-              ],
-            ),
-          ),
-          // 后续会使用宽屏组件
-          MusBotScreen()
-        ],
-      );
-    } else {
-      return Column(
-        children: [
-          Expanded(
-              child: IndexedStack(
-            index: _pageIndex,
-            children: pages,
-          )),
-          MusBotScreen()
-        ],
-      );
-    }
+  void _select(int index) {
+    if (index != _pageIndex) setState(() => _pageIndex = index);
   }
 
   @override
   Widget build(BuildContext context) {
-    final isTab = isTabletAll(context);
-    final dispatch = useDispatch(ref, settingProvider);
-    return Scaffold(
-      body: _renderIndexBody(isTab),
-      bottomNavigationBar: isTab
-          ? null
-          : BotNavBar(
-              onTabChange: _upPageIndex,
+    final wide = isTabletAll(context);
+    final hasSong = ref.watch(musPlayProvider.select((s) => s.curSong != null));
+    final colors = Theme.of(context).colorScheme;
+    final body = IndexedStack(index: _pageIndex, children: [
+      for (var i = 0; i < _pages.length; i++)
+        TickerMode(enabled: i == _pageIndex, child: _pages[i]),
+    ]);
+    return GlassScaffold(
+      edgeFade: false,
+      extendBody: false,
+      background: DecoratedBox(
+          decoration: BoxDecoration(
+        gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Theme.of(context).scaffoldBackgroundColor,
+              Color.alphaBlend(
+                  colors.primary.withValues(alpha: 0.08), colors.surface)
+            ]),
+      )),
+      body: SafeArea(
+          bottom: false,
+          child: wide
+              ? Row(children: [
+                  BotNavBar(
+                      isTablet: true,
+                      selectedIndex: _pageIndex,
+                      onTabChange: _select),
+                  Expanded(child: body)
+                ])
+              : body),
+      bottomBarHeight: wide ? (hasSong ? 86 : 0) : (hasSong ? 152 : 86),
+      bottomBar: Column(mainAxisSize: MainAxisSize.min, children: [
+        if (hasSong)
+          Padding(
+            padding: EdgeInsets.fromLTRB(wide ? 120 : 20, 8, 20, 4),
+            child: Container(
+              decoration: BoxDecoration(
+                  color: colors.surface.withValues(alpha: 0.92),
+                  borderRadius: BorderRadius.circular(22),
+                  border: Border.all(
+                      color: colors.outlineVariant.withValues(alpha: 0.45))),
+              clipBehavior: Clip.antiAlias,
+              child: const MusBotScreen(),
             ),
+          ),
+        if (!wide) BotNavBar(selectedIndex: _pageIndex, onTabChange: _select),
+        if (wide && hasSong)
+          SizedBox(height: MediaQuery.paddingOf(context).bottom + 8),
+      ]),
     );
   }
 }

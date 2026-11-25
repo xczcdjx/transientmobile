@@ -86,6 +86,20 @@ ThemeData buildAppTheme(Brightness brightness, Color accent) {
     scaffoldBackgroundColor: background,
     canvasColor: background,
     cardColor: surface,
+    cardTheme: CardThemeData(
+      color: surface,
+      elevation: 0,
+      margin: EdgeInsets.zero,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(24),
+        side: BorderSide(color: scheme.outlineVariant.withValues(alpha: 0.35)),
+      ),
+      clipBehavior: Clip.antiAlias,
+    ),
+    listTileTheme: const ListTileThemeData(
+      contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 6),
+      minVerticalPadding: 12,
+    ),
     dialogBackgroundColor: surface,
     appBarTheme: AppBarTheme(
         backgroundColor: background,

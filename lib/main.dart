@@ -1,3 +1,4 @@
+import 'styles/app_glass.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:oktoast/oktoast.dart';
@@ -12,6 +13,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await EasyLocalization.ensureInitialized();
+  await AppGlass.initialize();
   await ShareStorage.init(); // 初始化存储
   final container = ProviderContainer();
   await AudioHandlerService.instance.init(container); // 初始化音频服务
@@ -50,6 +52,8 @@ class MyApp extends ConsumerWidget {
       locale: context.locale,
       routerConfig: router,
       title: 'Transient',
+      builder: (context, child) =>
+          AppGlass.wrap(child ?? const SizedBox.shrink()),
     );
   }
 }

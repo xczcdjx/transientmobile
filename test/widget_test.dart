@@ -1,30 +1,52 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-
-import 'package:transientmobile/main.dart';
+import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
+import 'package:transientmobile/components/common/botNavBar.dart';
+import 'package:transientmobile/styles/app_glass.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
-
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
-
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
+  testWidgets('global glass navigation retains selection when layout changes',
+      (tester) async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.linux;
+    addTearDown(() => debugDefaultTargetPlatformOverride = null);
+    await tester.runAsync(AppGlass.initialize);
+    var selected = 0;
+    var wide = false;
+    late StateSetter update;
+    await tester.pumpWidget(
+        MaterialApp(home: StatefulBuilder(builder: (context, setState) {
+      update = setState;
+      return AppGlass.wrap(Scaffold(
+          body: Align(
+              alignment: Alignment.bottomCenter,
+              child: SizedBox(
+                  height: wide ? 450 : 100,
+                  child: BotNavBar(
+                      isTablet: wide,
+                      selectedIndex: selected,
+                      onTabChange: (value) =>
+                          setState(() => selected = value))))));
+    })));
     await tester.pump();
-
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    await tester.tap(find.text('我的').hitTestable().first);
+    await tester.pump(const Duration(milliseconds: 500));
+    expect(selected, 1);
+    expect(
+        tester.widget<GlassTabBar>(find.byType(GlassTabBar)).selectedIndex, 1);
+    update(() => wide = true);
+    await tester.pump(const Duration(milliseconds: 500));
+    expect(
+        tester
+            .widget<NavigationRail>(find.byType(NavigationRail))
+            .selectedIndex,
+        1);
+    await tester.tap(find.text('首页').hitTestable().first);
+    await tester.pump(const Duration(milliseconds: 500));
+    expect(selected, 0);
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump(const Duration(seconds: 1));
+    debugDefaultTargetPlatformOverride = null;
   });
 }

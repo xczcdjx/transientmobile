@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:transientmobile/styles/app_glass.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:transientmobile/pages/liquid_glass_test_page.dart';
@@ -14,7 +15,9 @@ void main() {
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
-    await tester.pumpWidget(const MaterialApp(home: LiquidGlassTestPage()));
+    await tester.pumpWidget(MaterialApp(
+        builder: (context, child) => AppGlass.wrap(child!),
+        home: const LiquidGlassTestPage()));
     // Shader loading performs real asynchronous asset I/O.
     for (var i = 0; i < 100; i++) {
       await tester.runAsync(
