@@ -7,3 +7,12 @@ flutter create \
   -i swift \
   --empty \
 flutter_all_test
+
+
+./flutterw build apk --release
+
+
+./flutterw build apk --release --split-per-abi --target-platform android-arm,android-arm64
+
+
+./flutterw build apk --release --target-platform android-arm,android-arm64

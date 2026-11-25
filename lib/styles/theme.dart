@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../utils/parseColor.dart';
 import 'custom.dart';
@@ -102,6 +103,9 @@ ThemeData buildAppTheme(Brightness brightness, Color accent) {
     ),
     dialogBackgroundColor: surface,
     appBarTheme: AppBarTheme(
+        systemOverlayStyle:
+            (dark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark)
+                .copyWith(statusBarColor: Colors.transparent),
         backgroundColor: background,
         foregroundColor: scheme.onSurface,
         elevation: 0,

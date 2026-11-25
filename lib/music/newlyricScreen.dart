@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:transientmobile/extensions/customColors.dart';
 
 import '../hooks/useStore.dart';
+import '../styles/player_lyric_ui.dart';
 import '../service/audioHandlerService.dart';
 import '../store/index.dart';
 import '../utils/musFun.dart';
@@ -48,13 +49,6 @@ class NewLyricScreenState extends ConsumerState<NewLyricScreen> {
   void initState() {
     // TODO: implement initState
     super.initState();
-    lyricUI = UINetease(
-      lyricAlign: widget.lycTextAlign,
-      defaultSize: widget.defaultSize,
-      lineGap: widget.lineGap,
-      bias: widget.bias,
-      defaultExtSize: widget.defaultExtSize,
-    );
     _lyricSub = ref.listenManual<String?>(
       musProvider.select((s) => s.lyric),
       (prev, next) {
@@ -69,6 +63,19 @@ class NewLyricScreenState extends ConsumerState<NewLyricScreen> {
     final current = ref.read(musProvider.select((s) => s.lyric)) ?? "";
     lyricModel =
         LyricsModelBuilder.create().bindLyricToMain(current).getModel();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    lyricUI = PlayerLyricUI(
+      colors: Theme.of(context).colorScheme,
+      lyricAlign: widget.lycTextAlign,
+      defaultSize: widget.defaultSize,
+      lineGap: widget.lineGap,
+      bias: widget.bias,
+      defaultExtSize: widget.defaultExtSize,
+    );
   }
 
   @override

@@ -1,0 +1,13 @@
+#!/bin/sh
+# Keep CLI builds on the Harmony-enabled SDK used by this project.
+# Set TRANSIENT_FLUTTER_SDK if the SDK lives somewhere else on your machine.
+set -eu
+project_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+flutter_sdk=${TRANSIENT_FLUTTER_SDK:-"$project_dir/../../Flutter/flutter_flutter"}
+if [ ! -x "$flutter_sdk/bin/flutter" ]; then
+  echo "找不到项目 Flutter SDK：$flutter_sdk" >&2
+  echo "请设置 TRANSIENT_FLUTTER_SDK，指向支持鸿蒙的 Flutter SDK 目录。" >&2
+  exit 1
+fi
+cd "$project_dir"
+exec "$flutter_sdk/bin/flutter" "$@"

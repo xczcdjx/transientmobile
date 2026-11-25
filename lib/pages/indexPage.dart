@@ -73,12 +73,16 @@ class _IndexPageState extends ConsumerState<IndexPage> {
       );
     });
     return GlassScaffold(
+      statusBarStyle: Theme.of(context).brightness == Brightness.dark
+          ? GlassStatusBarStyle.light
+          : GlassStatusBarStyle.dark,
       edgeFade: false,
       extendBody: true,
       // Match the page canvas so the floating controls have no tinted strip.
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
           bottom: false,
+          top: false,
           child: wide
               ? Row(children: [
                   BotNavBar(

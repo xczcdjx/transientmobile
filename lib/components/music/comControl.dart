@@ -24,7 +24,10 @@ class ComControlBtn extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final accent = Theme.of(context).colorScheme.primary;
+    final colors = Theme.of(context).colorScheme;
+    final accent = colors.primary;
+    final dark = colors.brightness == Brightness.dark;
+    final ink = dark ? Colors.white : colors.onSurface;
     return Center(
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 460),
@@ -50,7 +53,7 @@ class ComControlBtn extends ConsumerWidget {
                   width: size,
                   height: size,
                   iconSize: secondary ? 23 : 28,
-                  iconColor: active ? accent : Colors.white,
+                  iconColor: active ? accent : ink,
                   quality: secondary ? GlassQuality.minimal : AppGlass.quality,
                   enabled: onTap != null,
                   onTap: onTap ?? () {},
@@ -117,23 +120,25 @@ class ComControlBtn extends ConsumerWidget {
                         label: label,
                         enabled: !busy,
                         quality: AppGlass.quality,
-                        tintColor: Colors.white.withValues(alpha: 0.12),
+                        tintColor: dark
+                            ? Colors.white.withValues(alpha: 0.12)
+                            : accent.withValues(alpha: 0.08),
                         onTap: () {
                           final actions = ref.read(musPlayProvider.notifier);
                           state.playing ? actions.pause() : actions.play();
                         },
                         child: busy
-                            ? const SizedBox(
+                            ? SizedBox(
                                 width: 28,
                                 height: 28,
                                 child: CircularProgressIndicator(
-                                    strokeWidth: 2.5, color: Colors.white))
+                                    strokeWidth: 2.5, color: ink))
                             : Icon(
                                 state.playing
                                     ? Icons.pause_rounded
                                     : Icons.play_arrow_rounded,
                                 size: 40,
-                                color: Colors.white),
+                                color: ink),
                       ),
                     );
                   },
