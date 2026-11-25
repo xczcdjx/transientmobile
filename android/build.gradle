@@ -10,6 +10,20 @@ subprojects {
     project.buildDir = "${rootProject.buildDir}/${project.name}"
 }
 subprojects {
+    // Older audio plugins target Java 8 but inherit Kotlin's JDK 17 target.
+    // Align both compilers after each Android plugin has configured its defaults.
+    afterEvaluate { subproject ->
+        if (subproject.plugins.hasPlugin("com.android.application") ||
+                subproject.plugins.hasPlugin("com.android.library")) {
+            subproject.android.compileOptions {
+                sourceCompatibility JavaVersion.VERSION_17
+                targetCompatibility JavaVersion.VERSION_17
+            }
+            subproject.tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
+                kotlinOptions.jvmTarget = "17"
+            }
+        }
+    }
     project.evaluationDependsOn(":app")
 }
 
