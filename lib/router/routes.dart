@@ -1,4 +1,5 @@
 class Routes {
+  static const liquidGlassTest = '/test/liquid-glass';
   static const themeSettings = '/settings/theme';
   static const home = '/';
   static const test = '/test';

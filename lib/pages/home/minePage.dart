@@ -19,6 +19,13 @@ class _MinePageState extends State<MinePage> {
       body: Column(
         children: [
           ListTile(
+            leading: const Icon(Icons.blur_on),
+            title: const Text('液态玻璃测试'),
+            subtitle: const Text('按钮、滑块与玻璃面板效果'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.push(Routes.liquidGlassTest),
+          ),
+          ListTile(
             leading: Icon(Icons.account_circle_rounded),
             title: Text("My test"),
             trailing: Icon(Icons.chevron_right),

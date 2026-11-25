@@ -64,7 +64,8 @@ dependencies:
   flutter_cache_manager: ^3.3.1
   flutter_lyric: ^2.0.4+6
   text_scroll: ^0.2.1
-
+  liquid_glass_widgets:
+    path: '../../Flutter/mPackages/liquid_glass_widgets-1.20.0'
 dev_dependencies:
   flutter_test:
     sdk: flutter

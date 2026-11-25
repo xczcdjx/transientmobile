@@ -1,3 +1,4 @@
+import '../pages/liquid_glass_test_page.dart';
 import '../pages/theme_settings_page.dart';
 import 'package:go_router/go_router.dart';
 import 'package:transientmobile/pages/lastUploadPage.dart';
@@ -13,6 +14,10 @@ final GoRouter router = GoRouter(
   // refreshListenable: ValueNotifier(context),
   initialLocation: '/',
   routes: [
+    GoRoute(
+      path: Routes.liquidGlassTest,
+      builder: (context, state) => const LiquidGlassTestPage(),
+    ),
     GoRoute(
         path: Routes.themeSettings,
         builder: (context, state) => const ThemeSettingsPage()),
