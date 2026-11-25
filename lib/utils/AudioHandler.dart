@@ -161,7 +161,11 @@ class AudioPlayerHandlerImpl extends BaseAudioHandler with SeekHandler {
     if (_disposed) return;
     _lastSystemPosition = currentPosition;
     playbackState.add(playbackState.value.copyWith(
-      processingState: _buffering && processing == AudioProcessingState.ready
+      // Seeking within a fully downloaded track can briefly report buffering
+      // while the decoder repositions. Keep playback controls available.
+      processingState: _buffering &&
+              _downloadFraction < 1 &&
+              processing == AudioProcessingState.ready
           ? AudioProcessingState.buffering
           : processing,
       errorCode: null,

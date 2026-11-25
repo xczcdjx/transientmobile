@@ -264,6 +264,49 @@ void main() {
     await events.close();
   });
 
+  test('fully cached seeks retain controls and a new track buffers normally',
+      () async {
+    final events = StreamController<dynamic>.broadcast(sync: true);
+    final handler = AudioPlayerHandlerImpl(
+        player: TestPlayer(), bufferEvents: events.stream);
+    void emit(String id, int type, {double? fraction}) => events.add({
+          'playerId': 'test-player',
+          'url': 'https://example.com/$id.mp3',
+          'type': type,
+          if (fraction != null) 'downloadFraction': fraction,
+        });
+    await handler.playMediaItem(track('a'));
+    emit('a', 4, fraction: 0.5);
+    emit('a', 1);
+    expect(handler.playbackState.value.processingState,
+        AudioProcessingState.buffering);
+    emit('a', 4, fraction: 1);
+    expect(handler.playbackState.value.processingState,
+        AudioProcessingState.ready);
+    final states = <AudioProcessingState>[];
+    final subscription = handler.playbackState.listen(
+        (state) => states.add(state.processingState));
+    await handler.seek(const Duration(seconds: 7));
+    emit('a', 1);
+    expect(handler.playbackState.value.playing, isTrue);
+    expect(handler.playbackState.value.controls, contains(MediaControl.pause));
+    await handler.pause();
+    await handler.seek(const Duration(seconds: 2));
+    emit('a', 1);
+    expect(handler.playbackState.value.playing, isFalse);
+    expect(handler.playbackState.value.controls, contains(MediaControl.play));
+    await Future<void>.delayed(Duration.zero);
+    expect(states, everyElement(AudioProcessingState.ready));
+    await subscription.cancel();
+    await handler.playMediaItem(track('b'));
+    emit('a', 4, fraction: 1); // Old cache events must not hide new buffering.
+    emit('b', 1);
+    expect(handler.playbackState.value.processingState,
+        AudioProcessingState.buffering);
+    await handler.dispose();
+    await events.close();
+  });
+
   test('a bad track reports error and does not poison the next command',
       () async {
     final handler = AudioPlayerHandlerImpl(player: TestPlayer());
