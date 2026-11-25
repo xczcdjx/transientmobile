@@ -38,6 +38,8 @@ dependencies:
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.6
   dio: ^5.9.0
+  just_audio:
+    path: third_party/just_audio
   rxdart: ^0.27.7
   flutter_riverpod: ^2.6.1
   go_router: ^15.1.2
@@ -71,6 +73,8 @@ dev_dependencies:
   json_serializable: ^6.8.0
 
 dependency_overrides:
+  audio_session:
+    path: third_party/audio_session
   # Local Harmony background playback fixes; see third_party/README.md.
   audio_service_ohos:
     path: third_party/audio_service_ohos

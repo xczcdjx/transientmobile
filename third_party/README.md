@@ -19,3 +19,18 @@ Test continuous playback while locked, background track transitions, pause/resum
 To revert: remove both local dependency_overrides and run flutter pub get again.
 
 Task lifecycle regression check (mocked Harmony APIs): `node third_party/tests/background_task_test.cjs`. This does not replace device testing.
+
+## just_audio migration
+
+The production player uses just_audio 0.10.5 from CPF-Flutter tag
+0.10.5-ohos-1.0.1 (commit e366bb5858812da73b204ac5f071b9d2cdd11ebe).
+Its OHOS MediaAvPlayer session creation is disabled because audio_service owns
+the system media session and background task. audio_session 0.2.2 is vendored
+from CPF-Flutter br_v0.2.2_ohos (commit 62af3718564bca39e8eba77c9cf8a75aeebfd43e);
+the local copy avoids Git LFS checkout failures in the dependency cache.
+
+JustAudioPlayback preserves existing handler/UI interfaces while using
+LockCachingAudioSource and downloadProgressStream for actual continuous file
+download. The bar maps downloaded bytes to track duration (approximate for VBR);
+loading animation still follows player buffering state. Cache uses just_audio's
+temporary cache directory and is not a permanent offline-download library.

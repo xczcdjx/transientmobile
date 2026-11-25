@@ -66,14 +66,12 @@ packages:
     source: hosted
     version: "0.1.4"
   audio_session:
-    dependency: transitive
+    dependency: "direct overridden"
     description:
-      path: "."
-      ref: HEAD
-      resolved-ref: d2ff09dfe4df3b366c19cca27562bdb413de20c7
-      url: "https://gitcode.com/openharmony-sig/flutter_audio_session.git"
-    source: git
-    version: "0.1.18"
+      path: "third_party/audio_session"
+      relative: true
+    source: path
+    version: "0.2.2"
   audioplayers:
     dependency: "direct main"
     description:
@@ -555,6 +553,29 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "6.8.0"
+  just_audio:
+    dependency: "direct main"
+    description:
+      path: "third_party/just_audio"
+      relative: true
+    source: path
+    version: "0.10.5"
+  just_audio_platform_interface:
+    dependency: transitive
+    description:
+      name: just_audio_platform_interface
+      sha256: "2532c8d6702528824445921c5ff10548b518b13f808c2e34c2fd54793b999a6a"
+      url: "https://pub.flutter-io.cn"
+    source: hosted
+    version: "4.6.0"
+  just_audio_web:
+    dependency: transitive
+    description:
+      name: just_audio_web
+      sha256: "6ba8a2a7e87d57d32f0f7b42856ade3d6a9fbe0f1a11fabae0a4f00bb73f0663"
+      url: "https://pub.flutter-io.cn"
+    source: hosted
+    version: "0.4.16"
   leak_tracker:
     dependency: transitive
     description:
@@ -960,10 +981,10 @@ packages:
     dependency: transitive
     description:
       name: synchronized
-      sha256: "539ef412b170d65ecdafd780f924e5be3f60032a1128df156adad6c5b373d558"
+      sha256: c254ade258ec8282947a0acbbc90b9575b4f19673533ee46f2f6e9b3aeefd7c0
       url: "https://pub.flutter-io.cn"
     source: hosted
-    version: "3.1.0+1"
+    version: "3.4.0"
   term_glyph:
     dependency: transitive
     description:
@@ -1109,5 +1130,5 @@ packages:
     source: hosted
     version: "3.1.3"
 sdks:
-  dart: ">=3.8.0-0 <4.0.0"
-  flutter: ">=3.22.0"
+  dart: ">=3.8.0 <4.0.0"
+  flutter: ">=3.27.0"

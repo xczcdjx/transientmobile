@@ -2,14 +2,14 @@ import 'dart:async';
 import 'package:audio_service/audio_service.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/services.dart';
 import 'package:rxdart/rxdart.dart';
 import 'media_artwork.dart';
+import '../service/just_audio_playback.dart';
 
 /// Owns the player and system media state; queue decisions belong to MusPlaySlice.
 class AudioPlayerHandlerImpl extends BaseAudioHandler with SeekHandler {
   AudioPlayerHandlerImpl({AudioPlayer? player, Stream<dynamic>? bufferEvents})
-      : _audioPlayer = player ?? AudioPlayer() {
+      : _audioPlayer = player ?? JustAudioPlayback() {
     _subscriptions.add(_audioPlayer.onPlayerStateChanged
         .listen(_onPlayerState, onError: _onError));
     _subscriptions.add(_audioPlayer.onPositionChanged.listen((position) {
@@ -24,9 +24,8 @@ class AudioPlayerHandlerImpl extends BaseAudioHandler with SeekHandler {
       }
     }, onError: _onError));
     final events = bufferEvents ??
-        (!kIsWeb && defaultTargetPlatform.name == 'ohos'
-            ? const EventChannel('transient/audio_buffer/events')
-                .receiveBroadcastStream()
+        (_audioPlayer is JustAudioPlayback
+            ? _audioPlayer.bufferEvents
             : null);
     if (events != null) {
       _subscriptions.add(events.listen(_onBufferEvent, onError: (Object error) {
@@ -51,6 +50,7 @@ class AudioPlayerHandlerImpl extends BaseAudioHandler with SeekHandler {
   Duration? _lastSystemPosition;
   Duration _bufferedPosition = Duration.zero;
   bool _buffering = false;
+  double _downloadFraction = 0;
   PlayerState state = PlayerState.stopped;
 
   MediaItem? Function()? resolveCurrentItem;
@@ -103,6 +103,13 @@ class AudioPlayerHandlerImpl extends BaseAudioHandler with SeekHandler {
     final type = event['type'];
     if (type == 1) _buffering = true;
     if (type == 2) _buffering = false;
+    final fraction = event['downloadFraction'];
+    if (fraction is num && fraction.isFinite) {
+      _downloadFraction = fraction.clamp(0.0, 1.0).toDouble();
+      final duration = item.duration ?? Duration.zero;
+      _bufferedPosition = Duration(
+          microseconds: (duration.inMicroseconds * _downloadFraction).round());
+    }
     final end = event['bufferedPosition'];
     if (type == 4 && end is num && end.isFinite && end >= 0) {
       var milliseconds = end.round();
@@ -139,6 +146,10 @@ class AudioPlayerHandlerImpl extends BaseAudioHandler with SeekHandler {
   void _updateDuration(Duration duration) {
     final item = _currentItem.value;
     if (item == null || item.duration == duration) return;
+    if (_audioPlayer is JustAudioPlayback) {
+      _bufferedPosition = Duration(
+          microseconds: (duration.inMicroseconds * _downloadFraction).round());
+    }
     _currentItem.add(item.copyWith(duration: duration));
     final display = mediaItem.value;
     if (display?.id == item.id) {
@@ -199,6 +210,7 @@ class AudioPlayerHandlerImpl extends BaseAudioHandler with SeekHandler {
   }
 
   void _selectItem(MediaItem? item) {
+    _downloadFraction = 0;
     _bufferedPosition = Duration.zero;
     _buffering = false;
     if (_currentItem.value?.id != item?.id) _notificationLine = null;

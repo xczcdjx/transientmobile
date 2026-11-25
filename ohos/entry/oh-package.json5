@@ -11,6 +11,7 @@
     "path_provider_ohos": "file:../har/path_provider_ohos.har",
     "audio_session": "file:../har/audio_session.har",
     "audio_service_ohos": "file:../har/audio_service_ohos.har",
-    "@ohos/flutter_ohos": "har/flutter.har"
+    "@ohos/flutter_ohos": "har/flutter.har",
+    "just_audio": "file:../har/just_audio.har"
   }
 }

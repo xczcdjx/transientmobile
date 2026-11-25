@@ -56,6 +56,7 @@
     <!-- ✅ 允许 transient.online 使用 HTTP 播放音频 -->
     <key>NSAppTransportSecurity</key>
     <dict>
+        <key>NSAllowsLocalNetworking</key><true/>
         <key>NSExceptionDomains</key>
         <dict>
             <key>transient.online</key>
