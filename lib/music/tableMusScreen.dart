@@ -116,7 +116,7 @@ class TableMusScreen extends ConsumerWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
               ),
               // Repeat/shuffle controls
-              Row(
+              /*Row(
                 children: [
                   StreamBuilder<AudioServiceRepeatMode>(
                     stream: _audioHandler.playbackState
@@ -156,7 +156,7 @@ class TableMusScreen extends ConsumerWidget {
                   StreamBuilder<bool>(
                     stream: _audioHandler.playbackState
                         .map((state) =>
-                            state.shuffleMode == AudioServiceShuffleMode.all)
+                    state.shuffleMode == AudioServiceShuffleMode.all)
                         .distinct(),
                     builder: (context, snapshot) {
                       final shuffleModeEnabled = snapshot.data ?? false;
@@ -174,7 +174,7 @@ class TableMusScreen extends ConsumerWidget {
                     },
                   ),
                 ],
-              ),
+              ),*/
             ],
           ),
         ],

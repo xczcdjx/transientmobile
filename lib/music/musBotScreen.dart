@@ -16,6 +16,7 @@ import '../service/play_list_controller.dart';
 import '../utils/NetImage.dart';
 import '../utils/getDevice.dart';
 import '../utils/screenUtil.dart';
+
 // Music底部播放组件
 class MusBotScreen extends ConsumerStatefulWidget {
   const MusBotScreen({super.key});
@@ -38,226 +39,222 @@ class _MusBotScreenState extends ConsumerState<MusBotScreen> {
     final duration = m.duration ?? Duration();
     final position = mus.position;
     final dispatch = useDispatch(ref, musPlayProvider);
-    if (isTab) {
-      return Container(
-        height: 70,
-        color: context.musicStickBg.withOpacity(0.5),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 12.5),
-          child: Row(
-            children: [
-              GestureDetector(
-                onTap: () {
-                  MusPlayerController().show(context);
-                },
-                child: SizedBox(
-                  height: 55,
-                  width: 55,
-                  child: RotatingAlbumCover(
-                    pad: const EdgeInsets.all(3.5),
-                    imageUrl: (musP.curSong?.artUri ?? "").toString(),
-                    playing: musP.isPlaying,
-                    size: 55,
+    return GestureDetector(
+        onTap: () {
+          MusPlayerController().show(context);
+        },
+        child: isTab
+            ? Container(
+                height: 70,
+                color: context.musicStickBg.withOpacity(0.5),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 15, vertical: 12.5),
+                  child: Row(
+                    children: [
+                      SizedBox(
+                        height: 55,
+                        width: 55,
+                        child: RotatingAlbumCover(
+                          pad: const EdgeInsets.all(3.5),
+                          imageUrl: (musP.curSong?.artUri ?? "").toString(),
+                          playing: musP.isPlaying,
+                          size: 55,
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      // 标题 + 歌手
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: _buildTitleArtist(m, isPlaying),
+                                ),
+                                SizedBox(
+                                  width: 10,
+                                ),
+                                SizedBox(
+                                  width: 80,
+                                  child: Row(
+                                    children: [
+                                      _renderText(
+                                          tranTime(mus.position), context),
+                                      SizedBox(
+                                        width: 2.5,
+                                      ),
+                                      _renderText("/", context),
+                                      SizedBox(
+                                        width: 2.5,
+                                      ),
+                                      _renderText(
+                                          tranTime(musP.curSong?.duration ??
+                                              const Duration(seconds: 0)),
+                                          context),
+                                    ],
+                                  ),
+                                )
+                              ],
+                            ),
+                            Expanded(
+                              child: ComSeekBar(
+                                key: ValueKey(m.id),
+                                duration: musP.curSong?.duration ??
+                                    const Duration(seconds: 0),
+                                position: mus.position,
+                                bufferedPosition: mus.bufferedPosition,
+                                isBuffering: mus.isBuffering,
+                                showDuration: false,
+                                onChangeEnd: (newPosition) {
+                                  audioHandler.seek(newPosition);
+                                },
+                              ),
+                            )
+                          ],
+                        ),
+                      ),
+                      SizedBox(
+                        width: 10,
+                      ),
+                      SizedBox(
+                        width: 210,
+                        height: 60,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            IconButton(
+                                icon: const Icon(
+                                  Icons.skip_previous,
+                                  size: 30,
+                                ),
+                                onPressed: dispatch.previous),
+                            Transform.translate(
+                              offset: const Offset(0, 1),
+                              child: SizedBox(
+                                width: 45,
+                                height: 45,
+                                child: ComPlayCircleBtn(
+                                    outSize: 45,
+                                    iconSize: 35,
+                                    position: position,
+                                    duration: duration,
+                                    isPlaying: isPlaying,
+                                    onPlayPause: dispatch.playToggle),
+                              ),
+                            ),
+                            IconButton(
+                                icon: const Icon(
+                                  Icons.skip_next,
+                                  size: 30,
+                                ),
+                                onPressed: dispatch.next),
+                            IconButton(
+                                onPressed: () {
+                                  GlobalBottomSheet.show(context: context);
+                                },
+                                icon: Icon(
+                                  Icons.queue_music_sharp,
+                                  size: 30,
+                                ))
+                          ],
+                        ),
+                      )
+                    ],
                   ),
-                ),
-              ),
-              const SizedBox(width: 10),
-              // 标题 + 歌手
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _buildTitleArtist(m, isPlaying),
-                        ),
-                        SizedBox(
-                          width: 10,
-                        ),
-                        SizedBox(
-                          width: 80,
-                          child: Row(
-                            children: [
-                              _renderText(tranTime(mus.position), context),
-                              SizedBox(
-                                width: 2.5,
-                              ),
-                              _renderText("/", context),
-                              SizedBox(
-                                width: 2.5,
-                              ),
-                              _renderText(
-                                  tranTime(musP.curSong?.duration ??
-                                      const Duration(seconds: 0)),
-                                  context),
-                            ],
-                          ),
-                        )
-                      ],
-                    ),
-                    Expanded(
-                      child: ComSeekBar(
-                        key: ValueKey(m.id),
-                        duration: musP.curSong?.duration ??
-                            const Duration(seconds: 0),
-                        position: mus.position,
-                        bufferedPosition: mus.bufferedPosition,
-                        isBuffering: mus.isBuffering,
-                        showDuration: false,
-                        onChangeEnd: (newPosition) {
-                          audioHandler.seek(newPosition);
-                        },
-                      ),
-                    )
-                  ],
-                ),
-              ),
-              SizedBox(
-                width: 10,
-              ),
-              SizedBox(
-                width: 210,
-                height: 60,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    IconButton(
-                        icon: const Icon(
-                          Icons.skip_previous,
-                          size: 30,
-                        ),
-                        onPressed: dispatch.previous),
-                    Transform.translate(
-                      offset: const Offset(0, 1),
-                      child: SizedBox(
-                        width: 45,
-                        height: 45,
-                        child: ComPlayCircleBtn(
-                            outSize: 45,
-                            iconSize: 35,
-                            position: position,
-                            duration: duration,
-                            isPlaying: isPlaying,
-                            onPlayPause: dispatch.playToggle),
-                      ),
-                    ),
-                    IconButton(
-                        icon: const Icon(
-                          Icons.skip_next,
-                          size: 30,
-                        ),
-                        onPressed: dispatch.next),
-                    IconButton(
-                        onPressed: () {
-                          GlobalBottomSheet.show(context: context);
-                        },
-                        icon: Icon(
-                          Icons.queue_music_sharp,
-                          size: 30,
-                        ))
-                  ],
                 ),
               )
-            ],
-          ),
-        ),
-      );
-    }
-    return Container(
-      height: 50,
-      color: context.musicStickBg.withOpacity(0.5),
-      child: Padding(
-        padding: const EdgeInsets.only(left: 10, right: 5, top: 5, bottom: 5),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            GestureDetector(
-              onTap: () {
-                MusPlayerController().show(context);
-              },
-              child: SizedBox(
-                width: 35,
-                height: 35,
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: NetImage(
-                    url: m.artUri.toString(),
-                    cache: true,
-                    width: 35,
-                    height: 35,
-                    loadingWidget: (ctx, str) => const Padding(
-                      padding: EdgeInsets.all(15),
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    ),
+            : Container(
+                height: 50,
+                color: context.musicStickBg.withOpacity(0.5),
+                child: Padding(
+                  padding: const EdgeInsets.only(
+                      left: 10, right: 5, top: 5, bottom: 5),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      SizedBox(
+                        width: 35,
+                        height: 35,
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: NetImage(
+                            url: m.artUri.toString(),
+                            cache: true,
+                            width: 35,
+                            height: 35,
+                            loadingWidget: (ctx, str) => const Padding(
+                              padding: EdgeInsets.all(15),
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      // 标题 + 歌手
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.spaceAround,
+                          children: [
+                            _buildTitle(m, isPlaying),
+                            // const SizedBox(height: 3),
+                            Text(
+                              m.artist ?? '',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 10,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      SizedBox(
+                        width: 179,
+                        height: 50,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            IconButton(
+                                icon: const Icon(
+                                  Icons.skip_previous,
+                                  size: 24,
+                                ),
+                                onPressed: dispatch.previous),
+                            SizedBox(
+                              width: 35,
+                              height: 35,
+                              child: ComPlayCircleBtn(
+                                  position: position,
+                                  duration: duration,
+                                  isPlaying: isPlaying,
+                                  onPlayPause: dispatch.playToggle),
+                            ),
+                            IconButton(
+                                icon: const Icon(
+                                  Icons.skip_next,
+                                  size: 24,
+                                ),
+                                onPressed: dispatch.next),
+                            IconButton(
+                                onPressed: () {
+                                  GlobalBottomSheet.show(context: context);
+                                },
+                                icon: Icon(
+                                  Icons.queue_music_sharp,
+                                  size: 24,
+                                ))
+                          ],
+                        ),
+                      )
+                    ],
                   ),
                 ),
-              ),
-            ),
-            const SizedBox(width: 10),
-            // 标题 + 歌手
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  _buildTitle(m, isPlaying),
-                  // const SizedBox(height: 3),
-                  Text(
-                    m.artist ?? '',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 10,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            SizedBox(
-              width: 179,
-              height: 50,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  IconButton(
-                      icon: const Icon(
-                        Icons.skip_previous,
-                        size: 24,
-                      ),
-                      onPressed: dispatch.previous),
-                  SizedBox(
-                    width: 35,
-                    height: 35,
-                    child: ComPlayCircleBtn(
-                        position: position,
-                        duration: duration,
-                        isPlaying: isPlaying,
-                        onPlayPause: dispatch.playToggle),
-                  ),
-                  IconButton(
-                      icon: const Icon(
-                        Icons.skip_next,
-                        size: 24,
-                      ),
-                      onPressed: dispatch.next),
-                  IconButton(
-                      onPressed: () {
-                        GlobalBottomSheet.show(context: context);
-                      },
-                      icon: Icon(
-                        Icons.queue_music_sharp,
-                        size: 24,
-                      ))
-                ],
-              ),
-            )
-          ],
-        ),
-      ),
-    );
+              ));
   }
 
   Widget _renderText(String str, BuildContext ctx) {
