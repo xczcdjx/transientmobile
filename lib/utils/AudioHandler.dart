@@ -320,15 +320,33 @@ class AudioPlayerHandlerImpl extends BaseAudioHandler with SeekHandler {
             playing: playbackState.value.playing);
       });
 
+  /// 同步主标题，音乐名，歌手
   void _publishMediaItem(MediaItem? item) {
     // Native metadata updates reset elapsed time to their last state snapshot.
     // Send the current anchor before changing lyrics, artwork or duration.
     _publishState(playbackState.value.processingState,
         playing: playbackState.value.playing);
-    mediaItem.add(item == null ? null : withArtworkHeaders(item));
+    if (item == null) {
+      mediaItem.add(null);
+      return;
+    }
+
+    // 从原始歌曲取歌手，因为传进来的 item.artist 可能已被替换成歌词
+    final original = _currentItem.value;
+    final source = original?.id == item.id ? original! : item;
+    final artist = source.artist?.trim() ?? '';
+
+    final title = artist.isEmpty
+        ? source.title
+        : '${source.title} · $artist';
+    // 新增歌手拼接
+    mediaItem.add(
+      withArtworkHeaders(item.copyWith(title: title)),
+    );
   }
 
   /// Keep canonical metadata intact; only the system subtitle displays lyrics.
+  /// 同步副标题，歌词
   void updateNotificationLyric(String id, String? line) {
     final item = _currentItem.value;
     if (_disposed || item == null || item.id != id) return;
