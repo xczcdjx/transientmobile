@@ -173,7 +173,7 @@ class AudioPlayerHandlerImpl extends BaseAudioHandler with SeekHandler {
         MediaControl.skipToPrevious,
         playing ? MediaControl.pause : MediaControl.play,
         MediaControl.skipToNext,
-        MediaControl.stop
+        // MediaControl.stop
       ],
       systemActions: const {MediaAction.seek, MediaAction.playPause},
       androidCompactActionIndices: const [0, 1, 2],

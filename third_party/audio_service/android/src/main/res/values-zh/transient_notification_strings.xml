@@ -1,0 +1,9 @@
+<?xml version="1.0" ?>
+<resources>
+    <string name="transient_previous">上一首</string>
+    <string name="transient_play">播放</string>
+    <string name="transient_pause">暂停</string>
+    <string name="transient_next">下一首</string>
+    <string name="transient_artwork">专辑封面</string>
+    <string name="transient_open_player">打开播放器调整播放进度</string>
+</resources>

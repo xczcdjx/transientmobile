@@ -92,7 +92,8 @@ void main() {
     handler.updateNotificationLyric('a', 'stale');
     expect(handler.mediaItem.value!.artist, 'Artist b');
     handler.updateNotificationLyric('b', 'line');
-    expect(handler.mediaItem.value!.title, 'Title b');
+    expect(handler.mediaItem.value!.title, 'Title b · Artist b');
+    expect((await handler.currentItemStream.first)!.title, 'Title b');
     expect(handler.mediaItem.value!.artist, 'line');
     handler.updateNotificationLyric('b', null);
     expect(handler.mediaItem.value!.artist, 'Artist b');

@@ -35,6 +35,7 @@ class AudioHandlerService {
       config: const AudioServiceConfig(
         androidNotificationChannelId: 'com.ryanheise.myapp.channel.audio',
         androidNotificationChannelName: 'Audio playback',
+        androidNotificationIcon: 'drawable/transient_notification_music',
         androidNotificationOngoing: true,
         androidResumeOnClick: true,
         androidShowNotificationBadge: true,

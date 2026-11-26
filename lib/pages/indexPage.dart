@@ -1,3 +1,6 @@
+import 'dart:async';
+import 'package:audio_service/audio_service.dart';
+import '../service/mus_player_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
@@ -24,6 +27,26 @@ class _IndexPageState extends ConsumerState<IndexPage> {
   // Keep the mounted tab subtree when switching between bottom and side bars.
   final _tabsKey = GlobalKey();
   int _pageIndex = 0;
+  StreamSubscription<bool>? _notificationClickSubscription;
+
+  @override
+  void initState() {
+    super.initState();
+    _notificationClickSubscription =
+        AudioService.notificationClicked.listen((clicked) {
+      if (!clicked) return;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) MusPlayerController().show(context);
+      });
+      WidgetsBinding.instance.ensureVisualUpdate();
+    });
+  }
+
+  @override
+  void dispose() {
+    _notificationClickSubscription?.cancel();
+    super.dispose();
+  }
 
   List<Widget> get _pages => List.generate(_tabCount, (index) {
         if (!_visitedTabs.contains(index)) return const SizedBox.shrink();

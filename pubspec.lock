@@ -36,11 +36,9 @@ packages:
   audio_service:
     dependency: "direct main"
     description:
-      path: audio_service
-      ref: HEAD
-      resolved-ref: "43be9f21aa33cde5a7855691a00ce52aa06014a7"
-      url: "https://gitcode.com/openharmony-sig/fluttertpc_audio_service.git"
-    source: git
+      path: "third_party/audio_service"
+      relative: true
+    source: path
     version: "0.18.13"
   audio_service_ohos:
     dependency: "direct overridden"

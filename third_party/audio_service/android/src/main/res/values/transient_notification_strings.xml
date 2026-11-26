@@ -1,0 +1,9 @@
+<?xml version="1.0" ?>
+<resources>
+    <string name="transient_previous">Previous track</string>
+    <string name="transient_play">Play</string>
+    <string name="transient_pause">Pause</string>
+    <string name="transient_next">Next track</string>
+    <string name="transient_artwork">Album artwork</string>
+    <string name="transient_open_player">Open player to adjust playback position</string>
+</resources>

@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" android:id="@+id/transient_content" android:forceDarkAllowed="false" android:layout_width="match_parent" android:layout_height="48dp" android:orientation="horizontal" android:gravity="center_vertical" android:background="@drawable/transient_notification_background" android:paddingHorizontal="6dp">
+    <ImageView android:id="@+id/transient_artwork" android:layout_width="40dp" android:layout_height="40dp" android:scaleType="centerCrop" android:src="@drawable/transient_notification_artwork" android:contentDescription="@string/transient_artwork"/>
+    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:layout_marginHorizontal="8dp" android:orientation="vertical">
+        <TextView android:id="@+id/transient_title" android:layout_width="match_parent" android:layout_height="wrap_content" android:textSize="14sp" android:textStyle="bold" android:textColor="@color/transient_notification_primary" android:maxLines="1" android:ellipsize="end"/>
+        <TextView android:id="@+id/transient_lyric" android:layout_width="match_parent" android:layout_height="wrap_content" android:textSize="12sp" android:textColor="@color/transient_notification_secondary" android:maxLines="1" android:ellipsize="end"/>
+    </LinearLayout>
+    <ImageButton android:id="@+id/transient_previous" android:layout_width="36dp" android:layout_height="36dp" android:padding="10dp" android:scaleType="fitCenter" android:background="@android:color/transparent" android:src="@drawable/transient_notification_previous" android:contentDescription="@string/transient_previous"/>
+    <ImageButton android:id="@+id/transient_play_pause" android:layout_width="36dp" android:layout_height="36dp" android:padding="10dp" android:scaleType="fitCenter" android:background="@android:color/transparent" android:src="@drawable/transient_notification_play" android:contentDescription="@string/transient_play"/>
+    <ImageButton android:id="@+id/transient_next" android:layout_width="36dp" android:layout_height="36dp" android:padding="10dp" android:scaleType="fitCenter" android:background="@android:color/transparent" android:src="@drawable/transient_notification_next" android:contentDescription="@string/transient_next"/>
+</LinearLayout>

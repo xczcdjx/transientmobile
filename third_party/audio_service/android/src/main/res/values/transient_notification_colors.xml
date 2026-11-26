@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="transient_notification_primary">#222426</color>
+    <color name="transient_notification_secondary">#62696D</color>
+    <color name="transient_notification_background_start">#FFF1F2</color>
+    <color name="transient_notification_background_center">#F7F9F5</color>
+    <color name="transient_notification_background_end">#E8F8FA</color>
+    <color name="transient_notification_progress_track">#D9DEDD</color>
+    <color name="transient_notification_progress_fill">#645C60</color>
+</resources>

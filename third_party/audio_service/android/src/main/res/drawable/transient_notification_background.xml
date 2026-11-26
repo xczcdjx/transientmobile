@@ -1,0 +1,5 @@
+<?xml version="1.0" ?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <corners android:radius="20dp"/>
+    <gradient android:startColor="@color/transient_notification_background_start" android:centerColor="@color/transient_notification_background_center" android:endColor="@color/transient_notification_background_end" android:angle="0"/>
+</shape>
