@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:io';
+import 'package:hive_ce/hive.dart';
+import 'package:transientmobile/constants/HiveKeys.dart';
 import 'package:transientmobile/pages/settings/theme_settings_page.dart';
 import 'package:transientmobile/store/index.dart';
 import 'package:transientmobile/styles/custom.dart';
 import 'package:transientmobile/styles/theme.dart';
 import 'package:transientmobile/styles/theme_palette.dart';
-import 'package:transientmobile/utils/shareStorage.dart';
+import 'package:transientmobile/utils/settings_storage.dart';
 
 Widget harness(ProviderContainer container, {Key? previewKey}) =>
     UncontrolledProviderScope(
@@ -26,9 +28,15 @@ Widget harness(ProviderContainer container, {Key? previewKey}) =>
         ));
 
 void main() {
+  late Directory directory;
   setUp(() async {
-    SharedPreferences.setMockInitialValues({});
-    await ShareStorage.init();
+    directory = await Directory.systemTemp.createTemp('transient-theme-hive-');
+    Hive.init(directory.path);
+    await Hive.openBox<dynamic>(HiveKeys.settings);
+  });
+  tearDown(() async {
+    await Hive.close();
+    await directory.delete(recursive: true);
   });
 
   test('restore theme and custom color, preserve custom when selecting presets',
@@ -49,8 +57,8 @@ void main() {
   test(
       'invalid saved settings fall back safely; accent reaches playback tokens',
       () async {
-    await ShareStorage.set('theme_mode', 999);
-    await ShareStorage.set('theme_color', -1);
+    await SettingsStorage.set('theme_mode', 999);
+    await SettingsStorage.set('theme_color', -1);
     final settings = SettingSlice();
     expect(settings.state.themeMode, ThemeMode.system);
     expect(settings.state.themeColor, defaultThemeColor);
@@ -70,26 +78,27 @@ void main() {
     final container = ProviderContainer();
     addTearDown(container.dispose);
     await tester.pumpWidget(harness(container));
-    await tester.tap(find.text('暗黑模式'));
+    await tester.runAsync(() => tester.tap(find.text('暗黑模式')));
     await tester.pumpAndSettle();
     expect(container.read(settingProvider).themeMode, ThemeMode.dark);
     await tester.ensureVisible(find.text('湖光潋滟'));
-    await tester.tap(find.text('湖光潋滟'));
+    await tester.runAsync(() => tester.tap(find.text('湖光潋滟')));
     await tester.pumpAndSettle();
     expect(container.read(settingProvider).themeColor, themePresets[3].color);
     await tester.ensureVisible(find.text('自定义'));
-    await tester.tap(find.text('自定义'));
+    await tester.runAsync(() => tester.tap(find.text('自定义')));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField), 'bad');
-    await tester.tap(find.text('应用'));
+    await tester.runAsync(() => tester.tap(find.text('应用')));
     await tester.pumpAndSettle();
     expect(find.text('请输入 6 位十六进制颜色值'), findsOneWidget);
     await tester.enterText(find.byType(TextField), '#123456');
-    await tester.tap(find.text('应用'));
+    await tester.runAsync(() => tester.tap(find.text('应用')));
     await tester.pumpAndSettle();
     expect(container.read(settingProvider).themeColor, const Color(0xFF123456));
     expect(container.read(settingProvider).isCustomColor, isTrue);
     expect(tester.takeException(), isNull);
+    await tester.runAsync(Hive.close);
   });
 
   testWidgets(
@@ -101,24 +110,27 @@ void main() {
     addTearDown(tester.view.resetDevicePixelRatio);
     final container = ProviderContainer();
     addTearDown(container.dispose);
-    await container
-        .read(settingProvider.notifier)
-        .toggleTheme(ThemeMode.dark.index);
-    await container
-        .read(settingProvider.notifier)
-        .setThemeColor(themePresets[3].color);
+    await tester.runAsync(() async {
+      await container
+          .read(settingProvider.notifier)
+          .toggleTheme(ThemeMode.dark.index);
+      await container
+          .read(settingProvider.notifier)
+          .setThemeColor(themePresets[3].color);
+    });
     final preview = GlobalKey();
     await tester.pumpWidget(harness(container, previewKey: preview));
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
     await tester.ensureVisible(find.text('自定义'));
-    await tester.tap(find.text('自定义'));
+    await tester.runAsync(() => tester.tap(find.text('自定义')));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField), 'FF0000');
-    await tester.tap(find.text('取消'));
+    await tester.runAsync(() => tester.tap(find.text('取消')));
     await tester.pumpAndSettle();
     expect(container.read(settingProvider).themeColor, themePresets[3].color);
     expect(container.read(settingProvider).isCustomColor, isFalse);
+    await tester.runAsync(Hive.close);
   });
 
   testWidgets(
@@ -142,5 +154,6 @@ void main() {
     await tester.pumpAndSettle();
     await tester.ensureVisible(find.text('自定义'));
     expect(tester.takeException(), isNull);
+    await tester.runAsync(Hive.close);
   });
 }

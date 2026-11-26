@@ -6,7 +6,7 @@ import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
 import 'package:transientmobile/models/store/music_state.dart';
 import 'package:transientmobile/models/store/setting_state.dart';
-import 'package:transientmobile/utils/shareStorage.dart';
+import '../utils/settings_storage.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 // 实体类导入
 import 'package:transientmobile/models/store/count_state.dart';

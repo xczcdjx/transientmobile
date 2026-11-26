@@ -5,13 +5,15 @@ import '../music/playMainList.dart';
 /// A real modal route makes Android back dismiss the queue before its player.
 class GlobalBottomSheet {
   static _PlaylistRoute? _route;
+
   static bool get isShowing => _route != null;
 
   static void show({
     required BuildContext context,
     Widget? child,
     double maxHeight = 620,
-    BorderRadiusGeometry radius = const BorderRadius.all(Radius.circular(28)),
+    BorderRadiusGeometry radius = const BorderRadius.only(
+        topLeft: Radius.circular(28), topRight: Radius.circular(28)),
     Color barrierColor = Colors.black54,
     Duration duration = const Duration(milliseconds: 280),
     Curve curve = Curves.easeOutCubic,
@@ -74,6 +76,7 @@ class _PlaylistRoute extends PopupRoute<void> {
       required this.duration,
       required this.curve,
       required this.themes});
+
   final Widget child;
   final double maxHeight;
   final BorderRadiusGeometry radius;
@@ -82,10 +85,13 @@ class _PlaylistRoute extends PopupRoute<void> {
   final CapturedThemes themes;
   @override
   final Color barrierColor;
+
   @override
   bool get barrierDismissible => true;
+
   @override
   String get barrierLabel => '关闭播放列表';
+
   @override
   Duration get transitionDuration => duration;
 

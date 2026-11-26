@@ -1,119 +1,54 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
-import 'package:transientmobile/extensions/customColors.dart';
-import 'package:transientmobile/utils/shareStorage.dart';
+import '../utils/settings_storage.dart';
 
-class LangSwitch extends StatefulWidget {
-  bool iconRender;
+class LangSwitch extends StatelessWidget {
+  const LangSwitch({super.key, this.iconRender = false});
+  final bool iconRender;
+  static const _languages = {'en': 'English', 'zh': '中文'};
 
-  LangSwitch({super.key, this.iconRender = false});
-
-  @override
-  State<LangSwitch> createState() => _LangSwitch();
-}
-
-class LanCls {
-  String k;
-  String v;
-
-  LanCls(this.k, this.v);
-}
-
-class _LangSwitch extends State<LangSwitch> {
-  String _currentLang = "en";
-  final List<LanCls> languages = [
-    LanCls("en", "English"),
-    LanCls("zh", "中文"),
-  ];
-
-// 切换语言并保存到本地
-  Future<void> changeLanguage(String lang) async {
-    await context.setLocale(Locale(lang));
-    await WidgetsBinding.instance.performReassemble(); // ui重汇
-    // await ShareStorage.set('locale', locale.languageCode);
-  }
-
-  Future<void> _loadLang() async {
-    final savedLang = ShareStorage.get('locale');
-    print(savedLang);
-    if (savedLang != null) {
-      setState(() {
-        _currentLang = savedLang;
-      });
-      // context.setLocale(Locale(savedLang));
-    } else {
-      // 如果没有保存过，使用系统语言
-      final systemLocale = context.deviceLocale.languageCode;
-      if (languages.any((l) => l.k == systemLocale)) {
-        setState(() {
-          _currentLang = systemLocale;
-        });
-        // context.setLocale(Locale(systemLocale));
-      }
-    }
-  }
-
-  @override
-  void initState() {
-    // TODO: implement initState
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _loadLang();
-    });
+  Future<void> _change(BuildContext context, String? language) async {
+    if (language == null || !_languages.containsKey(language)) return;
+    await SettingsStorage.set('locale', language);
+    if (context.mounted) await context.setLocale(Locale(language));
   }
 
   @override
   Widget build(BuildContext context) {
-    return widget.iconRender
-        ? GestureDetector(
-      onTapDown: (details) async {
-        final selected = await showMenu<String>(
-          context: context,
-          position: RelativeRect.fromLTRB(
-            details.globalPosition.dx,
-            details.globalPosition.dy,
-            details.globalPosition.dx,
-            details.globalPosition.dy,
-          ),
-          // color: const Color(0xFF001F3F),
-          items: languages.map((entry) {
-            return PopupMenuItem<String>(
-              value: entry.k,
-              child: Text(
-                entry.v,
-                style: TextStyle(
-                  color: entry.k == _currentLang
-                      ? context.pcr
-                      : null,
-                ),
-              ),
-            );
-          }).toList(),
-        );
-        _switchLang(selected);
-      },
-      child: Image.asset('assets/images/lang.png', width: 24, height: 24),
-    )
-        : DropdownButton<String>(
-      // dropdownColor: Color(0xFF001F3F),
-      value: _currentLang,
-      items: languages.map((entry) {
-        return DropdownMenuItem<String>(
-          value: entry.k,
-          child: Text(entry.v, style: TextStyle(
-              color: entry.k==_currentLang?context.fc:null)),
-        );
-      }).toList(),
-      onChanged: _switchLang,
-    );
-  }
-
-  _switchLang(String? val) {
-    if (val != null) {
-      setState(() {
-        _currentLang = val;
-      });
-      changeLanguage(_currentLang);
+    final language = context.locale.languageCode;
+    if (iconRender) {
+      return GestureDetector(
+        onTapDown: (details) async {
+          final selected = await showMenu<String>(
+            context: context,
+            position: RelativeRect.fromLTRB(
+                details.globalPosition.dx,
+                details.globalPosition.dy,
+                details.globalPosition.dx,
+                details.globalPosition.dy),
+            items: _languages.entries
+                .map((entry) => PopupMenuItem<String>(
+                      value: entry.key,
+                      child: Text(entry.value,
+                          style: TextStyle(
+                              color: entry.key == language
+                                  ? Theme.of(context).colorScheme.primary
+                                  : null)),
+                    ))
+                .toList(),
+          );
+          if (context.mounted) await _change(context, selected);
+        },
+        child: Image.asset('assets/images/lang.png', width: 24, height: 24),
+      );
     }
+    return DropdownButton<String>(
+      value: _languages.containsKey(language) ? language : 'en',
+      items: _languages.entries
+          .map((entry) => DropdownMenuItem<String>(
+              value: entry.key, child: Text(entry.value)))
+          .toList(),
+      onChanged: (value) => _change(context, value),
+    );
   }
 }

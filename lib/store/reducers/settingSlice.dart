@@ -9,9 +9,9 @@ class SettingSlice extends StateNotifier<SettingState> {
   SettingSlice() : super(_restore());
 
   static SettingState _restore() {
-    final index = ShareStorage.get<int>(key) ?? 0;
+    final index = SettingsStorage.get<int>(key) ?? 0;
     Color restoreColor(String storageKey) {
-      final value = ShareStorage.get<int>(storageKey);
+      final value = SettingsStorage.get<int>(storageKey);
       return value != null && value >= 0 && value <= 0xFFFFFFFF
           ? Color(value).withAlpha(255)
           : const Color(0xFF4C8DF6);
@@ -23,14 +23,14 @@ class SettingSlice extends StateNotifier<SettingState> {
           : ThemeMode.system,
       themeColor: restoreColor(colorKey),
       customColor: restoreColor(customColorKey),
-      isCustomColor: ShareStorage.get<bool>(isCustomKey) ?? false,
+      isCustomColor: SettingsStorage.get<bool>(isCustomKey) ?? false,
     );
   }
 
   Future<void> toggleTheme(int index) async {
     if (index < 0 || index >= ThemeMode.values.length) return;
     state = state.copyWith(themeMode: ThemeMode.values[index]);
-    await ShareStorage.set(key, index);
+    await SettingsStorage.set(key, index);
   }
 
   Future<void> setThemeColor(Color color, {bool custom = false}) async {
@@ -39,8 +39,10 @@ class SettingSlice extends StateNotifier<SettingState> {
         themeColor: opaque,
         isCustomColor: custom,
         customColor: custom ? opaque : null);
-    await ShareStorage.set(colorKey, opaque.value);
-    await ShareStorage.set(isCustomKey, custom);
-    if (custom) await ShareStorage.set(customColorKey, opaque.value);
+    await SettingsStorage.setAll({
+      colorKey: opaque.toARGB32(),
+      isCustomKey: custom,
+      if (custom) customColorKey: opaque.toARGB32(),
+    });
   }
 }
