@@ -2,10 +2,48 @@ part of '../index.dart';
 
 class MusPlaySlice extends StateNotifier<MusPlayState> {
   final AudioPlayerHandlerImpl handler;
-
+  late final VoidCallback _removeStorageListener;
   StreamSubscription<PlaybackState>? _pbSub;
+  StreamSubscription<Duration>? _positionSub;
+  Duration _savedPosition = Duration.zero;
+  bool _restoring = true;
+
+  Future<void> restorePlayback() async {
+    try {
+      await handler.setMediaItemOnly(state.curSong, position: _savedPosition);
+    } finally {
+      _restoring = false;
+    }
+  }
+
+  Future<void> savePlayback() => PlaybackStorage.save(state, _savedPosition);
 
   MusPlaySlice(this.handler) : super(MusPlayState()) {
+    final (savedState, position) = PlaybackStorage.read();
+    state = savedState;
+    _savedPosition = position;
+    var previousState = state;
+    _removeStorageListener = addListener((next) {
+      final changed = !identical(previousState.playList, next.playList) ||
+          previousState.curIndex != next.curIndex ||
+          previousState.repeatMode != next.repeatMode ||
+          previousState.isShuffling != next.isShuffling ||
+          !identical(previousState.randomIdList, next.randomIdList) ||
+          previousState.isPlaying != next.isPlaying;
+      if (previousState.curSong?.id != next.curSong?.id) {
+        _savedPosition = Duration.zero;
+      }
+      previousState = next;
+      if (changed && !_restoring) unawaited(savePlayback());
+    }, fireImmediately: false);
+    _positionSub = handler.positionStream.listen((position) {
+      if (_restoring || handler.mediaItem.value?.id != state.curSong?.id) {
+        return;
+      }
+      final previousSecond = _savedPosition.inSeconds;
+      _savedPosition = position;
+      if (position.inSeconds != previousSecond) unawaited(savePlayback());
+    });
     // 监听底层播放状态，只同步 playing 标记
     _pbSub = handler.playbackState.listen((s) {
       if (state.isPlaying != s.playing) {
@@ -276,6 +314,8 @@ class MusPlaySlice extends StateNotifier<MusPlayState> {
 
   @override
   void dispose() {
+    _removeStorageListener();
+    _positionSub?.cancel();
     _pbSub?.cancel();
     handler.onCompleted = null;
     handler.onSkipTo = null;

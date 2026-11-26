@@ -1,3 +1,4 @@
+part of 'index.dart';
 final musTest = [
   {
     "id": 800,

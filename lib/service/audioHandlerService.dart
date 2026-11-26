@@ -56,6 +56,7 @@ class AudioHandlerService {
     );
     final slice = container.read(musPlayProvider.notifier);
     handler.resolveCurrentItem = () => slice.curMedia;
+    await slice.restorePlayback();
     _queueSubscription = container.listen<List<MediaItem>>(
       musPlayProvider.select((value) => value.playList),
       (_, items) =>

@@ -1,5 +1,5 @@
 import 'package:shared_preferences/shared_preferences.dart';
-import '../constants/HiveKeys.dart';
+import '../constants/index.dart';
 import 'HiveUtil.dart';
 
 /// Retains legacy data as a fallback. Only mark complete after Hive is flushed.

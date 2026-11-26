@@ -1,6 +1,6 @@
 import 'package:transientmobile/utils/HiveUtil.dart';
 
-import 'constants/HiveKeys.dart';
+import 'constants/index.dart';
 import 'styles/app_glass.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';

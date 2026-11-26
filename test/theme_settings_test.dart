@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'dart:io';
 import 'package:hive_ce/hive.dart';
-import 'package:transientmobile/constants/HiveKeys.dart';
+import 'package:transientmobile/constants/index.dart';
 import 'package:transientmobile/pages/settings/theme_settings_page.dart';
 import 'package:transientmobile/store/index.dart';
 import 'package:transientmobile/styles/custom.dart';

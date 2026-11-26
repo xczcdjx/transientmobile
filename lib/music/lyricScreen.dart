@@ -1,14 +1,10 @@
 import 'dart:async';
 import 'dart:math';
 
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:transientmobile/constants/testData.dart';
 import 'package:transientmobile/extensions/customColors.dart';
-import 'package:transientmobile/music/playMainList.dart';
-import 'package:transientmobile/utils/musFun.dart';
 
 import '../components/music/comControl.dart';
 import '../components/music/comPlaySeek.dart';

@@ -1,3 +1,4 @@
+part of 'index.dart';
 class HiveKeys {
   HiveKeys._();
 

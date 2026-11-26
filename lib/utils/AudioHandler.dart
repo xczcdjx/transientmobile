@@ -24,9 +24,7 @@ class AudioPlayerHandlerImpl extends BaseAudioHandler with SeekHandler {
       }
     }, onError: _onError));
     final events = bufferEvents ??
-        (_audioPlayer is JustAudioPlayback
-            ? _audioPlayer.bufferEvents
-            : null);
+        (_audioPlayer is JustAudioPlayback ? _audioPlayer.bufferEvents : null);
     if (events != null) {
       _subscriptions.add(events.listen(_onBufferEvent, onError: (Object error) {
         debugPrint('Audio buffer information unavailable: $error');
@@ -225,10 +223,13 @@ class AudioPlayerHandlerImpl extends BaseAudioHandler with SeekHandler {
         : item.copyWith(artist: _notificationLine));
   }
 
-  Future<void> setMediaItemOnly(MediaItem? item) => _enqueue(() async {
+  Future<void> setMediaItemOnly(MediaItem? item,
+          {Duration position = Duration.zero}) =>
+      _enqueue(() async {
         await _audioPlayer.stop();
         _loadedId = null;
         _selectItem(item);
+        _setPosition(item == null ? Duration.zero : position);
         _publishState(AudioProcessingState.idle, playing: false);
       });
 
@@ -241,7 +242,8 @@ class AudioPlayerHandlerImpl extends BaseAudioHandler with SeekHandler {
     return item == null ? stop() : playMediaItem(item);
   }
 
-  Future<void> _loadAndPlay(MediaItem item) async {
+  Future<void> _loadAndPlay(MediaItem item,
+      {Duration initialPosition = Duration.zero}) async {
     final rawUrl = item.extras?['musUrl'];
     if (rawUrl is! String || rawUrl.trim().isEmpty) {
       throw StateError('Track ${item.id} has no audio URL');
@@ -259,7 +261,9 @@ class AudioPlayerHandlerImpl extends BaseAudioHandler with SeekHandler {
       _publishState(AudioProcessingState.loading, playing: true);
       await _audioPlayer.stop();
       _loadedId = null;
-      await _audioPlayer.play(UrlSource(uri.toString()));
+      await _audioPlayer.play(UrlSource(uri.toString()),
+          position: initialPosition);
+      _setPosition(initialPosition);
       _loadedId = item.id;
       final duration = _pendingDuration;
       if (duration != null) _updateDuration(duration);
@@ -279,7 +283,9 @@ class AudioPlayerHandlerImpl extends BaseAudioHandler with SeekHandler {
         await _audioPlayer.resume();
         _publishState(AudioProcessingState.ready, playing: true);
       } else {
-        await _loadAndPlay(item);
+        final position =
+            _currentItem.value?.id == item.id ? currentPosition : Duration.zero;
+        await _loadAndPlay(item, initialPosition: position);
       }
     });
   }
@@ -308,7 +314,7 @@ class AudioPlayerHandlerImpl extends BaseAudioHandler with SeekHandler {
         if (duration != null && duration > Duration.zero && target > duration) {
           target = duration;
         }
-        await _audioPlayer.seek(target);
+        if (_loadedId != null) await _audioPlayer.seek(target);
         _setPosition(target);
         _publishState(playbackState.value.processingState,
             playing: playbackState.value.playing);

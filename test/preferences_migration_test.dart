@@ -2,7 +2,7 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive_ce/hive.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:transientmobile/constants/HiveKeys.dart';
+import 'package:transientmobile/constants/index.dart';
 import 'package:transientmobile/utils/HiveUtil.dart';
 import 'package:transientmobile/utils/preferences_migration.dart';
 import 'package:transientmobile/utils/settings_storage.dart';

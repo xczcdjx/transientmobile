@@ -1,4 +1,4 @@
-import '../constants/HiveKeys.dart';
+import '../constants/index.dart';
 import 'HiveUtil.dart';
 
 /// Application preferences, backed by the already-open settings box.
